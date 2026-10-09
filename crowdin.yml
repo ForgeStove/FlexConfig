@@ -1,0 +1,5 @@
+preserve_hierarchy: true
+
+files:
+  - source: /src/main/resources/assets/flexconfig/lang/en_us.json
+    translation: /src/main/resources/assets/flexconfig/lang/%locale_with_underscore%.json

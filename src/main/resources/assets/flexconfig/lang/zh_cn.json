@@ -1,0 +1,21 @@
+{
+	"flexconfig.cannot_save": "错误！",
+	"flexconfig.color_picker.tooltip": "选择颜色",
+	"flexconfig.keybinds": "快捷键",
+	"flexconfig.locked.tooltip": "此配置值已被服务器锁定",
+	"flexconfig.quit.confirm": "确认",
+	"flexconfig.quit.confirm.title": "放弃更改？",
+	"flexconfig.quit.confirm.warning": "你有未保存的更改，确定要放弃吗？",
+	"flexconfig.quit.unsaved": "放弃更改",
+	"flexconfig.restart.game.text": "需要重启游戏才能使更改生效。",
+	"flexconfig.restart.return": "忽略并继续",
+	"flexconfig.restart.server.text": "需要重新进入世界才能使更改生效。",
+	"flexconfig.restart.title": "需要重启",
+	"flexconfig.undo.tooltip": "撤销",
+	"flexconfig.unlock.tooltip": "在服务器上锁定此配置值",
+	"flexconfig.unsupported_type": "不支持的配置类型: ",
+	"flexconfig.validator.max": "值不能大于: ",
+	"flexconfig.validator.min": "值不能小于: ",
+	"flexconfig.validator.multiple_errors": "存在多个错误",
+	"flexconfig.warn.cheat.tooltip": "警告：在服务器上可能被视为作弊"
+}

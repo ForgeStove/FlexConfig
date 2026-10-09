@@ -1,0 +1,20 @@
+{
+	"flexconfig.cannot_save": "Erro!",
+	"flexconfig.color_picker.tooltip": "Escolha a cor",
+	"flexconfig.keybinds": "Atalhos do teclado",
+	"flexconfig.locked.tooltip": "Este valor de configuração está bloqueado pelo servidor",
+	"flexconfig.quit.confirm": "Confirmar",
+	"flexconfig.quit.confirm.title": "Descartar alterações?",
+	"flexconfig.quit.confirm.warning": "Algumas alterações não foram salvas. Deseja descartá-las?",
+	"flexconfig.quit.unsaved": "Descartar alterações",
+	"flexconfig.restart.game.text": "É necessário reiniciar o jogo para que as alterações tenham efeito.",
+	"flexconfig.restart.return": "Ignorar e continuar",
+	"flexconfig.restart.title": "Reinicialização Necessária",
+	"flexconfig.undo.tooltip": "Desfazer",
+	"flexconfig.unlock.tooltip": "Bloquear este valor de configuração no servidor",
+	"flexconfig.unsupported_type": "Tipo de configuração não suportado: ",
+	"flexconfig.validator.max": "Valor não pode ser maior que: ",
+	"flexconfig.validator.min": "Valor não pode ser menor que: ",
+	"flexconfig.validator.multiple_errors": "Existem vários erros",
+	"flexconfig.warn.cheat.tooltip": "Aviso: Pode ser considerado trapaça no servidor"
+}

@@ -1,0 +1,18 @@
+# 按变体解析的构建属性（生效依赖 stonecutter.gradle.kts 里的 properties.tags）。
+# 顶层 = 全局默认；["<MC版本>"] = 该版本通用；[<loader>."<MC版本>"] = 该版本该加载器专属。
+# 新增 MC 版本时：先在 settings.gradle.kts 加 match(...)，再到此处补对应段落。
+
+# 全局
+nightConfigVersion = "3.8.3"
+
+["1.21.1"]
+mcVersion = "1.21.1"
+javaVersion = "21"
+
+[fabric."1.21.1"]
+fabricLoaderVersion = "0.16.7"
+fabricApiVersion = "0.116.17+1.21.1"
+
+[neoforge."1.21.1"]
+loaderVersion = "21.1.252"
+parchmentVersion = "2024.11.17"

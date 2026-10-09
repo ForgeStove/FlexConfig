@@ -1,0 +1,42 @@
+name: Publish Mods
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-mods
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Run publishMods
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Get Java Version
+        id: java_version
+        run: echo "version=$(grep '^javaVersion=' gradle.properties | cut -d'=' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ steps.java_version.outputs.version }}
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Publish Mods
+        run: ./gradlew publishMods
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "${modId}",
+	"version": "${modVersion}",
+	"name": "${modDisplayName}",
+	"description": "${modDescription}",
+	"authors": [
+		"${modAuthors}"
+	],
+	"license": "${modLicense}",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.github.forgestove.flexconfig.FabricEvents"
+		],
+		"client": [
+			"io.github.forgestove.flexconfig.client.FabricClientEvents"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"fabric-api": "*",
+		"minecraft": "~1.21.1",
+		"java": ">=21"
+	},
+	"suggests": {
+		"modmenu": "*"
+	}
+}

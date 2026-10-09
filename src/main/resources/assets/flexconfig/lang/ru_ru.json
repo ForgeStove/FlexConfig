@@ -1,0 +1,20 @@
+{
+	"flexconfig.cannot_save": "Ошибка!",
+	"flexconfig.color_picker.tooltip": "Выбор цвета",
+	"flexconfig.keybinds": "Настройка клавиш",
+	"flexconfig.locked.tooltip": "Это значение конфигурации заблокировано на сервере",
+	"flexconfig.quit.confirm": "Подтвердить",
+	"flexconfig.quit.confirm.title": "Отменить изменения?",
+	"flexconfig.quit.confirm.warning": "У вас есть несохраненные изменения. Вы уверены, что хотите их отменить?",
+	"flexconfig.quit.unsaved": "Отменить изменения",
+	"flexconfig.restart.game.text": "Для применения изменений необходим перезапуск игры.",
+	"flexconfig.restart.return": "Пропустить и продолжить",
+	"flexconfig.restart.title": "Необходим перезапуск",
+	"flexconfig.undo.tooltip": "Отменить",
+	"flexconfig.unlock.tooltip": "Заблокировать это значение конфигурации на сервере",
+	"flexconfig.unsupported_type": "Неподдерживаемый тип конфигурации: ",
+	"flexconfig.validator.max": "Значение не может быть больше: ",
+	"flexconfig.validator.min": "Значение не может быть меньше: ",
+	"flexconfig.validator.multiple_errors": "Имеется несколько ошибок",
+	"flexconfig.warn.cheat.tooltip": "Внимание: На серверах может быть рассчитан как читы"
+}

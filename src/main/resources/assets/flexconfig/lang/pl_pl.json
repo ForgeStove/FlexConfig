@@ -1,0 +1,20 @@
+{
+	"flexconfig.cannot_save": "Błąd!",
+	"flexconfig.color_picker.tooltip": "Próbnik kolorów",
+	"flexconfig.keybinds": "Przypisania klawiszy",
+	"flexconfig.locked.tooltip": "Ta wartość konfiguracyjna jest zablokowana przez serwer",
+	"flexconfig.quit.confirm": "Potwierdź",
+	"flexconfig.quit.confirm.title": "Odrzucić zmiany?",
+	"flexconfig.quit.confirm.warning": "Masz niezapisane zmiany, na pewno chcesz je odrzucić?",
+	"flexconfig.quit.unsaved": "Odrzuć zmiany",
+	"flexconfig.restart.game.text": "Aby zmiany odniosły efekt, wymagany jest restart gry.",
+	"flexconfig.restart.return": "Ignoruj i kontynuuj",
+	"flexconfig.restart.title": "Wymagane ponowne uruchomienie",
+	"flexconfig.undo.tooltip": "Cofnij",
+	"flexconfig.unlock.tooltip": "Zablokuj tę wartość konfiguracji na serwerze",
+	"flexconfig.unsupported_type": "Nieobsługiwany typ konfiguracji: ",
+	"flexconfig.validator.max": "Wartość nie może być większa niż: ",
+	"flexconfig.validator.min": "Wartość nie może być mniejsza niż: ",
+	"flexconfig.validator.multiple_errors": "Istnieje wiele błędów",
+	"flexconfig.warn.cheat.tooltip": "Ostrzeżenie: Może być uznane za oszukiwanie na serwerze"
+}
