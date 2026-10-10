@@ -5,17 +5,28 @@ NeoForge and Fabric, Minecraft 1.21.1.
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-## Building
+## Usage
 
-```bash
-./gradlew :1.21.1-neoforge:build
-./gradlew :1.21.1-fabric:build
+Consume it from the GitHub release as an ivy repository:
+
+```kotlin
+repositories {
+	ivy {
+		url = uri("https://github.com/ForgeStove/FlexConfig/releases/download")
+		patternLayout { artifact("[revision]/[artifact]-[revision](-[classifier]).jar") }
+		metadataSources { artifact() }
+	}
+}
+
+dependencies {
+	implementation("io.github.forgestove:flexconfig:$mcVersion-$flexConfigVersion-$loader")?.let { jarJar(it) }
+}
 ```
 
-Artifacts land in `versions/<version>-<loader>/build/libs/`.
-
-Versions are managed with [Stonecutter](https://stonecutter.kikugie.dev/): `src/main/java` is shared
-(version differences use `//? <condition> {` comments), while `src/neoforge/java` and `src/fabric/java` are loader-specific.
+Coordinates follow `io.github.forgestove:flexconfig:<mcVersion>-<modVersion>-<loader>`, e.g.
+`1.21.1-0.1.0-neoforge` (use the version from the
+[Releases](https://github.com/ForgeStove/FlexConfig/releases) page). To embed it in your own artifact,
+use `jarJar(...)` on NeoForge and `include(...)` on Fabric instead of `implementation(...)`.
 
 ## License
 
