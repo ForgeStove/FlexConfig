@@ -10,6 +10,9 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.language.jvm.tasks.ProcessResources
 
+/** 开发期演示代码的包路径：只在 runClient 里生效，不参与打包。 */
+private const val DEMO_PACKAGE = "io/github/forgestove/flexconfig/demo/**"
+
 /**
  * 各加载器构建脚本的公共配置，供 `build.<loader>.gradle.kts` 调用。
  * [loader] 决定专属源码/模板目录（`src/<loader>/...`）。
@@ -25,7 +28,11 @@ fun Project.configureCommon(loader: String) {
 		toolchain.languageVersion.set(JavaLanguageVersion.of(p("javaVersion")))
 		withSourcesJar()
 	}
-	tasks.named<Jar>("jar") { from(rootProject.file("LICENSE")) }
+	tasks.named<Jar>("jar") {
+		from(rootProject.file("LICENSE"))
+		exclude(DEMO_PACKAGE)
+	}
+	tasks.named<Jar>("sourcesJar") { exclude(DEMO_PACKAGE) }
 	val generateMetadata = tasks.register<ProcessResources>("generateMetadata") {
 		description = "Generate this project metadata from templates."
 		val values = project.extensions.extraProperties.properties.mapValues { it.value.toString() }

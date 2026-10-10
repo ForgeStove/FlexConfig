@@ -4,6 +4,8 @@
 
 # 全局
 nightConfigVersion = "3.8.3"
+# loom
+loomx.loom_version = "1.18.4"
 
 ["1.21.1"]
 mcVersion = "1.21.1"

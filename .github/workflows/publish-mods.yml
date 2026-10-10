@@ -19,15 +19,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Get Java Version
-        id: java_version
-        run: echo "version=$(grep '^javaVersion=' gradle.properties | cut -d'=' -f2)" >> $GITHUB_OUTPUT
-
       - name: Setup Java
         uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: ${{ steps.java_version.outputs.version }}
+          java-version: 25
           cache: gradle
 
       - name: Setup Gradle
