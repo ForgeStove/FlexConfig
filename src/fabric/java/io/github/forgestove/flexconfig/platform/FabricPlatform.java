@@ -1,9 +1,11 @@
 package io.github.forgestove.flexconfig.platform;
 import net.fabricmc.api.EnvType;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
@@ -55,10 +57,10 @@ public final class FabricPlatform implements Platform {
 	/** 客户端专属 API，写在全限定名里靠 JVM 惰性解析隔离——专用服务器不会执行到这里。 */
 	@Override
 	public void sendToServer(CustomPacketPayload payload) {
-		net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(payload);
+		ClientPlayNetworking.send(payload);
 	}
 	@Override
-	public boolean canSendToPlayer(ServerPlayer player, CustomPacketPayload.Type<?> type) {
+	public boolean canSendToPlayer(ServerPlayer player, Type<?> type) {
 		return ServerPlayNetworking.canSend(player, type);
 	}
 }

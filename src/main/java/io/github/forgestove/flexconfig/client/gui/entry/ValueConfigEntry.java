@@ -52,13 +52,6 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		children.add(undoButton);
 		children.add(lockButton);
 	}
-	public List<FormattedCharSequence> getTooltipWithError() {
-		if (!hasError()) return tooltip;
-		var errorTooltip = new ArrayList<FormattedCharSequence>();
-		if (tooltip != null) errorTooltip.addAll(tooltip);
-		if (validationError != null) errorTooltip.add(validationError.copy().withStyle(ChatFormatting.RED).getVisualOrderText());
-		return errorTooltip;
-	}
 	public void resetToDefault() {
 		if (isReadOnly()) return;
 		var path = node.getPath();
@@ -74,43 +67,12 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		node.resetToActive(tab.config);
 		tab.screen.refresh();
 	}
-	/** 本条目所属的配置文件。 */
-	private FileKey fileKey() {
-		return new FileKey(tab.screen.root.modId(), tab.screen.root.fileName());
-	}
 	/** 切换待处理的锁定状态（延迟至保存时执行）。 */
 	private void onLockToggle() {
 		var path = node.getPath();
 		var shouldLock = !isLocked(); // effective state, considering pending
 		ClientLockManager.setPendingLock(fileKey(), path, shouldLock);
 		tab.screen.refresh();
-	}
-	private boolean canLock() {
-		return ClientUtil.mc.player != null && ClientUtil.mc.player.hasPermissions(2);
-	}
-	private boolean shouldShowLockButton() {
-		if (!tab.screen.isLockable()) return false;   // SERVER 型不接受锁定
-		if (ClientUtil.mc.player == null) return false;
-		if (ClientUtil.mc.isSingleplayer()) return false;
-		return ClientLockManager.hasReceivedSync();
-	}
-	@Override
-	public boolean hasError() {
-		return validationError != null;
-	}
-	/**
-	 * 检查此条目的有效锁定状态。
-	 * 首先考虑待处理的锁定操作，然后回退到服务器确认的锁定。
-	 */
-	public boolean isLocked() {
-		var path = node.getPath();
-		var pending = ClientLockManager.getPendingLock(fileKey(), path);
-		if (pending != null) return pending;
-		return ClientLockManager.isLocked(fileKey(), path);
-	}
-	/** 本条目的值是否不可修改：被锁定，或该配置文件在客户端本就不可编辑（远端服务器上的 SERVER 型）。 */
-	public boolean isReadOnly() {
-		return isLocked() || !tab.screen.isEditable();
 	}
 	public V getValue() {
 		return node.getEditingValue(tab.config);
@@ -134,6 +96,10 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		return hasError() ? tooltipWithError : tooltip;
 	}
 	@Override
+	public boolean hasError() {
+		return validationError != null;
+	}
+	@Override
 	public void refresh() {
 		var locked = isLocked();
 		var readOnly = isReadOnly();
@@ -152,6 +118,40 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 			lockButton.setMessage(Translation.UNLOCK_LABEL.copy().withStyle(ChatFormatting.GREEN));
 			lockButton.setTooltip(Tooltip.create(Translation.UNLOCK_TOOLTIP));
 		}
+	}
+	/**
+	 * 检查此条目的有效锁定状态。
+	 * 首先考虑待处理的锁定操作，然后回退到服务器确认的锁定。
+	 */
+	public boolean isLocked() {
+		var path = node.getPath();
+		var pending = ClientLockManager.getPendingLock(fileKey(), path);
+		if (pending != null) return pending;
+		return ClientLockManager.isLocked(fileKey(), path);
+	}
+	/** 本条目的值是否不可修改：被锁定，或该配置文件在客户端本就不可编辑（远端服务器上的 SERVER 型）。 */
+	public boolean isReadOnly() {
+		return isLocked() || !tab.screen.isEditable();
+	}
+	/** 本条目所属的配置文件。 */
+	private FileKey fileKey() {
+		return new FileKey(tab.screen.root.modId(), tab.screen.root.fileName());
+	}
+	public List<FormattedCharSequence> getTooltipWithError() {
+		if (!hasError()) return tooltip;
+		var errorTooltip = new ArrayList<FormattedCharSequence>();
+		if (tooltip != null) errorTooltip.addAll(tooltip);
+		if (validationError != null) errorTooltip.add(validationError.copy().withStyle(ChatFormatting.RED).getVisualOrderText());
+		return errorTooltip;
+	}
+	private boolean shouldShowLockButton() {
+		if (!tab.screen.isLockable()) return false;   // SERVER 型不接受锁定
+		if (ClientUtil.mc.player == null) return false;
+		if (ClientUtil.mc.isSingleplayer()) return false;
+		return ClientLockManager.hasReceivedSync();
+	}
+	private boolean canLock() {
+		return ClientUtil.mc.player != null && ClientUtil.mc.player.hasPermissions(2);
 	}
 	public void renderGui(
 		@NotNull GuiGraphics gui,

@@ -28,11 +28,6 @@ public final class ConfigChangeDispatcher {
 		depth = 0;
 		flush();
 	}
-	/** 记录一次变更；同一个 handler 类只保留首次（去重）。深度为 0（不经树遍历）时立即派发。 */
-	public static void record(Class<? extends ConfigChangeHandler> type, String path, Object oldValue, Object newValue) {
-		PENDING.putIfAbsent(type, new Pending(path, oldValue, newValue));
-		if (depth == 0) flush();
-	}
 	private static void flush() {
 		if (PENDING.isEmpty()) return;
 		var batch = new ArrayList<>(PENDING.entrySet());
@@ -67,6 +62,11 @@ public final class ConfigChangeDispatcher {
 		}
 		INSTANCES.put(type, handler);
 		return handler;
+	}
+	/** 记录一次变更；同一个 handler 类只保留首次（去重）。深度为 0（不经树遍历）时立即派发。 */
+	public static void record(Class<? extends ConfigChangeHandler> type, String path, Object oldValue, Object newValue) {
+		PENDING.putIfAbsent(type, new Pending(path, oldValue, newValue));
+		if (depth == 0) flush();
 	}
 	private record Pending(String path, Object oldValue, Object newValue) {}
 }

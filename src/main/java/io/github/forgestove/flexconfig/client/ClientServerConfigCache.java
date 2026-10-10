@@ -31,12 +31,12 @@ public final class ClientServerConfigCache {
 		SYNCED.put(key, toml);
 		ConfigRegistry.getHandler(key).cast().applySynced(toml);
 	}
+	private static boolean isServerConfig(FileKey key) {
+		return ConfigRegistry.getRegisteredFileKeys().contains(key) && ConfigRegistry.getHandler(key).getType() == ConfigType.SERVER;
+	}
 	/** 断开连接时丢弃下发内容并恢复默认值。 */
 	public static void clear() {
 		SYNCED.keySet().forEach(key -> ConfigRegistry.getHandler(key).unload());
 		SYNCED.clear();
-	}
-	private static boolean isServerConfig(FileKey key) {
-		return ConfigRegistry.getRegisteredFileKeys().contains(key) && ConfigRegistry.getHandler(key).getType() == ConfigType.SERVER;
 	}
 }

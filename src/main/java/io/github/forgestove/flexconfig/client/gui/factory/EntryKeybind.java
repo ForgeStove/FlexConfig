@@ -70,6 +70,14 @@ public record EntryKeybind(@NotNull Key key, int modifierFlags) {
 			|| InputConstants.isKeyDown(window, 342)
 			|| InputConstants.isKeyDown(window, 346);
 	}
+	public static boolean isModifier(int keyCode) {
+		return keyCode == InputConstants.KEY_LSHIFT
+			|| keyCode == InputConstants.KEY_RSHIFT
+			|| keyCode == InputConstants.KEY_LCONTROL
+			|| keyCode == InputConstants.KEY_RCONTROL
+			|| keyCode == InputConstants.KEY_LALT
+			|| keyCode == InputConstants.KEY_RALT;
+	}
 	public Component getDisplayName() {
 		return buildText().withStyle(getState().color());
 	}
@@ -108,13 +116,5 @@ public record EntryKeybind(@NotNull Key key, int modifierFlags) {
 		};
 		sb.append(typePrefix).append(key.getValue());
 		return sb.toString();
-	}
-	public static boolean isModifier(int keyCode) {
-		return keyCode == InputConstants.KEY_LSHIFT
-			|| keyCode == InputConstants.KEY_RSHIFT
-			|| keyCode == InputConstants.KEY_LCONTROL
-			|| keyCode == InputConstants.KEY_RCONTROL
-			|| keyCode == InputConstants.KEY_LALT
-			|| keyCode == InputConstants.KEY_RALT;
 	}
 }

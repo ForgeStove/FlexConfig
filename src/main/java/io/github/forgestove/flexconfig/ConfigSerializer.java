@@ -1,11 +1,7 @@
 package io.github.forgestove.flexconfig;
-import com.electronwill.nightconfig.core.CommentedConfig;
-import com.electronwill.nightconfig.core.InMemoryCommentedFormat;
-import com.electronwill.nightconfig.core.UnmodifiableConfig;
-import com.electronwill.nightconfig.core.io.ParsingMode;
-import com.electronwill.nightconfig.core.io.WritingMode;
-import com.electronwill.nightconfig.toml.TomlParser;
-import com.electronwill.nightconfig.toml.TomlWriter;
+import com.electronwill.nightconfig.core.*;
+import com.electronwill.nightconfig.core.io.*;
+import com.electronwill.nightconfig.toml.*;
 import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.client.Translation;
@@ -39,10 +35,6 @@ public final class ConfigSerializer<C> {
 	}
 	public static <C> Builder<C> builder(Class<C> configClass) {
 		return new Builder<>(configClass);
-	}
-	/** 新建一个保持插入顺序的内存配置。 */
-	public static CommentedConfig inMemory() {
-		return CommentedConfig.of(LinkedHashMap::new, InMemoryCommentedFormat.defaultInstance());
 	}
 	/** 把配置值转成 NightConfig 可写入的表示；不支持或非法的值返回 {@code null}（跳过该条）。 */
 	private static @Nullable Object toTomlValue(Field field, @Nullable Object value) {
@@ -167,13 +159,31 @@ public final class ConfigSerializer<C> {
 		}
 		return warnNull(field, "list element does not match " + elementType.getSimpleName());
 	}
+	/** 快捷键段：键是配置路径（含点号），必须按字面键写入，否则点号会被解析成层级。 */
+	private static void writeKeybinds(CommentedConfig toml, Map<String, String> keybinds) {
+		if (keybinds.isEmpty()) return;
+		var section = toml.createSubConfig();
+		keybinds.forEach((path, value) -> section.set(List.of(path), value));
+		toml.set(KEYBINDS_SECTION, section);
+	}
+	/** 读取快捷键段；兼容旧的、点号被解析成层级的写法。 */
+	public static Map<String, String> readKeybinds(@Nullable CommentedConfig toml) {
+		var result = new LinkedHashMap<String, String>();
+		Object raw = toml == null ? null : toml.get(KEYBINDS_SECTION);
+		if (raw instanceof UnmodifiableConfig section) flatten(section, "", result);
+		return result;
+	}
+	private static void flatten(UnmodifiableConfig config, String prefix, Map<String, String> out) {
+		for (var entry : config.entrySet()) {
+			var path = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
+			var value = entry.getValue();
+			if (value instanceof UnmodifiableConfig sub) flatten(sub, path, out);
+			else if (value instanceof String string) out.put(path, string);
+		}
+	}
 	/** 设置读写目标文件；由 {@link ConfigHandler#loadFromDisk} 在路径解析后调用。 */
 	public void setTargetPath(Path targetPath) {
 		this.targetPath = targetPath;
-	}
-	private Path targetPath() {
-		if (targetPath == null) throw new IllegalStateException("Config target path has not been resolved yet");
-		return targetPath;
 	}
 	/** 原子写入：先写临时文件再原子替换，写入失败时原文件保持完整。 */
 	public void serialize(C config, Map<String, String> keybinds) throws SerializationException {
@@ -208,6 +218,14 @@ public final class ConfigSerializer<C> {
 			throw new SerializationException(e);
 		}
 	}
+	private Path targetPath() {
+		if (targetPath == null) throw new IllegalStateException("Config target path has not been resolved yet");
+		return targetPath;
+	}
+	/** 新建一个保持插入顺序的内存配置。 */
+	public static CommentedConfig inMemory() {
+		return CommentedConfig.of(LinkedHashMap::new, InMemoryCommentedFormat.defaultInstance());
+	}
 	/** 构建整份配置的 TOML 表示（值 + 本地化注释）；不写盘。 */
 	private CommentedConfig toConfig(C config) throws SerializationException {
 		var toml = inMemory();
@@ -220,28 +238,6 @@ public final class ConfigSerializer<C> {
 			throw new SerializationException(e);
 		}
 		return toml;
-	}
-	/** 快捷键段：键是配置路径（含点号），必须按字面键写入，否则点号会被解析成层级。 */
-	private static void writeKeybinds(CommentedConfig toml, Map<String, String> keybinds) {
-		if (keybinds.isEmpty()) return;
-		var section = toml.createSubConfig();
-		keybinds.forEach((path, value) -> section.set(List.of(path), value));
-		toml.set(KEYBINDS_SECTION, section);
-	}
-	/** 读取快捷键段；兼容旧的、点号被解析成层级的写法。 */
-	public static Map<String, String> readKeybinds(@Nullable CommentedConfig toml) {
-		var result = new LinkedHashMap<String, String>();
-		Object raw = toml == null ? null : toml.get(KEYBINDS_SECTION);
-		if (raw instanceof UnmodifiableConfig section) flatten(section, "", result);
-		return result;
-	}
-	private static void flatten(UnmodifiableConfig config, String prefix, Map<String, String> out) {
-		for (var entry : config.entrySet()) {
-			var path = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
-			var value = entry.getValue();
-			if (value instanceof UnmodifiableConfig sub) flatten(sub, path, out);
-			else if (value instanceof String string) out.put(path, string);
-		}
 	}
 	/**
 	 * 从已解析的 {@link CommentedConfig} 反序列化配置实例，不从文件读取。

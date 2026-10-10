@@ -18,10 +18,6 @@ public final class ConfigNaming {
 		if (explicit != null && !explicit.isBlank()) return explicit.endsWith(".toml") ? explicit : explicit + ".toml";
 		return "%s-%s.toml".formatted(modId, type.extension());
 	}
-	/** 全局配置目录（{@code config/}）下的完整路径。 */
-	public static Path configDirPath(String fileName) {
-		return Platform.get().configDir().resolve(fileName);
-	}
 	/**
 	 * 解析该配置的读取路径。
 	 * <p>
@@ -36,6 +32,10 @@ public final class ConfigNaming {
 		var target = configDirPath(fileName);
 		migrateLegacy(modId, target);
 		return target;
+	}
+	/** 全局配置目录（{@code config/}）下的完整路径。 */
+	public static Path configDirPath(String fileName) {
+		return Platform.get().configDir().resolve(fileName);
 	}
 	/** 旧命名 {@code <modId>.toml} 迁移到新命名（同目录移动，保留内容与快捷键段）；目标已存在则不动。 */
 	private static void migrateLegacy(String modId, Path target) {

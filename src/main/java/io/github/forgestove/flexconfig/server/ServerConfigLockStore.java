@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.server;
-import com.electronwill.nightconfig.core.CommentedConfig;
-import com.electronwill.nightconfig.core.UnmodifiableConfig;
+import com.electronwill.nightconfig.core.*;
 import com.electronwill.nightconfig.core.io.WritingMode;
 import com.electronwill.nightconfig.toml.TomlWriter;
 import com.mojang.logging.LogUtils;
@@ -26,12 +25,21 @@ public final class ServerConfigLockStore {
 	/** 锁定项，结构与配置文件一致；键由客户端传来的路径按点号分层。 */
 	private CommentedConfig locks = ConfigSerializer.inMemory();
 	public ServerConfigLockStore(MinecraftServer server, String modId, String fileName) {
-		lockFilePath = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/flexconfig/" + lockBaseName(fileName) + "_locks.toml");
+		lockFilePath = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/flexconfig/" + lockBaseName(fileName) + "_locks"
+			+ ".toml");
 		legacyLockFilePath = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/" + modId + "_locks.toml");
 	}
 	/** 锁文件名去掉 .toml 后缀，例如 {@code flexconfig-client.toml} → {@code flexconfig-client}。 */
 	private static String lockBaseName(String fileName) {
 		return fileName.endsWith(".toml") ? fileName.substring(0, fileName.length() - ".toml".length()) : fileName;
+	}
+	private static void collectPaths(UnmodifiableConfig config, String prefix, Set<String> out) {
+		for (var entry : config.entrySet()) {
+			var path = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
+			var value = entry.getValue();
+			if (value instanceof UnmodifiableConfig sub) collectPaths(sub, path, out);
+			else out.add(path);
+		}
 	}
 	/** 从磁盘加载锁定。在服务器启动时调用。 */
 	public void load() {
@@ -58,42 +66,6 @@ public final class ServerConfigLockStore {
 		locks.set(splitPath(configId), toTypedValue(value));
 		save();
 	}
-	/** 解锁配置条目。将其从锁定存储中移除。 */
-	public void unlockEntry(String configId) {
-		locks.remove(splitPath(configId));
-		save();
-	}
-	/** 将锁定保存到磁盘。在服务器停止和每次更改后调用。 */
-	public void save() {
-		try {
-			Files.createDirectories(lockFilePath.getParent());
-			new TomlWriter().write(locks, lockFilePath, WritingMode.REPLACE_ATOMIC);
-		} catch (Exception e) {
-			LOGGER.error("Failed to save config locks to {}", lockFilePath, e);
-		}
-	}
-	/** 当前锁定的配置项路径（点分形式）的只读视图。 */
-	public Set<String> lockedPaths() {
-		var result = new LinkedHashSet<String>();
-		collectPaths(locks, "", result);
-		return Collections.unmodifiableSet(result);
-	}
-	/** 锁定项的结构化表示，供服务端直接应用（无需再走文本往返）。 */
-	public CommentedConfig toConfig() {
-		return locks;
-	}
-	/** 锁定项的 TOML 文本，供下发给客户端。 */
-	public String toTomlString() {
-		return new TomlWriter().writeToString(locks);
-	}
-	private static void collectPaths(UnmodifiableConfig config, String prefix, Set<String> out) {
-		for (var entry : config.entrySet()) {
-			var path = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
-			var value = entry.getValue();
-			if (value instanceof UnmodifiableConfig sub) collectPaths(sub, path, out);
-			else out.add(path);
-		}
-	}
 	private static List<String> splitPath(String configId) {
 		return List.of(configId.split("\\."));
 	}
@@ -117,5 +89,33 @@ public final class ServerConfigLockStore {
 			return Double.parseDouble(raw);
 		} catch (NumberFormatException ignored) {}
 		return raw;
+	}
+	/** 将锁定保存到磁盘。在服务器停止和每次更改后调用。 */
+	public void save() {
+		try {
+			Files.createDirectories(lockFilePath.getParent());
+			new TomlWriter().write(locks, lockFilePath, WritingMode.REPLACE_ATOMIC);
+		} catch (Exception e) {
+			LOGGER.error("Failed to save config locks to {}", lockFilePath, e);
+		}
+	}
+	/** 解锁配置条目。将其从锁定存储中移除。 */
+	public void unlockEntry(String configId) {
+		locks.remove(splitPath(configId));
+		save();
+	}
+	/** 当前锁定的配置项路径（点分形式）的只读视图。 */
+	public Set<String> lockedPaths() {
+		var result = new LinkedHashSet<String>();
+		collectPaths(locks, "", result);
+		return Collections.unmodifiableSet(result);
+	}
+	/** 锁定项的结构化表示，供服务端直接应用（无需再走文本往返）。 */
+	public CommentedConfig toConfig() {
+		return locks;
+	}
+	/** 锁定项的 TOML 文本，供下发给客户端。 */
+	public String toTomlString() {
+		return new TomlWriter().writeToString(locks);
 	}
 }

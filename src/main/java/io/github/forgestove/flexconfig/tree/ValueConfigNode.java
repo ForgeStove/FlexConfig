@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.tree;
-import io.github.forgestove.flexconfig.api.ColorValue;
-import io.github.forgestove.flexconfig.api.RestartType;
+import io.github.forgestove.flexconfig.api.*;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 
@@ -60,9 +59,6 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public void resetToActive(C config) {
 		setEditingValue(currentBase(config));
 	}
-	public V getActiveValue(C config) {
-		return valueReader.read(config);
-	}
 	/**
 	 * 编辑基线：有未生效的改动时取那份新值（已在文件里），否则取运行时值。
 	 * <p>
@@ -70,6 +66,9 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	 */
 	private V currentBase(C config) {
 		return pendingValue != null ? pendingValue : getActiveValue(config);
+	}
+	public V getActiveValue(C config) {
+		return valueReader.read(config);
 	}
 	@Override
 	public @Nullable RestartType restartType(C config) {
@@ -95,6 +94,9 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public void copy(C from, C to) {
 		setActiveValue(to, getActiveValue(from));
 	}
+	public void setActiveValue(C config, V value) {
+		valueWriter.write(config, value);
+	}
 	@Override
 	public void copyForRuntime(C from, C to) {
 		if (pendingValue != null) return;   // 待生效：运行时先保持旧值
@@ -115,9 +117,6 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 		setActiveValue(active, newValue);
 		if (changeCallback != null) changeCallback.onChange(oldValue, newValue);
 	}
-	public void setActiveValue(C config, V value) {
-		valueWriter.write(config, value);
-	}
 	@Override
 	public void writeEditingToConfig(C config) {
 		var oldValue = getActiveValue(config);
@@ -131,6 +130,7 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 		// 延迟生效：新值只落盘，运行时保持旧值，等重启后由 applyRestart 切过去（改回原值则取消待生效）
 		pendingValue = Objects.equals(oldValue, newValue) ? null : newValue;
 	}
+	@Override
 	public String getPath() {
 		return path;
 	}

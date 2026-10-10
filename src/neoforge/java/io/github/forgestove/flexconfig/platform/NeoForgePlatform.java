@@ -7,10 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.FMLLoader;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.fml.loading.FMLPaths;
-import net.neoforged.fml.loading.LoadingModList;
+import net.neoforged.fml.loading.*;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -19,10 +16,13 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.*;
 /** {@link Platform} 的 NeoForge 实现。 */
 public final class NeoForgePlatform implements Platform {
+	/** 由 {@link RegisterPayloadHandlersEvent} 的订阅者调用，把加载器的注册器交给核心。 */
+	public static void registerPayloads(RegisterPayloadHandlersEvent event, Consumer<Payloads> consumer) {
+		consumer.accept(new NeoForgePayloads(event.registrar(FlexConfig.ID).optional()));
+	}
 	@Override
 	public Path configDir() {
 		return FMLPaths.CONFIGDIR.get();
@@ -65,10 +65,6 @@ public final class NeoForgePlatform implements Platform {
 	@Override
 	public boolean canSendToPlayer(ServerPlayer player, Type<?> type) {
 		return player.connection.hasChannel(type);
-	}
-	/** 由 {@link RegisterPayloadHandlersEvent} 的订阅者调用，把加载器的注册器交给核心。 */
-	public static void registerPayloads(RegisterPayloadHandlersEvent event, Consumer<Payloads> consumer) {
-		consumer.accept(new NeoForgePayloads(event.registrar(FlexConfig.ID).optional()));
 	}
 	private record NeoForgePayloads(PayloadRegistrar registrar) implements Payloads {
 		@Override

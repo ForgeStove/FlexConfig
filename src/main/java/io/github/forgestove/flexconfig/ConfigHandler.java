@@ -4,8 +4,8 @@ import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.client.ConfigScreenFactory;
 import io.github.forgestove.flexconfig.client.gui.factory.EntryKeybind;
-import io.github.forgestove.flexconfig.tree.RootConfigNode;
 import io.github.forgestove.flexconfig.platform.Platform;
+import io.github.forgestove.flexconfig.tree.RootConfigNode;
 import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
@@ -31,10 +31,10 @@ public final class ConfigHandler<C, V> {
 	private final String modId;
 	private final ConfigType type;
 	private final String fileName;
-	/** 已解析的磁盘路径；SERVER 型在进世界前为 {@code null}。 */
-	@Nullable private Path resolvedPath;
 	// ---- 全局快捷键系统 ----
 	private final Map<String, String> triggerKeybinds = new LinkedHashMap<>();
+	/** 已解析的磁盘路径；SERVER 型在进世界前为 {@code null}。 */
+	@Nullable private Path resolvedPath;
 	private ConfigHandler(Builder<C, V> builder) {
 		configClass = builder.configClass;
 		modId = ConfigRegistry.getModId(configClass);
@@ -45,6 +45,13 @@ public final class ConfigHandler<C, V> {
 		savedConfig = newInstance();
 		activeConfig = newInstance();
 		if (loadsAtRegistration()) loadFromDisk(null);
+	}
+	private @NotNull C newInstance() {
+		try {
+			return configClass.getDeclaredConstructor().newInstance();
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create config instance", e);
+		}
 	}
 	/**
 	 * 注册期是否立即读盘。
@@ -59,13 +66,6 @@ public final class ConfigHandler<C, V> {
 			case CLIENT -> Platform.get().isClient();
 			case COMMON -> true;
 		};
-	}
-	private @NotNull C newInstance() {
-		try {
-			return configClass.getDeclaredConstructor().newInstance();
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to create config instance", e);
-		}
 	}
 	/** 解析路径并读盘；SERVER 型需传入服务器以定位存档目录，其余类型忽略该参数。 */
 	public void loadFromDisk(@Nullable MinecraftServer server) {
@@ -92,6 +92,18 @@ public final class ConfigHandler<C, V> {
 		// 刚读过盘，把修改时间记为基线，免得热重载把自己的这次读取当成外部改动
 		ConfigWatchService.markCurrent(new FileKey(modId, fileName));
 	}
+	private C deserialize(CommentedConfig toml) {
+		try {
+			return serializer.deserializeFrom(toml);
+		} catch (SerializationException e) {
+			LOGGER.error("Failed to load configuration, using defaults", e);
+			return newInstance();
+		}
+	}
+	@Contract(value = "_ -> new", pure = true)
+	public static <C, V> @NotNull Builder<C, V> builder(Class<C> configClass) {
+		return new Builder<>(configClass);
+	}
 	/** 用服务端下发的整份内容覆盖 saved 与 active（只改内存，不落盘、不读本地文件）。 */
 	public void applySynced(CommentedConfig toml) {
 		var fresh = deserialize(toml);
@@ -105,18 +117,6 @@ public final class ConfigHandler<C, V> {
 		configTree.copy(defaults, savedConfig);
 		configTree.copy(defaults, activeConfig);
 		triggerKeybinds.clear();
-	}
-	private C deserialize(CommentedConfig toml) {
-		try {
-			return serializer.deserializeFrom(toml);
-		} catch (SerializationException e) {
-			LOGGER.error("Failed to load configuration, using defaults", e);
-			return newInstance();
-		}
-	}
-	@Contract(value = "_ -> new", pure = true)
-	public static <C, V> @NotNull Builder<C, V> builder(Class<C> configClass) {
-		return new Builder<>(configClass);
 	}
 	@Contract(pure = true)
 	public RootConfigNode<C, V> getConfigTree() {

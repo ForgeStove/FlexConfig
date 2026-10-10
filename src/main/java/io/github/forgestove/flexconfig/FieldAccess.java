@@ -23,6 +23,12 @@ public final class FieldAccess {
 		);
 		return fields;
 	}
+	/** 取 {@code List<T>} 声明的元素类型；裸 {@code List} 或非 Class 实参时返回 {@code null}。 */
+	public static Class<?> elementType(Field field) {
+		if (field.getGenericType() instanceof ParameterizedType parameterized
+			&& parameterized.getActualTypeArguments()[0] instanceof Class<?> element) return boxed(element);
+		return null;
+	}
 	/** 原始类型映射到包装类型（值类型注册表按包装类型索引），其余原样返回。 */
 	public static Class<?> boxed(Class<?> type) {
 		if (type == int.class) return Integer.class;
@@ -34,12 +40,6 @@ public final class FieldAccess {
 		if (type == short.class) return Short.class;
 		if (type == char.class) return Character.class;
 		return type;
-	}
-	/** 取 {@code List<T>} 声明的元素类型；裸 {@code List} 或非 Class 实参时返回 {@code null}。 */
-	public static Class<?> elementType(Field field) {
-		if (field.getGenericType() instanceof ParameterizedType parameterized
-			&& parameterized.getActualTypeArguments()[0] instanceof Class<?> element) return boxed(element);
-		return null;
 	}
 	public static VarHandle varHandle(Field field) {
 		try {

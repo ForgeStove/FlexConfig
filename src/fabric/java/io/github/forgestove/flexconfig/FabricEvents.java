@@ -1,11 +1,9 @@
 package io.github.forgestove.flexconfig;
 import io.github.forgestove.flexconfig.network.ConfigNetwork;
-import io.github.forgestove.flexconfig.platform.FabricPayloads;
-import io.github.forgestove.flexconfig.platform.FabricPlatform;
+import io.github.forgestove.flexconfig.platform.*;
 import io.github.forgestove.flexconfig.server.ServerLifecycleHandler;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 /**
  * Fabric 的事件订阅适配层：本类只做「解包事件数据 → 转交核心」，不含任何业务逻辑。

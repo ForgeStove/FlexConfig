@@ -5,7 +5,6 @@ import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.network.*;
 import io.github.forgestove.flexconfig.platform.Platform;
-import io.github.forgestove.flexconfig.tree.*;
 import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
 
@@ -31,8 +30,6 @@ public final class ClientLockManager {
 	/** 服务端下发的原始 TOML，供外部重载后重新叠加锁定时复用。 */
 	private static final Map<FileKey, CommentedConfig> syncedConfigs = new HashMap<>();
 	private static boolean receivedSync = false;
-	/** 定位一条配置项的键：哪份文件的哪个路径。 */
-	private record LockKey(FileKey file, String path) {}
 	/** 更新服务端锁定的配置：解析 TOML → 用 ConfigSerializer 获取类型化值 → 应用锁定。 */
 	public static void setLocks(String modId, String fileName, String tomlContent) {
 		// 忽略玩家已断开连接后的延迟包
@@ -183,4 +180,6 @@ public final class ClientLockManager {
 		var fileLocks = lockedConfigs.get(file);
 		return fileLocks != null && fileLocks.containsKey(configId);
 	}
+	/** 定位一条配置项的键：哪份文件的哪个路径。 */
+	private record LockKey(FileKey file, String path) {}
 }

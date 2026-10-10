@@ -3,8 +3,7 @@ import io.github.forgestove.flexconfig.api.ConfigType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 /**
  * 配置文件的外部改动探测（修改时间轮询）。
@@ -32,6 +31,10 @@ public final class ConfigWatchService {
 			STAMPS.remove(key);
 		}
 	}
+	@Nullable
+	private static Path handlerPath(FileKey key) {
+		return ConfigRegistry.getRegisteredFileKeys().contains(key) ? ConfigRegistry.getHandler(key).getPath() : null;
+	}
 	/**
 	 * 返回自上次轮询以来被外部改动过的文件，并更新基线。
 	 * 首次见到某个文件时只建立基线、不报告（否则启动即触发一次无意义的重载）。
@@ -57,9 +60,5 @@ public final class ConfigWatchService {
 			if (previous != null && previous != stamp) changed.add(key);
 		}
 		return changed;
-	}
-	@Nullable
-	private static Path handlerPath(FileKey key) {
-		return ConfigRegistry.getRegisteredFileKeys().contains(key) ? ConfigRegistry.getHandler(key).getPath() : null;
 	}
 }

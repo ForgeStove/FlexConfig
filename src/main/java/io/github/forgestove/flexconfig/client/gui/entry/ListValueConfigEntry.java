@@ -38,6 +38,12 @@ public final class ListValueConfigEntry<C> extends GenericValueConfigEntry<C, Li
 			return false;
 		}
 	}
+	private static String format(@Nullable List list) {
+		if (list == null) return "";
+		var parts = new ArrayList<String>(list.size());
+		for (var element : list) if (element != null) parts.add(String.valueOf(element));
+		return String.join(", ", parts);
+	}
 	private static Object parseElement(@Nullable Class<?> elementType, String token) {
 		if (elementType == null || elementType == String.class) return token;
 		if (elementType == Integer.class) return Integer.parseInt(token);
@@ -49,11 +55,5 @@ public final class ListValueConfigEntry<C> extends GenericValueConfigEntry<C, Li
 		if (elementType == Boolean.class) return Boolean.parseBoolean(token);
 		if (elementType.isEnum()) return Enum.valueOf((Class<? extends Enum>) elementType, token);
 		throw new IllegalArgumentException("Unsupported list element type: " + elementType.getName());
-	}
-	private static String format(@Nullable List list) {
-		if (list == null) return "";
-		var parts = new ArrayList<String>(list.size());
-		for (var element : list) if (element != null) parts.add(String.valueOf(element));
-		return String.join(", ", parts);
 	}
 }

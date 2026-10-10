@@ -1,9 +1,7 @@
 package io.github.forgestove.flexconfig.client.gui;
 import com.mojang.blaze3d.platform.InputConstants.Key;
-import io.github.forgestove.flexconfig.ConfigHandler;
-import io.github.forgestove.flexconfig.FileKey;
-import io.github.forgestove.flexconfig.api.ConfigType;
-import io.github.forgestove.flexconfig.api.RestartType;
+import io.github.forgestove.flexconfig.*;
+import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.api.CaptureHandler;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
@@ -14,8 +12,7 @@ import net.minecraft.client.gui.components.tabs.*;
 import net.minecraft.client.gui.layouts.*;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.*;
-import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -145,6 +142,45 @@ public final class ConfigScreen<C, V> extends Screen {
 		savedTriggerKeybinds = new LinkedHashMap<>(handler.getAllTriggerKeybinds());
 		mc.setScreen(restartScreen(restartType));
 	}
+	@Override
+	protected void repositionElements() {
+		refresh();
+		repositionTabLayout();
+	}
+	private void initTabs(@NotNull TabNavigationBar bar) {
+		var i = 0;
+		for (var child : bar.children()) if (child instanceof TabButton tabButton) tabs.get(i++).setTabButton(tabButton);
+	}
+	private int lastTabIndex() {
+		if (lastSelectedCategory == null) return 0;
+		for (var i = 0; i < tabs.size(); i++)
+			if (tabs.get(i).node == lastSelectedCategory) return i;
+		return 0;
+	}
+	private boolean isActiveValue() {
+		if (ClientLockManager.hasPendingLocks()) return false;
+		if (!root.isActiveValue(config) || keybindCategory != null && !keybindCategory.isActiveValue(config)) return false;
+		return savedTriggerKeybinds.equals(handler.getAllTriggerKeybinds());
+	}
+	/**
+	 * 本界面所显示的配置是否可编辑。
+	 * <p>
+	 * 远端连服、或单人存档已对局域网开放时，SERVER 型由服务端权威，客户端不可改（与官方一致）。
+	 * 单人未开放时客户端就是服务端，可编辑。
+	 */
+	public boolean isEditable() {
+		if (handler.getType() != ConfigType.SERVER) return true;
+		var mc = ClientUtil.mc;
+		if (!mc.isSingleplayer()) return false;
+		var server = mc.getSingleplayerServer();
+		return server == null || !server.isPublished();
+	}
+	private @Nullable Component validate() {
+		var rootError = root.validate(config);
+		if (rootError != null) return rootError;
+		if (keybindCategory != null) return keybindCategory.validate(config);
+		return null;
+	}
 	/**
 	 * 按所需的重启级别给出后续界面。
 	 * 只需重载世界时提供「返回标题界面」，需要重启游戏时才提供「退出游戏」。
@@ -175,32 +211,6 @@ public final class ConfigScreen<C, V> extends Screen {
 			Translation.QUIT_GAME,
 			Translation.IGNORE_RESTART_LABEL
 		);
-	}
-	@Override
-	protected void repositionElements() {
-		refresh();
-		repositionTabLayout();
-	}
-	private void initTabs(@NotNull TabNavigationBar bar) {
-		var i = 0;
-		for (var child : bar.children()) if (child instanceof TabButton tabButton) tabs.get(i++).setTabButton(tabButton);
-	}
-	private int lastTabIndex() {
-		if (lastSelectedCategory == null) return 0;
-		for (var i = 0; i < tabs.size(); i++)
-			if (tabs.get(i).node == lastSelectedCategory) return i;
-		return 0;
-	}
-	private boolean isActiveValue() {
-		if (ClientLockManager.hasPendingLocks()) return false;
-		if (!root.isActiveValue(config) || keybindCategory != null && !keybindCategory.isActiveValue(config)) return false;
-		return savedTriggerKeybinds.equals(handler.getAllTriggerKeybinds());
-	}
-	private @Nullable Component validate() {
-		var rootError = root.validate(config);
-		if (rootError != null) return rootError;
-		if (keybindCategory != null) return keybindCategory.validate(config);
-		return null;
 	}
 	public void refresh() {
 		tabs.forEach(ConfigCategoryTab::refresh);
@@ -234,19 +244,6 @@ public final class ConfigScreen<C, V> extends Screen {
 	/** 本界面所显示的配置是否支持服务端锁定（SERVER 型由服务端权威下发，不需要锁定）。 */
 	public boolean isLockable() {
 		return handler.getType() != ConfigType.SERVER;
-	}
-	/**
-	 * 本界面所显示的配置是否可编辑。
-	 * <p>
-	 * 远端连服、或单人存档已对局域网开放时，SERVER 型由服务端权威，客户端不可改（与官方一致）。
-	 * 单人未开放时客户端就是服务端，可编辑。
-	 */
-	public boolean isEditable() {
-		if (handler.getType() != ConfigType.SERVER) return true;
-		var mc = ClientUtil.mc;
-		if (!mc.isSingleplayer()) return false;
-		var server = mc.getSingleplayerServer();
-		return server == null || !server.isPublished();
 	}
 	public void onEntryCaptureChanged(CaptureHandler entry, boolean capturing) {
 		capturingEntry = capturing ? entry : null;

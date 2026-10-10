@@ -1,7 +1,6 @@
 package io.github.forgestove.flexconfig.server;
 import com.mojang.logging.LogUtils;
-import io.github.forgestove.flexconfig.ConfigRegistry;
-import io.github.forgestove.flexconfig.FileKey;
+import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.network.ConfigNetwork;
 import org.slf4j.Logger;
 /**
@@ -16,12 +15,6 @@ public final class ServerLockApplier {
 	public static void applyAll(FileKey key, ServerConfigLockStore store) {
 		if (!ConfigRegistry.getRegisteredFileKeys().contains(key)) return;
 		ConfigRegistry.resetToSaved(key);
-		apply(key, store);
-	}
-	/** 配置文件被外部重载后，重新叠加锁定值（调用方已重读文件，这里不再读盘）。 */
-	public static void reapply(FileKey key) {
-		var store = ConfigNetwork.getLockStore(key);
-		if (store == null) return;
 		apply(key, store);
 	}
 	private static void apply(FileKey key, ServerConfigLockStore store) {
@@ -44,5 +37,11 @@ public final class ServerLockApplier {
 			if (value == null) continue;
 			ConfigRegistry.applyLockedValue(key, node, value);
 		}
+	}
+	/** 配置文件被外部重载后，重新叠加锁定值（调用方已重读文件，这里不再读盘）。 */
+	public static void reapply(FileKey key) {
+		var store = ConfigNetwork.getLockStore(key);
+		if (store == null) return;
+		apply(key, store);
 	}
 }

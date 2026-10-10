@@ -55,13 +55,13 @@ public final class ConfigRegistry {
 		if (annotation.value().isBlank()) throw new IllegalStateException("Mod id must be provided before building ConfigHandler");
 		return annotation;
 	}
-	public static String getModId(@NotNull Class<?> configClass) {
-		return requireAnnotation(configClass).value();
-	}
 	/** 客户端上把配置入口挂到模组列表：只有一份配置时直接打开，多份则先进入选择界面。 */
 	private static void initConfigScreenForClient(String modId) {
 		if (!Platform.get().isClient()) return;
 		Platform.get().registerConfigScreen(modId, () -> ConfigScreenFactory.createConfigScreen(modId));
+	}
+	public static String getModId(@NotNull Class<?> configClass) {
+		return requireAnnotation(configClass).value();
 	}
 	// ========== 按 modId（主配置）访问 ==========
 	/** 获取该模组的「主」配置处理器（CLIENT → COMMON → SERVER 优先）。 */
@@ -81,14 +81,14 @@ public final class ConfigRegistry {
 		}
 		return List.copyOf(handlers);
 	}
+	public static Object getActiveConfig(FileKey key) {
+		return BY_FILE.containsKey(key) ? getHandler(key).getConfig() : null;
+	}
 	// ========== 按文件精确定位 ==========
 	public static @NotNull ConfigHandler<?, ?> getHandler(FileKey key) {
 		var handler = BY_FILE.get(key);
 		if (handler == null) throw new IllegalStateException("Config handler for '%s' is not initialized.".formatted(key));
 		return handler;
-	}
-	public static Object getActiveConfig(FileKey key) {
-		return BY_FILE.containsKey(key) ? getHandler(key).getConfig() : null;
 	}
 	public static RootConfigNode<Object, Object> getRootConfigNode(FileKey key) {
 		return getHandler(key).cast().getConfigTree();

@@ -3,8 +3,7 @@ import io.github.forgestove.flexconfig.platform.FabricPayloads;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
+import net.fabricmc.fabric.api.client.screen.v1.*;
 /**
  * Fabric 的客户端事件订阅适配层，对应 NeoForge 的 {@code ConfigEvents.Client}。
  * <p>
