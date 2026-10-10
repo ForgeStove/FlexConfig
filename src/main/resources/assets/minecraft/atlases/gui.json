@@ -1,0 +1,20 @@
+{
+	"sources": [
+		{
+			"type": "unstitch",
+			"resource": "flexconfig:gui/toggle",
+			"divisor_x": 128,
+			"divisor_y": 64,
+			"regions": [
+				{"sprite": "flexconfig:toggle/track_off", "x": 0, "y": 0, "width": 38, "height": 18},
+				{"sprite": "flexconfig:toggle/track_on", "x": 42, "y": 0, "width": 38, "height": 18},
+				{"sprite": "flexconfig:toggle/track_disabled", "x": 84, "y": 0, "width": 38, "height": 18},
+				{"sprite": "flexconfig:toggle/thumb", "x": 0, "y": 22, "width": 20, "height": 20},
+				{"sprite": "flexconfig:toggle/thumb_hover", "x": 24, "y": 22, "width": 20, "height": 20},
+				{"sprite": "flexconfig:toggle/thumb_pressed", "x": 48, "y": 22, "width": 20, "height": 20},
+				{"sprite": "flexconfig:toggle/thumb_disabled", "x": 72, "y": 22, "width": 20, "height": 20},
+				{"sprite": "flexconfig:toggle/focus_ring", "x": 96, "y": 22, "width": 22, "height": 22}
+			]
+		}
+	]
+}
