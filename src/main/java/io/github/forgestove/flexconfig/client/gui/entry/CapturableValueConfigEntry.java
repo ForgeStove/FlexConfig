@@ -3,6 +3,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.*;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
+import io.github.forgestove.flexconfig.client.gui.components.OreButton;
 import io.github.forgestove.flexconfig.client.gui.api.*;
 import io.github.forgestove.flexconfig.client.gui.factory.*;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
@@ -18,7 +19,7 @@ import java.util.*;
  */
 public abstract class CapturableValueConfigEntry<C, V> extends ValueConfigEntry<C, V>
 	implements CaptureHandler, TabLifecycle, CrossRefreshable {
-	protected final Button keybindButton;
+	protected final OreButton keybindButton;
 	/** 进入屏幕时的 keybind 快照（用于 undo）。 */
 	@Nullable private final String initialKeybindSerialized;
 	protected boolean capturing;
@@ -29,13 +30,13 @@ public abstract class CapturableValueConfigEntry<C, V> extends ValueConfigEntry<
 		super(tab, node);
 		initialKeybindSerialized = tab.screen.getHandler().getTriggerKeybind(node.getPath());
 		var keybind = initialKeybindSerialized != null ? EntryKeybind.deserialize(initialKeybindSerialized) : EntryKeybind.UNBOUND;
-		keybindButton = Button.builder(
+		keybindButton = OreButton.of(
 			keybind.getDisplayName(), b -> {
 				capturing = true;
 				captureCallback.onCaptureStateChanged(this, true);
 				tab.screen.refresh();
 			}
-		).size(WIDTH / 2, HEIGHT).build();
+		).size(HALF_VALUE_WIDTH, HEIGHT).build();
 		children.add(keybindButton);
 	}
 	/** 子类实现：注册全局快捷键触发动作（值变更逻辑 + 提示消息）。 */

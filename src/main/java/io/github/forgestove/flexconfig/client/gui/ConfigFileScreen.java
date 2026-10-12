@@ -1,6 +1,7 @@
 package io.github.forgestove.flexconfig.client.gui;
 import io.github.forgestove.flexconfig.ConfigHandler;
 import io.github.forgestove.flexconfig.client.ClientUtil;
+import io.github.forgestove.flexconfig.client.gui.components.OreButton;
 import io.github.forgestove.flexconfig.platform.Platform;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
@@ -37,7 +38,7 @@ public final class ConfigFileScreen extends Screen {
 		var totalHeight = handlers.size() * BUTTON_HEIGHT + (handlers.size() - 1) * SPACING;
 		var y = (height - totalHeight) / 2;
 		for (var handler : handlers) {
-			addRenderableWidget(Button.builder(label(handler), button -> open(handler))
+			addRenderableWidget(OreButton.of(label(handler), button -> open(handler))
 				.bounds(x, y, BUTTON_WIDTH, BUTTON_HEIGHT)
 				.tooltip(Tooltip.create(Component.literal(handler.getFileName())))
 				.build());

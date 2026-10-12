@@ -13,16 +13,8 @@ import java.awt.Point;
 import java.lang.reflect.Field;
 import java.nio.file.*;
 import java.util.*;
-/**
- * 通用的TOML配置序列化工具，支持本地化注释。
- * <p>
- * 写入交给 NightConfig 的 {@link TomlWriter}（{@link WritingMode#REPLACE_ATOMIC} 先写临时文件再原子替换），
- * 因此键名/字符串转义、数值格式都不需要自己维护。
- *
- * @param <C> 配置类类型
- */
+/** 通用的 TOML 配置序列化工具，支持本地化注释。写入交给 NightConfig 的 {@link TomlWriter}（原子替换）。 */
 public final class ConfigSerializer<C> {
-	/** 快捷键段名（合法 bare key）。 */
 	private static final String KEYBINDS_SECTION = "-keybinds-";
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Class<C> configClass;
@@ -181,7 +173,7 @@ public final class ConfigSerializer<C> {
 			else if (value instanceof String string) out.put(path, string);
 		}
 	}
-	/** 设置读写目标文件；由 {@link ConfigHandler#loadFromDisk} 在路径解析后调用。 */
+	/** 由 {@link ConfigHandler#loadFromDisk} 在路径解析后调用。 */
 	public void setTargetPath(Path targetPath) {
 		this.targetPath = targetPath;
 	}
@@ -222,7 +214,6 @@ public final class ConfigSerializer<C> {
 		if (targetPath == null) throw new IllegalStateException("Config target path has not been resolved yet");
 		return targetPath;
 	}
-	/** 新建一个保持插入顺序的内存配置。 */
 	public static CommentedConfig inMemory() {
 		return CommentedConfig.of(LinkedHashMap::new, InMemoryCommentedFormat.defaultInstance());
 	}

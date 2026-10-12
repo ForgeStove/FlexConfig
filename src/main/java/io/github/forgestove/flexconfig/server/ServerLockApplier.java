@@ -3,12 +3,7 @@ import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.network.ConfigNetwork;
 import org.slf4j.Logger;
-/**
- * 把服务端锁定的配置项应用到服务端自身的活动配置。
- * <p>
- * 与客户端的 {@code ClientLockManager} 对等：锁不只是客户端补丁，服务端进程读到的也是锁定值。
- * 每次都先从 TOML 重载以撤销旧锁值，再逐条应用当前锁，因此解锁后能恢复原值。
- */
+/** 把锁定的配置项也应用到服务端自身的活动配置（与客户端那个对等）；先重载撤销旧锁值再逐条应用，解锁后能恢复原值。 */
 public final class ServerLockApplier {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/** 从 TOML 重载该配置后应用全部锁定；解锁能因此恢复原值。 */

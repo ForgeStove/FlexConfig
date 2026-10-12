@@ -1,10 +1,12 @@
 package io.github.forgestove.flexconfig;
+import io.github.forgestove.flexconfig.demo.FabricDemoEntry;
 import io.github.forgestove.flexconfig.network.ConfigNetwork;
 import io.github.forgestove.flexconfig.platform.*;
 import io.github.forgestove.flexconfig.server.ServerLifecycleHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.loader.api.FabricLoader;
 /**
  * Fabric 的事件订阅适配层：本类只做「解包事件数据 → 转交核心」，不含任何业务逻辑。
  * <p>
@@ -15,6 +17,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 public final class FabricEvents implements ModInitializer {
 	@Override
 	public void onInitialize() {
+		if (FabricLoader.getInstance().isDevelopmentEnvironment() && Platform.get().isClient()) FabricDemoEntry.register();
 		ConfigNetwork.register(new FabricPayloads());
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			FabricPlatform.server = server;

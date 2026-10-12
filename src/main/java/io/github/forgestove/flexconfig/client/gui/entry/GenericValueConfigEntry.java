@@ -1,6 +1,7 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.*;
+import io.github.forgestove.flexconfig.client.gui.components.OreEditBox;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.function.*;
 public abstract class GenericValueConfigEntry<C, V> extends ValueConfigEntry<C, V> {
-	private final ConfigEditBox inputField;
+	private final OreEditBox inputField;
 	private final Function<String, V> parser;
 	private final Predicate<String> validator;
 	private final Function<V, String> formatter;
@@ -35,7 +36,7 @@ public abstract class GenericValueConfigEntry<C, V> extends ValueConfigEntry<C, 
 		this.parser = parser;
 		this.validator = validator;
 		this.formatter = formatter;
-		inputField = new ConfigEditBox(ClientUtil.mc.font, 0, 0, WIDTH, HEIGHT, node.getTitle());
+		inputField = new OreEditBox(ClientUtil.mc.font, 0, 0, WIDTH, HEIGHT, node.getTitle());
 		inputField.setValue(text(getValue()));
 		inputField.setFilter(validator);
 		inputField.setResponder(this::onInputChange);

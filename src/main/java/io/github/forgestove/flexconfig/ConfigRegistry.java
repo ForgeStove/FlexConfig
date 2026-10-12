@@ -1,6 +1,6 @@
 package io.github.forgestove.flexconfig;
 import io.github.forgestove.flexconfig.api.*;
-import io.github.forgestove.flexconfig.client.ConfigScreenFactory;
+import io.github.forgestove.flexconfig.client.FlexConfigScreenFactory;
 import io.github.forgestove.flexconfig.platform.Platform;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.server.MinecraftServer;
@@ -20,7 +20,7 @@ public final class ConfigRegistry {
 	 * 注册并返回配置 POJO。同一 (模组 ID, 类型) 只会构建一次；
 	 * 同类型重复注册不同配置类会抛异常。
 	 */
-	@SuppressWarnings("unused")
+	@SuppressWarnings({"unused", "UnusedReturnValue"})
 	public static <C> C init(Class<C> clazz) {
 		var annotation = requireAnnotation(clazz);
 		var modId = annotation.value();
@@ -58,7 +58,7 @@ public final class ConfigRegistry {
 	/** 客户端上把配置入口挂到模组列表：只有一份配置时直接打开，多份则先进入选择界面。 */
 	private static void initConfigScreenForClient(String modId) {
 		if (!Platform.get().isClient()) return;
-		Platform.get().registerConfigScreen(modId, () -> ConfigScreenFactory.createConfigScreen(modId));
+		Platform.get().registerConfigScreen(modId, () -> FlexConfigScreenFactory.createConfigScreen(modId));
 	}
 	public static String getModId(@NotNull Class<?> configClass) {
 		return requireAnnotation(configClass).value();
@@ -128,7 +128,6 @@ public final class ConfigRegistry {
 		var handler = BY_FILE.get(key);
 		return handler != null && handler.getType() != ConfigType.SERVER;
 	}
-	/** 获取所有已注册的 (模组 ID, 文件名)。 */
 	public static Set<FileKey> getRegisteredFileKeys() {
 		return Set.copyOf(BY_FILE.keySet());
 	}

@@ -4,10 +4,11 @@ import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.api.CaptureHandler;
+import io.github.forgestove.flexconfig.client.gui.components.*;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.tabs.*;
 import net.minecraft.client.gui.layouts.*;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 public final class ConfigScreen<C, V> extends Screen {
+	/** Ore UI 页面底色（官方设计表 {@code #313233}），与生成器 {@code TAB_SURFACE} 同值。 */
+	private static final int SURFACE_COLOR = 0xFF313233;
 	public static CategoryConfigNode<?> lastSelectedCategory;
 	public final RootConfigNode<C, V> root;
 	private final C config;
@@ -26,8 +29,8 @@ public final class ConfigScreen<C, V> extends Screen {
 	private final List<ConfigCategoryTab<C, V>> tabs;
 	private final HeaderAndFooterLayout layout;
 	private CategoryConfigNode<C> keybindCategory;
-	private TabNavigationBar tabNavigationBar;
-	private Button cancelButton, saveButton;
+	private OreTabNavigationBar tabNavigationBar;
+	private OreButton cancelButton, saveButton;
 	private CaptureHandler capturingEntry;
 	private Map<String, String> savedTriggerKeybinds = Map.of();
 	public ConfigScreen(ConfigHandler<C, V> handler) {
@@ -72,8 +75,8 @@ public final class ConfigScreen<C, V> extends Screen {
 		} else keybindCategory = null;
 		initTabLayout();
 		var buttonWidth = ConfigEntry.SIZE * 8;
-		cancelButton = Button.builder(getCancelLabel(), b -> onClose()).width(buttonWidth).build();
-		saveButton = Button.builder(getSaveLabel(false), b -> saveAndQuit()).width(buttonWidth).build();
+		cancelButton = new OreButton(buttonWidth, getCancelLabel(), getCancelStyle(), b -> onClose());
+		saveButton = new OreButton(buttonWidth, getSaveLabel(false), OreButton.Style.PRIMARY, b -> saveAndQuit());
 		var footerLyt = layout.addToFooter(LinearLayout.horizontal().spacing(8));
 		footerLyt.addChild(cancelButton);
 		footerLyt.addChild(saveButton);
@@ -103,15 +106,17 @@ public final class ConfigScreen<C, V> extends Screen {
 		return builder.build();
 	}
 	private void initTabLayout() {
-		var builder = TabNavigationBar.builder(tabManager, width);
-		tabs.forEach(builder::addTabs);
-		tabNavigationBar = builder.build();
+		tabNavigationBar = new OreTabNavigationBar(tabManager, tabs, width);
 		initTabs(tabNavigationBar);
 		addRenderableWidget(tabNavigationBar);
 		tabNavigationBar.selectTab(lastTabIndex(), false);
 	}
 	private Component getCancelLabel() {
-		return isActiveValue() ? Translation.CANCEL_LABEL : Translation.QUIT_UNSAVED_LABEL;
+		return isActiveValue() ? Translation.BACK_LABEL : Translation.QUIT_UNSAVED_LABEL;
+	}
+	/** 与 {@link #getCancelLabel()} 同步：「取消」无损失用 Secondary，「放弃更改」会丢弃未保存的修改、用 Destructive。 */
+	private OreButton.Style getCancelStyle() {
+		return isActiveValue() ? OreButton.Style.SECONDARY : OreButton.Style.DESTRUCTIVE;
 	}
 	@Override
 	public void onClose() {
@@ -120,11 +125,16 @@ public final class ConfigScreen<C, V> extends Screen {
 			mc.setScreen(parent);
 			return;
 		}
-		mc.setScreen(new ConfirmScreen(
+		mc.setScreen(new OreConfirmScreen(
 			confirmed -> {
 				if (confirmed) handler.restoreTriggerKeybinds(savedTriggerKeybinds);
 				mc.setScreen(confirmed ? parent : this);
-			}, Translation.QUIT_CONFIRM_TITLE, Translation.QUIT_CONFIRM_WARNING, Translation.QUIT_CONFIRM_LABEL, Translation.CANCEL_LABEL
+			},
+			Translation.QUIT_CONFIRM_TITLE,
+			Translation.QUIT_CONFIRM_WARNING,
+			Translation.QUIT_CONFIRM_LABEL,
+			OreButton.Style.DESTRUCTIVE,
+			Translation.CANCEL_LABEL
 		));
 	}
 	private Component getSaveLabel(boolean hasEntryError) {
@@ -143,13 +153,17 @@ public final class ConfigScreen<C, V> extends Screen {
 		mc.setScreen(restartScreen(restartType));
 	}
 	@Override
+	public void renderBackground(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+		gui.fill(0, 0, width, height, SURFACE_COLOR);
+	}
+	@Override
 	protected void repositionElements() {
 		refresh();
 		repositionTabLayout();
 	}
-	private void initTabs(@NotNull TabNavigationBar bar) {
+	private void initTabs(@NotNull OreTabNavigationBar bar) {
 		var i = 0;
-		for (var child : bar.children()) if (child instanceof TabButton tabButton) tabs.get(i++).setTabButton(tabButton);
+		for (var button : bar.children()) tabs.get(i++).setTabButton(button);
 	}
 	private int lastTabIndex() {
 		if (lastSelectedCategory == null) return 0;
@@ -162,12 +176,7 @@ public final class ConfigScreen<C, V> extends Screen {
 		if (!root.isActiveValue(config) || keybindCategory != null && !keybindCategory.isActiveValue(config)) return false;
 		return savedTriggerKeybinds.equals(handler.getAllTriggerKeybinds());
 	}
-	/**
-	 * 本界面所显示的配置是否可编辑。
-	 * <p>
-	 * 远端连服、或单人存档已对局域网开放时，SERVER 型由服务端权威，客户端不可改（与官方一致）。
-	 * 单人未开放时客户端就是服务端，可编辑。
-	 */
+	/** 远端连服、或单人存档已对局域网开放时，SERVER 型由服务端权威，客户端不可改。 */
 	public boolean isEditable() {
 		if (handler.getType() != ConfigType.SERVER) return true;
 		var mc = ClientUtil.mc;
@@ -181,16 +190,13 @@ public final class ConfigScreen<C, V> extends Screen {
 		if (keybindCategory != null) return keybindCategory.validate(config);
 		return null;
 	}
-	/**
-	 * 按所需的重启级别给出后续界面。
-	 * 只需重载世界时提供「返回标题界面」，需要重启游戏时才提供「退出游戏」。
-	 */
+	/** 按重启级别给出后续界面：重载世界给「返回标题界面」，重启游戏给「退出游戏」。 */
 	private Screen restartScreen(@Nullable RestartType restartType) {
 		if (restartType == null) return parent;
 		var mc = ClientUtil.mc;
 		if (restartType == RestartType.WORLD) {
 			if (mc.level == null) return parent;   // 不在世界里，没有可重载的世界
-			return new ConfirmScreen(
+			return new OreConfirmScreen(
 				confirmed -> {
 					if (confirmed) mc.disconnect();
 					else mc.setScreen(parent);
@@ -198,10 +204,11 @@ public final class ConfigScreen<C, V> extends Screen {
 				Translation.RESTART_REQUIRED_TITLE,
 				Translation.RESTART_REQUIRED_WORLD,
 				mc.isLocalServer() ? Translation.RETURN_TO_MENU : CommonComponents.GUI_DISCONNECT,
+				OreButton.Style.PRIMARY,
 				Translation.IGNORE_RESTART_LABEL
 			);
 		}
-		return new ConfirmScreen(
+		return new OreConfirmScreen(
 			confirmed -> {
 				if (confirmed) mc.stop();
 				else mc.setScreen(parent);
@@ -209,6 +216,7 @@ public final class ConfigScreen<C, V> extends Screen {
 			Translation.RESTART_REQUIRED_TITLE,
 			Translation.RESTART_REQUIRED_LABEL,
 			Translation.QUIT_GAME,
+			OreButton.Style.DESTRUCTIVE,
 			Translation.IGNORE_RESTART_LABEL
 		);
 	}
@@ -217,6 +225,7 @@ public final class ConfigScreen<C, V> extends Screen {
 		var hasEntryError = tabs.stream().anyMatch(ConfigCategoryTab::hasEntryError);
 		saveButton.active = isEditable() && !isActiveValue() && validate() == null && !hasEntryError;
 		cancelButton.setMessage(getCancelLabel());
+		cancelButton.setStyle(getCancelStyle());
 		saveButton.setMessage(getSaveLabel(hasEntryError));
 	}
 	private void repositionTabLayout() {

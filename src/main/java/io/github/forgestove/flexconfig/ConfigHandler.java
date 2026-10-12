@@ -2,7 +2,7 @@ package io.github.forgestove.flexconfig;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
-import io.github.forgestove.flexconfig.client.ConfigScreenFactory;
+import io.github.forgestove.flexconfig.client.FlexConfigScreenFactory;
 import io.github.forgestove.flexconfig.client.gui.factory.EntryKeybind;
 import io.github.forgestove.flexconfig.platform.Platform;
 import io.github.forgestove.flexconfig.tree.RootConfigNode;
@@ -13,12 +13,8 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 import java.util.*;
 /**
- * 通用配置处理器，管理单个配置文件的加载、保存和 GUI 创建。
- * <p>
- * 文件路径由 {@link ConfigNaming} 解析：除 {@link ConfigType#SERVER} 需进世界后才解析（存档目录）外，
- * 其余类型在构造期即读盘。
- *
- * @param <C> 配置类类型
+ * 通用配置处理器，管理单个配置文件的加载、保存与 GUI 创建。
+ * 文件路径由 {@link ConfigNaming} 解析，除 SERVER 型要进世界才知道存档目录外，其余在构造期即读盘。
  */
 public final class ConfigHandler<C, V> {
 	private static final Logger LOGGER = LogUtils.getLogger();
@@ -53,13 +49,7 @@ public final class ConfigHandler<C, V> {
 			throw new RuntimeException("Failed to create config instance", e);
 		}
 	}
-	/**
-	 * 注册期是否立即读盘。
-	 * <p>
-	 * 划分对齐官方（{@code CommonModLoader}）：SERVER 要进世界才知道存档目录；CLIENT 只在客户端加载；
-	 * COMMON 双端都加载。区别在于官方把 COMMON/CLIENT 放在更晚的加载任务里，而这里统一提前到注册期——
-	 * 这是刻意的，避免静态初始化或极早期读取拿到默认值。
-	 */
+	/** 注册期是否立即读盘：SERVER 要进世界才知道存档目录，CLIENT 只在客户端。 */
 	private boolean loadsAtRegistration() {
 		return switch (type) {
 			case SERVER -> false;
@@ -126,14 +116,12 @@ public final class ConfigHandler<C, V> {
 	public C getConfig() {
 		return activeConfig;
 	}
-	/** 由 {@link ConfigScreenFactory} 用于访问已保存的配置实例。 */
+	/** 由 {@link FlexConfigScreenFactory} 用于访问已保存的配置实例。 */
 	@Contract(pure = true)
 	public C getSavedConfig() {
 		return savedConfig;
 	}
-	/**
-	 * 获取配置序列化器，用于网络包等场景的类型转换和反序列化。
-	 */
+	/** 供网络包等场景做类型转换与反序列化。 */
 	@Contract(pure = true)
 	public ConfigSerializer<C> getSerializer() {
 		return serializer;
@@ -186,15 +174,12 @@ public final class ConfigHandler<C, V> {
 		else triggerKeybinds.put(path, serialized);
 		if (action != null) triggerActions.put(path, action);
 	}
-	/** 获取指定路径的快捷键序列化字符串。 */
 	public @Nullable String getTriggerKeybind(String path) {
 		return triggerKeybinds.get(path);
 	}
-	/** 获取所有快捷键绑定的只读视图。 */
 	public Map<String, String> getAllTriggerKeybinds() {
 		return Collections.unmodifiableMap(triggerKeybinds);
 	}
-	/** 遍历所有快捷键，边缘检测并执行触发动作。 */
 	public void tickTriggerKeybinds(long window, Map<String, Boolean> previousStates) {
 		triggerKeybinds.forEach((path, value) -> {
 			var keybind = EntryKeybind.deserialize(value);

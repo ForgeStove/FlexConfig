@@ -4,7 +4,7 @@ import io.github.forgestove.flexconfig.client.gui.*;
 import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.*;
 /** 配置界面的构建入口；挂到模组列表的动作由加载器实现（{@code Platform#registerConfigScreen}）负责。 */
-public final class ConfigScreenFactory {
+public final class FlexConfigScreenFactory {
 	/**
 	 * 该模组的配置入口。
 	 * 只有一份配置时直接打开它（与以前完全一致）；多份时先进入 {@link ConfigFileScreen} 选择。

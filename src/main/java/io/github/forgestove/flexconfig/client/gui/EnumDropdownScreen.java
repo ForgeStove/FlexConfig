@@ -1,38 +1,34 @@
 package io.github.forgestove.flexconfig.client.gui;
+import io.github.forgestove.flexconfig.client.gui.components.*;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
-import io.github.forgestove.flexconfig.client.gui.factory.SmoothScroll;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.function.*;
 public final class EnumDropdownScreen extends Screen {
-	private static final int GAP = ConfigEntry.GAP, HEIGHT = ConfigEntry.HEIGHT, SCROLLBAR_WIDTH = HEIGHT / 4;
+	private static final int GAP = ConfigEntry.GAP, HEIGHT = ConfigEntry.HEIGHT, ITEM_H = HEIGHT + GAP;
 	private final Enum<?>[] values;
 	private final Supplier<Enum<?>> selectedSupplier;
 	private final Consumer<Enum<?>> onSelect;
 	private final Function<Enum<?>, Component> displayMapper;
 	private final Screen parent;
-	private final Button dropdownButton;
-	private final SmoothScroll smoothScrool;
+	private final OreButton dropdownButton;
+	/** 滚动条组件：滚动量、平滑、命中、拖动全在它里面，这里只喂几何与输入。 */
+	private final OreScrollbar scrollbar = new OreScrollbar();
 	private int maxVisibleOptions;
-	private double smoothScrollOffset;
-	private boolean draggingScrollbar;
 	public EnumDropdownScreen(
 		Enum<?>[] values,
 		Supplier<Enum<?>> selectedSupplier,
 		Consumer<Enum<?>> onSelect,
 		Function<Enum<?>, Component> displayMapper,
 		Screen parent,
-		Button dropdownButton
+		OreButton dropdownButton
 	) {
 		super(Component.empty());
 		this.values = values;
@@ -41,26 +37,34 @@ public final class EnumDropdownScreen extends Screen {
 		this.displayMapper = displayMapper;
 		this.parent = parent;
 		this.dropdownButton = dropdownButton;
+		scrollbar.step(ITEM_H);
 		update();
-		smoothScrool = new SmoothScroll(value -> smoothScrollOffset = value, () -> smoothScrollOffset, this::getMaxScrollOffset);
 	}
 	private void update() {
-		maxVisibleOptions = Math.min(
-			values.length,
-			(parent.height - dropdownButton.getY() - dropdownButton.getHeight() - HEIGHT) / (HEIGHT + GAP)
-		);
-		smoothScrollOffset = Mth.clamp(
-			Arrays.asList(values).indexOf(selectedSupplier.get()) - maxVisibleOptions / 2,
-			0,
-			getMaxScrollOffset()
-		);
+		maxVisibleOptions = Math.min(values.length,
+			(parent.height - dropdownButton.getY() - dropdownButton.getHeight() - HEIGHT) / ITEM_H);
+		scrollbar.area(scrollbarX(), dropdownY() + GAP, viewportHeight(), values.length * ITEM_H);
+		// 打开时把选中项摆到中间
+		scrollbar.seek((Arrays.asList(values).indexOf(selectedSupplier.get()) - maxVisibleOptions / 2.0) * ITEM_H);
 	}
-	private int getMaxScrollOffset() {
-		return Math.max(0, values.length - maxVisibleOptions);
+	/** 可视区高，与 content 同口径（都是「项数 × 行高」），装得下时两者相等、滚动条不显示。 */
+	private int viewportHeight() {
+		return maxVisibleOptions * ITEM_H;
+	}
+	private int dropdownY() {
+		return dropdownButton.getY() + dropdownButton.getHeight();
+	}
+	private int scrollbarX() {
+		return dropdownButton.getX() + dropdownButton.getWidth() - scrollbarWidth() - GAP;
+	}
+	/** 滚动条宽度 = 滑块精灵宽（随资源包变），面板右侧要让出这么多。 */
+	private int scrollbarWidth() {
+		return FlexGuiTextures.SCROLLBAR_TOP.width();
 	}
 	@Override
 	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
-		smoothScrool.tick(delta);
+		scrollbar.dragTo(mouseY);   // 拖动落位：按每帧拿到的真实鼠标坐标推进，不用 mouseDragged
+		scrollbar.update();
 		var pose = gui.pose();
 		pose.pushPose();
 		pose.translate(0, 0, -100);
@@ -70,17 +74,17 @@ public final class EnumDropdownScreen extends Screen {
 		var dropdownX = dropdownButton.getX();
 		var dropdownY = dropdownY();
 		var dropdownWidth = dropdownButton.getWidth();
-		var dropdownHeight = maxVisibleOptions * (HEIGHT + GAP);
+		var dropdownHeight = maxVisibleOptions * ITEM_H;
 		// 绘制下拉面板（外圈黑底=边框 + 内部灰色填充）
 		gui.fill(dropdownX, dropdownY, dropdownX + dropdownWidth, dropdownY + dropdownHeight + GAP, 0xFF000000);
 		gui.fill(dropdownX + 1, dropdownY + 1, dropdownX + dropdownWidth - 1, dropdownY + dropdownHeight + GAP - 1, 0xFF2D2D2D);
 		// 绘制可见选项（裁剪到面板内部区域，防止滚动时外溢）
 		gui.enableScissor(dropdownX + 1, dropdownY + 1, dropdownX + dropdownWidth - 1, dropdownY + dropdownHeight + GAP - 1);
-		var itemHeight = HEIGHT + GAP;
-		var firstIndex = Math.max(0, (int) Math.floor(smoothScrollOffset));
-		var lastIndex = Math.min(values.length - 1, (int) Math.ceil(smoothScrollOffset + maxVisibleOptions));
+		var scroll = scrollbar.scroll();
+		var firstIndex = Math.max(0, (int) Math.floor(scroll / ITEM_H));
+		var lastIndex = Math.min(values.length - 1, (int) Math.ceil((scroll + viewportHeight()) / ITEM_H));
 		for (var optionIndex = firstIndex; optionIndex <= lastIndex; optionIndex++) {
-			var y = (int) Math.round(dropdownY + (optionIndex - smoothScrollOffset) * itemHeight);
+			var y = (int) Math.round(dropdownY + optionIndex * ITEM_H - scroll);
 			if (y + HEIGHT < dropdownY || y > dropdownY + dropdownHeight + GAP) continue;
 			var isSelected = values[optionIndex] == selectedSupplier.get();
 			var isHovered = mouseX >= dropdownX && mouseX < dropdownX + dropdownWidth && mouseY >= y + GAP && mouseY < y + HEIGHT + GAP;
@@ -90,40 +94,7 @@ public final class EnumDropdownScreen extends Screen {
 			gui.drawString(font, displayMapper.apply(values[optionIndex]), dropdownX + HEIGHT / 4, y + HEIGHT / 4 + GAP, color, false);
 		}
 		gui.disableScissor();
-		// 如果需要则绘制滚动条
-		if (!needsScrollbar()) return;
-		var track = getScrollbarTrack();
-		gui.fill(track.x, track.y, track.x + track.width, track.y + track.height, 0xFF1A1A1A);
-		var thumb = getScrollbarThumb();
-		var thumbHovered = thumb.contains(mouseX, mouseY);
-		gui.fill(
-			thumb.x,
-			thumb.y,
-			thumb.x + thumb.width,
-			thumb.y + thumb.height,
-			thumbHovered || draggingScrollbar ? 0xFF888888 : 0xFF555555
-		);
-	}
-	private int dropdownY() {
-		return dropdownButton.getY() + dropdownButton.getHeight();
-	}
-	private boolean needsScrollbar() {
-		return values.length > maxVisibleOptions;
-	}
-	private Rectangle getScrollbarTrack() {
-		return new Rectangle(
-			dropdownButton.getX() + dropdownButton.getWidth() - SCROLLBAR_WIDTH - GAP,
-			dropdownY() + GAP,
-			SCROLLBAR_WIDTH,
-			maxVisibleOptions * (HEIGHT + GAP) - GAP
-		);
-	}
-	private Rectangle getScrollbarThumb() {
-		var track = getScrollbarTrack();
-		var thumbHeight = Math.max(15, track.height * maxVisibleOptions / values.length);
-		var maxScroll = getMaxScrollOffset();
-		var thumbY = maxScroll > 0 ? track.y + (track.height - thumbHeight) * smoothScrollOffset / maxScroll : track.y;
-		return new Rectangle(track.x, (int) thumbY, track.width, thumbHeight);
+		scrollbar.render(gui, mouseX, mouseY);
 	}
 	@Override
 	public void resize(@NotNull Minecraft minecraft, int width, int height) {
@@ -138,17 +109,14 @@ public final class EnumDropdownScreen extends Screen {
 			playClickSound();
 			return true;
 		}
-		if (needsScrollbar() && getScrollbarTrack().contains(mouseX, mouseY)) {
-			draggingScrollbar = true;
-			return true;
-		}
+		if (scrollbar.mousePressed(mouseX, mouseY)) return true;
 		var dropdownY = dropdownY();
-		var itemHeight = HEIGHT + GAP;
-		var firstIndex = Math.max(0, (int) Math.floor(smoothScrollOffset));
-		var lastIndex = Math.min(values.length - 1, (int) Math.ceil(smoothScrollOffset + maxVisibleOptions));
+		var scroll = scrollbar.scroll();
+		var firstIndex = Math.max(0, (int) Math.floor(scroll / ITEM_H));
+		var lastIndex = Math.min(values.length - 1, (int) Math.ceil((scroll + viewportHeight()) / ITEM_H));
 		var contentWidth = getContentWidth();
 		for (var optionIndex = firstIndex; optionIndex <= lastIndex; optionIndex++) {
-			var y = (int) Math.round(dropdownY + (optionIndex - smoothScrollOffset) * itemHeight);
+			var y = (int) Math.round(dropdownY + optionIndex * ITEM_H - scroll);
 			if (mouseX < dropdownButton.getX() || mouseX >= dropdownButton.getX() + contentWidth) continue;
 			if (!(mouseY >= y + GAP) || !(mouseY < y + HEIGHT + GAP)) continue;
 			onSelect.accept(values[optionIndex]);
@@ -162,7 +130,7 @@ public final class EnumDropdownScreen extends Screen {
 		var panelX = dropdownButton.getX() - GAP;
 		var panelY = dropdownY() - GAP;
 		var panelW = dropdownButton.getWidth() + GAP;
-		var panelH = maxVisibleOptions * (HEIGHT + GAP) + GAP * 2;
+		var panelH = maxVisibleOptions * ITEM_H + GAP * 2;
 		return !(mouseX >= panelX) || !(mouseX <= panelX + panelW) || !(mouseY >= panelY) || !(mouseY <= panelY + panelH);
 	}
 	private void playClickSound() {
@@ -170,30 +138,17 @@ public final class EnumDropdownScreen extends Screen {
 		minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 	}
 	private int getContentWidth() {
-		return needsScrollbar() ? dropdownButton.getWidth() - SCROLLBAR_WIDTH - GAP : dropdownButton.getWidth();
+		return scrollbar.shown() ? dropdownButton.getWidth() - scrollbarWidth() - GAP : dropdownButton.getWidth();
 	}
 	@Override
 	public boolean mouseReleased(double mouseX, double mouseY, int button) {
-		draggingScrollbar = false;
+		scrollbar.release();
 		return super.mouseReleased(mouseX, mouseY, button);
-	}
-	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-		if (!draggingScrollbar) return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
-		updateScrollFromMouse(mouseY);
-		return true;
-	}
-	private void updateScrollFromMouse(double mouseY) {
-		var track = getScrollbarTrack();
-		var thumbHeight = Math.max(15, track.height * maxVisibleOptions / values.length);
-		double scrollRange = track.height - thumbHeight;
-		if (scrollRange <= 0) return;
-		var relativeY = mouseY - track.y - thumbHeight / 2.0;
-		smoothScrollOffset = Mth.clamp((int) Math.round(relativeY / scrollRange * getMaxScrollOffset()), 0, getMaxScrollOffset());
 	}
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
 		if (isOutsidePanel(mouseX, mouseY)) return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
-		return smoothScrool.onMouseScroll(vertical, 1);
+		scrollbar.wheel(vertical);
+		return true;
 	}
 }

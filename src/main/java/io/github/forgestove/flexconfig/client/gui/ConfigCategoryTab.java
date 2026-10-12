@@ -1,5 +1,6 @@
 package io.github.forgestove.flexconfig.client.gui;
 import io.github.forgestove.flexconfig.client.gui.api.TabLifecycle;
+import io.github.forgestove.flexconfig.client.gui.components.OreTabButton;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.ChatFormatting;
@@ -19,7 +20,7 @@ public final class ConfigCategoryTab<C, V> implements Tab {
 	public final CategoryConfigNode<C> node;
 	public final ConfigEntryList list;
 	private final Component title;
-	private TabButton tabButton;
+	private OreTabButton tabButton;
 	public ConfigCategoryTab(ConfigScreen<C, V> screen, @NotNull CategoryConfigNode<C> node, C config) {
 		this.screen = screen;
 		this.node = node;
@@ -85,7 +86,7 @@ public final class ConfigCategoryTab<C, V> implements Tab {
 		if (hasChanged) result.withStyle(ChatFormatting.ITALIC);
 		return result;
 	}
-	public void setTabButton(TabButton tabButton) {
+	public void setTabButton(OreTabButton tabButton) {
 		this.tabButton = tabButton;
 	}
 }

@@ -11,6 +11,7 @@ public final class Translation {
 	public static final Component UNDO_TOOLTIP = Component.translatable("flexconfig.undo.tooltip");
 	public static final Component KEYBINDS_LABEL = Component.translatable("flexconfig.keybinds");
 	public static final Component CANCEL_LABEL = Component.translatable("gui.cancel");
+	public static final Component BACK_LABEL = Component.translatable("gui.back");
 	public static final Component QUIT_UNSAVED_LABEL = Component.translatable("flexconfig.quit.unsaved");
 	public static final Component SAVE_LABEL = Component.translatable("selectWorld.edit.save");
 	public static final Component CANNOT_SAVE_LABEL = Component.translatable("flexconfig.cannot_save");

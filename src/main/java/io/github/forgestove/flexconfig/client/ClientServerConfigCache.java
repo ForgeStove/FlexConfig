@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * 保存服务端下发的 SERVER 型配置。
  * <p>
- * 只存内存：官方同样如此（下发后那份配置的 path 为 {@code null}），客户端本地的
+ * 只存内存（下发后那份配置的 path 为 {@code null}）：客户端本地的
  * {@code <modId>-server.toml} 不会因此被改写，也不参与读取。
  */
 public final class ClientServerConfigCache {

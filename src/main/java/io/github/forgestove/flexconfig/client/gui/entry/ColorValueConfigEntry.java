@@ -1,6 +1,7 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.*;
+import io.github.forgestove.flexconfig.client.gui.components.*;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,20 +13,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Pattern;
 public final class ColorValueConfigEntry<C> extends ValueConfigEntry<C, Integer> {
 	public static final Pattern HEX_PATTERN = Pattern.compile("[0-9A-Fa-f]*");
-	public final ConfigEditBox inputField;
-	public final Button pickerButton;
+	public final OreEditBox inputField;
+	public final OreButton pickerButton;
 	public final ColorPreviewWidget previewWidget;
 	public final boolean hasAlpha;
 	public ColorValueConfigEntry(ConfigCategoryTab<C, Integer> tab, ValueConfigNode<C, Integer> node) {
 		super(tab, node);
 		hasAlpha = node.colorHasAlpha();
 		previewWidget = new ColorPreviewWidget(0, 0, SIZE, SIZE, hasAlpha, this::getValue);
-		inputField = new ConfigEditBox(ClientUtil.mc.font, 0, 0, WIDTH - 44, HEIGHT, this.node.getTitle());
+		inputField = new OreEditBox(ClientUtil.mc.font, 0, 0, WIDTH - 44, HEIGHT, this.node.getTitle());
 		inputField.setMaxLength(getMaxLength());
 		inputField.setValue(formatColor(getValue()));
 		inputField.setFilter(s -> HEX_PATTERN.matcher(s).matches());
 		inputField.setResponder(this::onInputChange);
-		pickerButton = Button.builder(Translation.COLOR_PICKER_LABEL, b -> openColorPicker())
+		pickerButton = OreButton.of(Translation.COLOR_PICKER_LABEL, b -> openColorPicker())
 			.size(SIZE, SIZE)
 			.tooltip(Tooltip.create(Translation.COLOR_PICKER_TOOLTIP))
 			.build();

@@ -15,6 +15,9 @@
 		],
 		"client": [
 			"io.github.forgestove.flexconfig.client.FabricClientEvents"
+		],
+		"modmenu": [
+			"io.github.forgestove.flexconfig.client.FlexConfigModMenu"
 		]
 	},
 	"depends": {

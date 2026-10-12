@@ -2,6 +2,7 @@ package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.FileKey;
 import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
+import io.github.forgestove.flexconfig.client.gui.components.OreButton;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -14,9 +15,17 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
-	public final Button resetButton;
-	public final Button undoButton;
-	public final Button lockButton;
+	/**
+	 * 值区拆两半时每半的宽度。
+	 * <p>
+	 * 值区总宽固定是 {@link #WIDTH}（<b>所有类型都要对齐</b>，否则整排左缘会参差），
+	 * 半宽 = {@code (WIDTH - GAP) / 2} 已扣掉中间那一个 {@link #GAP} —— 直接写 {@code WIDTH / 2} 会让这一行
+	 * 比别的类型多出一个 GAP。
+	 */
+	public static final int HALF_VALUE_WIDTH = (WIDTH - GAP) / 2;
+	public final OreButton resetButton;
+	public final OreButton undoButton;
+	public final OreButton lockButton;
 	public final ConfigCategoryTab<C, V> tab;
 	public final List<AbstractWidget> children = new ArrayList<>();
 	public final ValueConfigNode<C, V> node;
@@ -32,17 +41,17 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		var font = ClientUtil.mc.font;
 		tooltip = this.node.getTooltip() == null ? null : font.split(this.node.getTooltip(), 350);
 		tooltipWithError = getTooltipWithError();
-		resetButton = Button.builder(Translation.RESET_LABEL, b -> resetToDefault())
+		resetButton = OreButton.of(Translation.RESET_LABEL, b -> resetToDefault())
 			.size(Math.max(font.width(Translation.RESET_LABEL) + 6, SIZE), SIZE)
 			.tooltip(Tooltip.create(Translation.RESET_TOOLTIP))
 			.build();
-		undoButton = Button.builder(Translation.UNDO_LABEL, b -> resetToActive())
+		undoButton = OreButton.of(Translation.UNDO_LABEL, b -> resetToActive())
 			.size(Math.max(font.width(Translation.UNDO_LABEL) + 6, SIZE), SIZE)
 			.tooltip(Tooltip.create(Translation.UNDO_TOOLTIP))
 			.build();
 		resetButton.active = !this.node.isDefaultValue(this.tab.config);
 		undoButton.active = !this.node.isActiveValue(this.tab.config);
-		lockButton = Button.builder(Translation.UNLOCK_LABEL, b -> onLockToggle())
+		lockButton = OreButton.of(Translation.UNLOCK_LABEL, b -> onLockToggle())
 			.size(Math.max(font.width(Translation.UNLOCK_LABEL) + 6, SIZE), SIZE)
 			.tooltip(Tooltip.create(Translation.UNLOCK_TOOLTIP))
 			.build();

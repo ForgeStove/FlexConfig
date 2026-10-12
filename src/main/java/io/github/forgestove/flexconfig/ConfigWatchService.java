@@ -6,12 +6,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 /**
- * 配置文件的外部改动探测（修改时间轮询）。
- * <p>
- * 不使用 NeoForge 的 {@code FileWatcher}：那套只挂在 {@code ConfigTracker} 上，只监听经 {@code registerConfig}
- * 注册的配置，自管的 {@link ConfigHandler} 接不进去。
- * <p>
- * 调用方负责节流与按类型分工：客户端轮询非 SERVER 型，服务端轮询 SERVER 型。
+ * 配置文件的外部改动探测（修改时间轮询）。调用方负责节流与分工：客户端轮询非 SERVER 型，服务端轮询 SERVER 型。
  */
 public final class ConfigWatchService {
 	/** 轮询间隔（tick）。 */
@@ -36,11 +31,8 @@ public final class ConfigWatchService {
 		return ConfigRegistry.getRegisteredFileKeys().contains(key) ? ConfigRegistry.getHandler(key).getPath() : null;
 	}
 	/**
-	 * 返回自上次轮询以来被外部改动过的文件，并更新基线。
-	 * 首次见到某个文件时只建立基线、不报告（否则启动即触发一次无意义的重载）。
-	 * <p>
-	 * {@code excluded}（例如配置界面正在编辑的文件）会被完全跳过、**不更新基线**，
-	 * 这样等它们退出排除后仍能被检出，不会漏掉那次外部改动。</p>
+	 * 返回自上次轮询以来被外部改动过的文件，并更新基线；首次见到只建基线不报告。
+	 * {@code excluded}（如界面正在编辑的文件）会完全跳过且不更新基线，退出排除后仍能被检出。
 	 */
 	public static Set<FileKey> poll(Set<FileKey> excluded, ConfigType... types) {
 		if (types.length == 0) return Set.of();

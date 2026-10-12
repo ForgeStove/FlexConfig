@@ -19,7 +19,7 @@ private const val DEMO_PACKAGE = "io/github/forgestove/flexconfig/demo/**"
  *
  * 用 `extensions.getByType(...)` 而非 Kotlin DSL 访问器：`.kt` 文件没有那些访问器。
  */
-@Suppress("unused")
+@Suppress("unused", "KotlinPrintToLogpoint")
 fun Project.configureCommon(loader: String) {
 	extensions.getByType(BasePluginExtension::class.java).archivesName.set(p("modId"))
 	group = p("modGroupId")
@@ -49,4 +49,5 @@ fun Project.configureCommon(loader: String) {
 		mavenLocal()
 		mavenCentral()
 	}
+	println("Java: ${System.getProperty("java.version")}, JVM: ${System.getProperty("java.vm.version")} (${System.getProperty("java.vendor")}), Arch: ${System.getProperty("os.arch")}")
 }

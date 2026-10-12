@@ -11,17 +11,10 @@ import org.slf4j.Logger;
 import java.awt.Point;
 import java.io.StringReader;
 import java.util.*;
-/**
- * 追踪服务端锁定的配置项，以 (模组 ID, 配置文件名) 为维度。
- * <p>
- * 在服务端发送 {@link ConfigSyncPayload} 时更新。
- * 锁定前备份原始值，断开连接或解锁时恢复。
- * 锁定值以 TOML 格式传输，由 {@link ConfigSerializer} 处理类型转换。
- * </p>
- */
+/** 追踪服务端锁定的配置项，维度是 (模组 ID, 配置文件名)：备份锁定前的原值，解锁或断开时恢复。 */
 public final class ClientLockManager {
 	private static final Logger LOGGER = LogUtils.getLogger();
-	/** 待发送的锁定操作（延迟至保存时执行）。 */
+	/** 待发送的锁定操作，延迟到保存时才发给服务端。 */
 	private static final Map<LockKey, Boolean> pendingLocks = new LinkedHashMap<>();
 	/** 文件 → (配置路径 → 服务端确认的锁定值字符串)。 */
 	private static final Map<FileKey, Map<String, String>> lockedConfigs = new HashMap<>();
@@ -30,14 +23,13 @@ public final class ClientLockManager {
 	/** 服务端下发的原始 TOML，供外部重载后重新叠加锁定时复用。 */
 	private static final Map<FileKey, CommentedConfig> syncedConfigs = new HashMap<>();
 	private static boolean receivedSync = false;
-	/** 更新服务端锁定的配置：解析 TOML → 用 ConfigSerializer 获取类型化值 → 应用锁定。 */
+	/** 服务端下发整份 TOML 时更新锁定。 */
 	public static void setLocks(String modId, String fileName, String tomlContent) {
 		// 忽略玩家已断开连接后的延迟包
 		if (ClientUtil.mc.getConnection() == null && !ClientUtil.mc.isSingleplayer()) return;
 		var key = new FileKey(modId, fileName);
 		if (!ConfigRegistry.isLockable(key)) return;
 		receivedSync = true;
-		// 解析 TOML
 		CommentedConfig tomlConfig;
 		try {
 			tomlConfig = new TomlParser().parse(new StringReader(tomlContent));
@@ -45,7 +37,6 @@ public final class ClientLockManager {
 			LOGGER.error(e.getMessage());
 			return;
 		}
-		// 提取扁平路径→值映射（用于锁定追踪和 revert）
 		var newLocks = new HashMap<String, String>();
 		collectPaths(tomlConfig, "", newLocks);
 		var handler = ConfigRegistry.getHandler(key).cast();
@@ -96,7 +87,6 @@ public final class ClientLockManager {
 			node.resetToActive(config);
 		}
 	}
-	/** 递归遍历 CommentedConfig，收集扁平路径→字符串值映射。 */
 	private static void collectPaths(CommentedConfig config, String prefix, Map<String, String> result) {
 		config.entrySet().forEach(entry -> {
 			var key = entry.getKey();
@@ -106,7 +96,6 @@ public final class ClientLockManager {
 			else result.put(path, String.valueOf(value));
 		});
 	}
-	// -- 待处理的锁定操作（延迟至保存时发送） --
 	@Nullable
 	public static Boolean getPendingLock(FileKey file, String configId) {
 		return pendingLocks.get(new LockKey(file, configId));
@@ -164,7 +153,6 @@ public final class ClientLockManager {
 		if (node == null || config == null) return;
 		originalValues.put(new LockKey(file, configId), node.getActiveValue(config));
 	}
-	// -- 查询方法 --
 	public static boolean hasReceivedSync() {
 		return receivedSync;
 	}
@@ -180,6 +168,5 @@ public final class ClientLockManager {
 		var fileLocks = lockedConfigs.get(file);
 		return fileLocks != null && fileLocks.containsKey(configId);
 	}
-	/** 定位一条配置项的键：哪份文件的哪个路径。 */
 	private record LockKey(FileKey file, String path) {}
 }

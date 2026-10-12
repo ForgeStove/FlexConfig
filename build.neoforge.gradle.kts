@@ -24,7 +24,6 @@ neoForge {
 			systemProperty("terminal.jline", "true")
 			jvmArgument("-XX:+IgnoreUnrecognizedVMOptions")
 			jvmArgument("-XX:+AllowEnhancedClassRedefinition")
-			disableIdeRun()
 		}
 	}
 	mods.create(p("modId")).sourceSet(sourceSets.main.get())

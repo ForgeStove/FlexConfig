@@ -3,6 +3,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.*;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
+import io.github.forgestove.flexconfig.client.gui.components.OreButton;
 import io.github.forgestove.flexconfig.client.gui.api.*;
 import io.github.forgestove.flexconfig.client.gui.factory.KeybindState;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
@@ -13,14 +14,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 public final class KeybindValueConfigEntry<C> extends ValueConfigEntry<C, Key> implements TabLifecycle, CrossRefreshable, CaptureHandler {
-	private final Button bindButton;
+	private final OreButton bindButton;
 	private boolean capturing;
 	private CaptureCallback captureCallback = (e, c) -> {};
 	private KeybindState state = KeybindState.BOUND;
 	private List<Component> conflictUsages = List.of();
 	public KeybindValueConfigEntry(ConfigCategoryTab<C, Key> tab, ValueConfigNode<C, Key> valueNode) {
 		super(tab, valueNode);
-		bindButton = Button.builder(
+		bindButton = OreButton.of(
 			Component.empty(), b -> {
 				capturing = true;
 				captureCallback.onCaptureStateChanged(this, true);

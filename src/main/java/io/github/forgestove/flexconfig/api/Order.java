@@ -1,13 +1,9 @@
 package io.github.forgestove.flexconfig.api;
 import java.lang.annotation.*;
 /**
- * 指定字段在其声明类中序列化时的顺序。
- * 字段按此值升序排序。
+ * 指定字段在其声明类中的排列顺序，按值升序。
  * <p>
- * 没有此注解的字段默认排序值为0，排在前面，
- * 保持来自 {@link Class#getDeclaredFields()} 的相对顺序。
- * <p>
- * 默认值为0。
+ * 未标注的按 0 处理，彼此保持 {@link Class#getDeclaredFields()} 的相对顺序。
  */
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

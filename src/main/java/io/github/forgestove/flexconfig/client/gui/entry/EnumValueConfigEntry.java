@@ -1,25 +1,26 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.*;
+import io.github.forgestove.flexconfig.client.gui.components.OreButton;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.network.chat.Component;
 @SuppressWarnings("rawtypes")
 public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C, Enum> {
-	private final Button dropdownButton;
+	private final OreButton dropdownButton;
 	private final String enumClassName;
 	public EnumValueConfigEntry(ConfigCategoryTab<C, Enum> tab, ValueConfigNode<C, Enum> node) {
 		super(tab, node);
 		enumClassName = node.getValueType().getSimpleName();
-		dropdownButton = Button.builder(getDisplayComponent(getValue()), this::openDropdown).size(WIDTH / 2, HEIGHT).build();
+		dropdownButton = OreButton.of(getDisplayComponent(getValue()), this::openDropdown).size(HALF_VALUE_WIDTH, HEIGHT).build();
 		children.add(dropdownButton);
 		registerKeybindTask();
 	}
 	private Component getDisplayComponent(Enum<?> value) {
 		return Component.translatable("%s.config.enum.%s.%s".formatted(tab.screen.root.modId(), enumClassName, value.name()));
 	}
-	private void openDropdown(Button button) {
+	private void openDropdown(OreButton button) {
 		var mc = ClientUtil.mc;
 		var screen = mc.screen;
 		if (screen == null || screen instanceof EnumDropdownScreen) return;

@@ -10,13 +10,7 @@ import org.slf4j.Logger;
 
 import java.nio.file.*;
 import java.util.*;
-/**
- * 按世界存档存储锁定的配置条目。
- * <p>
- * 持久化为存档 {@code serverconfig/flexconfig/<配置文件名>_locks.toml}，结构与配置文件一致（嵌套子表），
- * 用与配置相同的 {@link TomlWriter} 原子写出。
- * 生命周期由 {@link ServerLifecycleHandler} 管理。
- */
+/** 按世界存档存储锁定的配置条目，落盘为存档下的 {@code serverconfig/flexconfig/<配置文件名>_locks.toml}（结构与配置文件一致）。 */
 public final class ServerConfigLockStore {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Path lockFilePath;
@@ -41,7 +35,7 @@ public final class ServerConfigLockStore {
 			else out.add(path);
 		}
 	}
-	/** 从磁盘加载锁定。在服务器启动时调用。 */
+	/** 服务器启动时调用。 */
 	public void load() {
 		var path = lockFilePath;
 		if (!Files.exists(path) && Files.exists(legacyLockFilePath)) {
@@ -90,7 +84,7 @@ public final class ServerConfigLockStore {
 		} catch (NumberFormatException ignored) {}
 		return raw;
 	}
-	/** 将锁定保存到磁盘。在服务器停止和每次更改后调用。 */
+	/** 服务器停止时与每次更改后调用。 */
 	public void save() {
 		try {
 			Files.createDirectories(lockFilePath.getParent());
@@ -99,7 +93,7 @@ public final class ServerConfigLockStore {
 			LOGGER.error("Failed to save config locks to {}", lockFilePath, e);
 		}
 	}
-	/** 解锁配置条目。将其从锁定存储中移除。 */
+	/** 从锁定存储中移除。 */
 	public void unlockEntry(String configId) {
 		locks.remove(splitPath(configId));
 		save();

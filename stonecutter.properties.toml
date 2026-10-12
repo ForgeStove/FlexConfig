@@ -12,8 +12,9 @@ mcVersion = "1.21.1"
 javaVersion = "21"
 
 [fabric."1.21.1"]
-fabricLoaderVersion = "0.16.7"
-fabricApiVersion = "0.116.17+1.21.1"
+fabricLoaderVersion = "0.19.5"
+fabricApiVersion = "0.116.17"
+modmenuVersion = "11.0.5"
 
 [neoforge."1.21.1"]
 loaderVersion = "21.1.252"

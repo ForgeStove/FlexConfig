@@ -1,6 +1,6 @@
 package io.github.forgestove.flexconfig.demo;
 import io.github.forgestove.flexconfig.*;
-import io.github.forgestove.flexconfig.client.ConfigScreenFactory;
+import io.github.forgestove.flexconfig.client.FlexConfigScreenFactory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.neoforged.api.distmarker.Dist;
@@ -25,11 +25,12 @@ public final class NeoForgeDemoEntry {
 		var mc = Minecraft.getInstance();
 		if (!(mc.screen instanceof TitleScreen)) return;
 		opened = true;
-		mc.setScreen(ConfigScreenFactory.createConfigScreen(FlexConfig.ID));
+		mc.setScreen(FlexConfigScreenFactory.createConfigScreen(FlexConfig.ID));
 	}
-	/** 注册演示配置，早于任何界面创建。 */
+	/** 注册演示配置，早于任何界面创建。两份配置让模组入口先走配置文件选择界面。 */
 	@SubscribeEvent
 	public static void onClientSetup(FMLClientSetupEvent event) {
 		ConfigRegistry.init(DemoConfig.class);
+		ConfigRegistry.init(DemoServerConfig.class);
 	}
 }
