@@ -100,6 +100,6 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 	}
 	@Override
 	public int getRowWidth() {
-		return width * 4 / 5;
+		return width * 2 / 3;
 	}
 }

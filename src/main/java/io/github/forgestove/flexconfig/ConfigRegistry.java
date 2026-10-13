@@ -119,14 +119,14 @@ public final class ConfigRegistry {
 	}
 	// ========== 查询 ==========
 	/**
-	 * 该配置是否支持服务端锁定。
+	 * 该配置是否支持服务端锁定：只有 {@link ConfigType#CLIENT}（客户端自己读的那份）可以被锁。
 	 * <p>
-	 * 锁的语义是「服务端强制客户端的本地配置」，只对客户端自己读的那份（CLIENT / COMMON / STARTUP）成立；
-	 * {@link ConfigType#SERVER} 本就由服务端权威下发，再叠加锁会多出一份真相源。</p>
+	 * 锁的语义是「服务端强制客户端的本地配置」—— COMMON 双端各存一份、{@link ConfigType#SERVER} 本就由服务端权威下发，
+	 * 都不适用。
 	 */
 	public static boolean isLockable(FileKey key) {
 		var handler = BY_FILE.get(key);
-		return handler != null && handler.getType() != ConfigType.SERVER;
+		return handler != null && handler.getType() == ConfigType.CLIENT;
 	}
 	public static Set<FileKey> getRegisteredFileKeys() {
 		return Set.copyOf(BY_FILE.keySet());

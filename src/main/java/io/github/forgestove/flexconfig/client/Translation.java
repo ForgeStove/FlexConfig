@@ -25,6 +25,8 @@ public final class Translation {
 	public static final Component OTHER_MODS_LABEL = Component.translatable("flexconfig.other_mods");
 	public static final Component OTHER_MODS_TITLE = Component.translatable("flexconfig.other_mods.title");
 	public static final Component OTHER_MODS_NONE = Component.translatable("flexconfig.other_mods.none");
+	public static final Component OTHER_MODS_SEARCH = Component.translatable("flexconfig.other_mods.search");
+	public static final Component OTHER_MODS_NO_MATCH = Component.translatable("flexconfig.other_mods.no_match");
 	public static final Component QUIT_CONFIRM_LABEL = Component.translatable("flexconfig.quit.confirm");
 	public static final Component QUIT_CONFIRM_TITLE = Component.translatable("flexconfig.quit.confirm.title");
 	public static final Component QUIT_CONFIRM_WARNING = Component.translatable("flexconfig.quit.confirm.warning");

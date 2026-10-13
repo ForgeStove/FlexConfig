@@ -8,7 +8,6 @@ import io.github.forgestove.flexconfig.platform.Platform;
 import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
 
-import java.awt.Point;
 import java.io.StringReader;
 import java.util.*;
 /** 追踪服务端锁定的配置项，维度是 (模组 ID, 配置文件名)：备份锁定前的原值，解锁或断开时恢复。 */
@@ -139,13 +138,7 @@ public final class ClientLockManager {
 		var config = ConfigRegistry.getActiveConfig(file);
 		if (node == null || config == null) return "";
 		var value = node.getActiveValue(config);
-		return switch (value) {
-			case null -> "";
-			case Integer integer when node.isColorValue() -> String.format(node.colorHasAlpha() ? "0x%08X" : "0x%06X", integer);
-			case Enum<?> anEnum -> anEnum.name();
-			case Point point -> point.x + ", " + point.y;
-			default -> value.toString();
-		};
+		return value == null ? "" : LockValueCodec.format(node, value);
 	}
 	private static void updateOriginalValue(FileKey file, String configId) {
 		var node = ConfigRegistry.getRootConfigNode(file).getValueNode(configId);

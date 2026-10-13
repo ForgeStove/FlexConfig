@@ -149,6 +149,8 @@
 	"flexconfig.locked.tooltip": "This config value is locked by the server",
 	"flexconfig.other_mods": "Other Mods' Configs",
 	"flexconfig.other_mods.none": "No other mods use FlexConfig",
+	"flexconfig.other_mods.no_match": "No matching mods",
+	"flexconfig.other_mods.search": "Search mods…",
 	"flexconfig.other_mods.title": "Mod Configs",
 	"flexconfig.quit.confirm": "Confirm",
 	"flexconfig.quit.confirm.title": "Discard Changes?",

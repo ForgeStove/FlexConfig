@@ -14,23 +14,20 @@ import java.util.regex.Pattern;
 public final class ColorValueConfigEntry<C> extends ValueConfigEntry<C, Integer> {
 	public static final Pattern HEX_PATTERN = Pattern.compile("[0-9A-Fa-f]*");
 	public final OreEditBox inputField;
-	public final OreIconButton pickerButton;
-	public final ColorPreviewWidget previewWidget;
+	public final OreColorPickerButton previewWidget;
 	public final boolean hasAlpha;
 	public ColorValueConfigEntry(ConfigCategoryTab<C, Integer> tab, ValueConfigNode<C, Integer> node) {
 		super(tab, node);
 		hasAlpha = node.colorHasAlpha();
-		previewWidget = new ColorPreviewWidget(0, 0, SIZE, SIZE, hasAlpha, this::getValue);
-		inputField = new OreEditBox(ClientUtil.mc.font, 0, 0, WIDTH - 44, HEIGHT, this.node.getTitle());
+		previewWidget = new OreColorPickerButton(0, 0, SIZE, SIZE, hasAlpha, this::getValue, this::openColorPicker);
+		previewWidget.setTooltip(Tooltip.create(Translation.COLOR_PICKER_TOOLTIP));
+		inputField = new OreEditBox(ClientUtil.mc.font, 0, 0, WIDTH - SIZE - GAP, HEIGHT, this.node.getTitle());
 		inputField.setMaxLength(getMaxLength());
 		inputField.setValue(formatColor(getValue()));
 		inputField.setFilter(s -> HEX_PATTERN.matcher(s).matches());
 		inputField.setResponder(this::onInputChange);
-		pickerButton = new OreIconButton(SIZE, FlexGuiTextures.ICON_COLOR, b -> openColorPicker());
-		pickerButton.setTooltip(Tooltip.create(Translation.COLOR_PICKER_TOOLTIP));
 		children.add(previewWidget);
 		children.add(inputField);
-		children.add(pickerButton);
 	}
 	private int getMaxLength() {
 		return hasAlpha ? 8 : 6;
@@ -81,7 +78,6 @@ public final class ColorValueConfigEntry<C> extends ValueConfigEntry<C, Integer>
 		var readOnly = isReadOnly();
 		previewWidget.active = !readOnly;
 		inputField.active = !readOnly;
-		pickerButton.active = !readOnly;
-		renderGui(gui, y, x, width, mouseX, mouseY, delta, lockButton, undoButton, resetButton, pickerButton, inputField, previewWidget);
+		renderGui(gui, y, x, width, mouseX, mouseY, delta, lockButton, undoButton, resetButton, inputField, previewWidget);
 	}
 }

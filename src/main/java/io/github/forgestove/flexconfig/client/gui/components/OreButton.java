@@ -101,7 +101,7 @@ public class OreButton extends OreAbstractButton {
 		var box = box();
 		var capW = box.left().width();
 		var height = box.left().height();
-		var y = getY() + preferredHeight() - height;   // 按下态矮 2px，底对齐 = 沉下去
+		var y = getY() + preferredHeight() - height;   // 按下态的盒子矮 2px 并底对齐，所以看起来是沉下去
 		box.left().render(gui, getX(), y);
 		box.mid().render(gui, getX() + capW, y, getWidth() - 2 * capW, height);
 		box.right().render(gui, getX() + getWidth() - capW, y);

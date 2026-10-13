@@ -10,22 +10,18 @@ import org.slf4j.Logger;
 
 import java.nio.file.*;
 import java.util.*;
-/** 按世界存档存储锁定的配置条目，落盘为存档下的 {@code serverconfig/flexconfig/<配置文件名>_locks.toml}（结构与配置文件一致）。 */
+/**
+ * 按世界存档存储锁定的配置条目，落盘为存档下的 {@code serverconfig/flexconfig/<modId>_locks.toml}（结构与配置文件一致）。
+ * <p>
+ * 放在 {@code flexconfig} 子目录是为了不和官方认的「server 配置覆盖文件」混在一起。
+ */
 public final class ServerConfigLockStore {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Path lockFilePath;
-	/** 旧命名（只按 modId 而不分文件、也不在 flexconfig 子目录）的锁文件，仅在迁移时读取。 */
-	private final Path legacyLockFilePath;
 	/** 锁定项，结构与配置文件一致；键由客户端传来的路径按点号分层。 */
 	private CommentedConfig locks = ConfigSerializer.inMemory();
-	public ServerConfigLockStore(MinecraftServer server, String modId, String fileName) {
-		lockFilePath = server.getWorldPath(LevelResource.ROOT)
-			.resolve("serverconfig/flexconfig/" + lockBaseName(fileName) + "_locks" + ".toml");
-		legacyLockFilePath = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/" + modId + "_locks.toml");
-	}
-	/** 锁文件名去掉 .toml 后缀，例如 {@code flexconfig-client.toml} → {@code flexconfig-client}。 */
-	private static String lockBaseName(String fileName) {
-		return fileName.endsWith(".toml") ? fileName.substring(0, fileName.length() - ".toml".length()) : fileName;
+	public ServerConfigLockStore(MinecraftServer server, String modId) {
+		lockFilePath = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/flexconfig/" + modId + "_locks.toml");
 	}
 	private static void collectPaths(UnmodifiableConfig config, String prefix, Set<String> out) {
 		for (var entry : config.entrySet()) {
@@ -38,10 +34,6 @@ public final class ServerConfigLockStore {
 	/** 服务器启动时调用。 */
 	public void load() {
 		var path = lockFilePath;
-		if (!Files.exists(path) && Files.exists(legacyLockFilePath)) {
-			LOGGER.warn("Adopting legacy lock file {} for {}", legacyLockFilePath, lockFilePath.getFileName());
-			path = legacyLockFilePath;
-		}
 		if (!Files.exists(path)) {
 			locks = ConfigSerializer.inMemory();
 			return;
@@ -55,34 +47,13 @@ public final class ServerConfigLockStore {
 			locks = ConfigSerializer.inMemory();
 		}
 	}
-	/** 将配置条目锁定为特定的值字符串。 */
-	public void lockEntry(String configId, String value) {
-		locks.set(splitPath(configId), toTypedValue(value));
+	/** 将配置条目锁定为特定的值（已由 {@link io.github.forgestove.flexconfig.LockValueCodec} 转成 TOML 原生类型）。 */
+	public void lockEntry(String configId, Object value) {
+		locks.set(splitPath(configId), value);
 		save();
 	}
 	private static List<String> splitPath(String configId) {
 		return List.of(configId.split("\\."));
-	}
-	/** 把客户端传来的字面量还原成 TOML 原生类型；不认识的一律当字符串。 */
-	private static Object toTypedValue(String raw) {
-		if (raw.equals("true")) return Boolean.TRUE;
-		if (raw.equals("false")) return Boolean.FALSE;
-		try {
-			return Integer.parseInt(raw);
-		} catch (NumberFormatException ignored) {}
-		try {
-			return Integer.decode(raw);   // 支持 0xFF0000 等十六进制颜色
-		} catch (NumberFormatException ignored) {}
-		try {
-			return Long.parseLong(raw);
-		} catch (NumberFormatException ignored) {}
-		try {
-			return Long.decode(raw);
-		} catch (NumberFormatException ignored) {}
-		try {
-			return Double.parseDouble(raw);
-		} catch (NumberFormatException ignored) {}
-		return raw;
 	}
 	/** 服务器停止时与每次更改后调用。 */
 	public void save() {

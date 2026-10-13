@@ -63,7 +63,11 @@ public final class ConfigEvents {
 			OreCursor.apply();
 		}
 	}
-	@EventBusSubscriber(Dist.DEDICATED_SERVER)
+	/**
+	 * 服务端事件两种 dist 都要注册：单人存档的内置服务端就跑在客户端 JVM 里。
+	 * 只挂 {@code Dist.DEDICATED_SERVER} 的话，内置服务端上锁存储不会加载、加入的玩家也收不到锁与 SERVER 配置。
+	 */
+	@EventBusSubscriber
 	public static class Server {
 		@SubscribeEvent
 		public static void onServerStarting(ServerStartingEvent event) {

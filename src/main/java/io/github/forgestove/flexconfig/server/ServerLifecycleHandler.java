@@ -26,7 +26,7 @@ public final class ServerLifecycleHandler {
 	public static void onServerStarting(MinecraftServer server) {
 		ConfigRegistry.getRegisteredFileKeys().forEach(key -> {
 			if (!ConfigRegistry.isLockable(key)) return;
-			var lockStore = new ServerConfigLockStore(server, key.modId(), key.fileName());
+			var lockStore = new ServerConfigLockStore(server, key.modId());
 			lockStore.load();
 			ConfigNetwork.setLockStore(key, lockStore);
 			ServerLockApplier.applyAll(key, lockStore);

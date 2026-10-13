@@ -77,9 +77,11 @@ public abstract class OrePopupScreen extends Screen {
 		buildWidgets();
 		relayout();       // 控件就位后再摆一遍
 	}
-	/** 重算面板矩形并摆放内容。⚠️ 两条分支都必须走到 {@link #layoutContent()} —— 居中模态曾在这里提前 return，导致子控件从未被摆过。 */
+	/** 重算面板矩形并摆放内容；两条分支都要走到 {@link #layoutContent()}。 */
 	protected final void relayout() {
+		// 面板至少要跟锚定控件一样宽：下拉挂在按钮正下方，宽度不齐看着就错位
 		panelWidth = Math.min(contentWidth() + PAD * 2, width);
+		if (anchor != null) panelWidth = Math.clamp(anchor.width(), panelWidth, width);
 		panelHeight = Math.min(contentHeight() + PAD * 2 + headerHeight() + footerHeight(), height);
 		if (anchor == null) {
 			panelX = (width - panelWidth) / 2;

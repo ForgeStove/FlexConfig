@@ -191,13 +191,14 @@ public final class ColorPickerScreen extends Screen {
 		addRenderableWidget(cancelButton);
 		hexInput = createHexInput(buttonY);
 		addRenderableWidget(hexInput);
-		addRenderableWidget(new ColorPreviewWidget(
+		addRenderableWidget(new OreColorPickerButton(
 			hexInput.getX() + hexInput.getWidth() + 4,
 			buttonY,
 			SIZE,
 			SIZE,
 			hasAlpha,
-			this::colorFromHSB
+			this::colorFromHSB,
+			null
 		));
 	}
 	private void layoutPicker() {

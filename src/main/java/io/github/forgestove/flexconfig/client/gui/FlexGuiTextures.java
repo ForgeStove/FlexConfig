@@ -66,12 +66,11 @@ public enum FlexGuiTextures {
 	SCROLLBAR_TOP("scrollbar/top"),
 	SCROLLBAR_MID("scrollbar/mid"),
 	SCROLLBAR_BOTTOM("scrollbar/bottom"),
-	// 行内动作图标：9×9 单色精灵（重置 / 撤销 / 锁定 / 解锁 / 取色）
+	// 行内动作图标：重置 / 撤销 / 锁定 / 解锁（都取自 icons.png 的 16px 格）
 	ICON_RESET("icon/reset"),
 	ICON_UNDO("icon/undo"),
 	ICON_LOCK("icon/lock"),
-	ICON_UNLOCK("icon/unlock"),
-	ICON_COLOR("icon/color");
+	ICON_UNLOCK("icon/unlock");
 	private final ResourceLocation sprite;
 	FlexGuiTextures(String path) {
 		sprite = ResourceLocation.fromNamespaceAndPath("flexconfig", path);

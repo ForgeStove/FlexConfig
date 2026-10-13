@@ -9,6 +9,7 @@ import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import io.github.forgestove.flexconfig.client.gui.popup.OreConfirmPopupScreen;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.tabs.TabManager;
 import net.minecraft.client.gui.layouts.*;
@@ -256,9 +257,9 @@ public final class ConfigScreen<C, V> extends Screen {
 	public Set<FileKey> editedFiles() {
 		return Set.of(new FileKey(root.modId(), root.fileName()));
 	}
-	/** 本界面所显示的配置是否支持服务端锁定（SERVER 型由服务端权威下发，不需要锁定）。 */
+	/** 本界面所显示的配置是否支持服务端锁定（规则见 {@link ConfigRegistry#isLockable}）。 */
 	public boolean isLockable() {
-		return handler.getType() != ConfigType.SERVER;
+		return ConfigRegistry.isLockable(new FileKey(root.modId(), root.fileName()));
 	}
 	public void onEntryCaptureChanged(CaptureHandler entry, boolean capturing) {
 		capturingEntry = capturing ? entry : null;
@@ -275,5 +276,9 @@ public final class ConfigScreen<C, V> extends Screen {
 	}
 	public int getFooterHeight() {
 		return layout.getFooterHeight();
+	}
+	@Override
+	public void renderBackground(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+		ClientUtil.renderBands(gui, width, height, getHeaderHeight(), getFooterHeight());
 	}
 }

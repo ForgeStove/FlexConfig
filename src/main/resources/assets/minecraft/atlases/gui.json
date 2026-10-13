@@ -16,26 +16,9 @@
 		},
 		{
 			"type": "unstitch",
-			"resource": "flexconfig:gui/tab",
-			"divisor_x": 15,
-			"divisor_y": 24,
-			"regions": [
-				{"sprite": "flexconfig:tab/off_l", "x": 0, "y": 0, "width": 2, "height": 24},
-				{"sprite": "flexconfig:tab/off_m", "x": 2, "y": 0, "width": 1, "height": 24},
-				{"sprite": "flexconfig:tab/off_r", "x": 3, "y": 0, "width": 2, "height": 24},
-				{"sprite": "flexconfig:tab/off_hover_l", "x": 5, "y": 0, "width": 2, "height": 24},
-				{"sprite": "flexconfig:tab/off_hover_m", "x": 7, "y": 0, "width": 1, "height": 24},
-				{"sprite": "flexconfig:tab/off_hover_r", "x": 8, "y": 0, "width": 2, "height": 24},
-				{"sprite": "flexconfig:tab/on_l", "x": 10, "y": 0, "width": 2, "height": 22},
-				{"sprite": "flexconfig:tab/on_m", "x": 12, "y": 0, "width": 1, "height": 22},
-				{"sprite": "flexconfig:tab/on_r", "x": 13, "y": 0, "width": 2, "height": 22}
-			]
-		},
-		{
-			"type": "unstitch",
 			"resource": "flexconfig:gui/button",
-			"divisor_x": 50,
-			"divisor_y": 20,
+			"divisor_x": 65,
+			"divisor_y": 24,
 			"regions": [
 				{"sprite": "flexconfig:button/primary_l", "x": 0, "y": 0, "width": 2, "height": 20},
 				{"sprite": "flexconfig:button/primary_m", "x": 2, "y": 0, "width": 1, "height": 20},
@@ -66,7 +49,16 @@
 				{"sprite": "flexconfig:button/secondary_pressed_r", "x": 43, "y": 0, "width": 2, "height": 18},
 				{"sprite": "flexconfig:button/disabled_l", "x": 45, "y": 0, "width": 2, "height": 20},
 				{"sprite": "flexconfig:button/disabled_m", "x": 47, "y": 0, "width": 1, "height": 20},
-				{"sprite": "flexconfig:button/disabled_r", "x": 48, "y": 0, "width": 2, "height": 20}
+				{"sprite": "flexconfig:button/disabled_r", "x": 48, "y": 0, "width": 2, "height": 20},
+				{"sprite": "flexconfig:tab/off_l", "x": 50, "y": 0, "width": 2, "height": 24},
+				{"sprite": "flexconfig:tab/off_m", "x": 52, "y": 0, "width": 1, "height": 24},
+				{"sprite": "flexconfig:tab/off_r", "x": 53, "y": 0, "width": 2, "height": 24},
+				{"sprite": "flexconfig:tab/off_hover_l", "x": 55, "y": 0, "width": 2, "height": 24},
+				{"sprite": "flexconfig:tab/off_hover_m", "x": 57, "y": 0, "width": 1, "height": 24},
+				{"sprite": "flexconfig:tab/off_hover_r", "x": 58, "y": 0, "width": 2, "height": 24},
+				{"sprite": "flexconfig:tab/on_l", "x": 60, "y": 0, "width": 2, "height": 22},
+				{"sprite": "flexconfig:tab/on_m", "x": 62, "y": 0, "width": 1, "height": 22},
+				{"sprite": "flexconfig:tab/on_r", "x": 63, "y": 0, "width": 2, "height": 22}
 			]
 		},
 		{
@@ -92,6 +84,18 @@
 				{"sprite": "flexconfig:scrollbar/top", "x": 0, "y": 0, "width": 8, "height": 2},
 				{"sprite": "flexconfig:scrollbar/mid", "x": 0, "y": 10, "width": 8, "height": 1},
 				{"sprite": "flexconfig:scrollbar/bottom", "x": 0, "y": 15, "width": 8, "height": 5}
+			]
+		},
+		{
+			"type": "unstitch",
+			"resource": "flexconfig:gui/icons",
+			"divisor_x": 64,
+			"divisor_y": 16,
+			"regions": [
+				{"sprite": "flexconfig:icon/reset", "x": 0, "y": 0, "width": 16, "height": 16},
+				{"sprite": "flexconfig:icon/undo", "x": 16, "y": 0, "width": 16, "height": 16},
+				{"sprite": "flexconfig:icon/lock", "x": 32, "y": 0, "width": 16, "height": 16},
+				{"sprite": "flexconfig:icon/unlock", "x": 48, "y": 0, "width": 16, "height": 16}
 			]
 		}
 	]

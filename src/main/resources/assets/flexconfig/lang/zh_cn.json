@@ -149,6 +149,8 @@
 	"flexconfig.locked.tooltip": "此配置值已被服务器锁定",
 	"flexconfig.other_mods": "访问其他模组的配置",
 	"flexconfig.other_mods.none": "没有其他模组使用 FlexConfig",
+	"flexconfig.other_mods.no_match": "没有匹配的模组",
+	"flexconfig.other_mods.search": "搜索模组…",
 	"flexconfig.other_mods.title": "访问模组配置",
 	"flexconfig.quit.confirm": "确认",
 	"flexconfig.quit.confirm.title": "放弃更改？",

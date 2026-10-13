@@ -32,8 +32,7 @@ public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C,
 			List.of(node.getValueType().getEnumConstants()),
 			this::getDisplayComponent,
 			this::getValue,
-			this::selectValue,
-			false
+			this::selectValue
 		);
 		popup.anchorTo(dropdownButton.getX(), dropdownButton.getY(), dropdownButton.getWidth(), dropdownButton.getHeight());
 		mc.setScreen(popup);

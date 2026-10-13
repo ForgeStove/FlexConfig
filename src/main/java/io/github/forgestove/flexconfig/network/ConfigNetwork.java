@@ -30,7 +30,13 @@ public final class ConfigNetwork {
 		var lockStore = lockStores.get(key);
 		if (lockStore == null) return;
 		if (payload.value().isEmpty()) lockStore.unlockEntry(payload.configId());
-		else lockStore.lockEntry(payload.configId(), payload.value());
+		else {
+			// 字符串 → TOML 原生值：按路径查到节点，交给 LockValueCodec 按字段类型转（找不到节点或类型不支持就忽略这条）
+			var node = ConfigRegistry.getRootConfigNode(key).getValueNode(payload.configId());
+			var typed = node == null ? null : LockValueCodec.toToml(node, payload.value());
+			if (typed == null) return;
+			lockStore.lockEntry(payload.configId(), typed);
+		}
 		ServerLockApplier.applyAll(key, lockStore);
 		broadcastLocks();
 	}
