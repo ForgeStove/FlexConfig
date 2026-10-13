@@ -1,11 +1,14 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.client.ClientUtil;
-import io.github.forgestove.flexconfig.client.gui.*;
+import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
 import io.github.forgestove.flexconfig.client.gui.components.OreButton;
+import io.github.forgestove.flexconfig.client.gui.popup.OreListPopupScreen;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
+
+import java.util.List;
 @SuppressWarnings("rawtypes")
 public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C, Enum> {
 	private final OreButton dropdownButton;
@@ -23,15 +26,17 @@ public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C,
 	private void openDropdown(OreButton button) {
 		var mc = ClientUtil.mc;
 		var screen = mc.screen;
-		if (screen == null || screen instanceof EnumDropdownScreen) return;
-		mc.setScreen(new EnumDropdownScreen(
-			node.getValueType().getEnumConstants(),
+		if (screen == null || screen instanceof OreListPopupScreen<?>) return;
+		var popup = new OreListPopupScreen<>(
+			screen,
+			List.of(node.getValueType().getEnumConstants()),
+			this::getDisplayComponent,
 			this::getValue,
 			this::selectValue,
-			this::getDisplayComponent,
-			screen,
-			dropdownButton
-		));
+			false
+		);
+		popup.anchorTo(dropdownButton.getX(), dropdownButton.getY(), dropdownButton.getWidth(), dropdownButton.getHeight());
+		mc.setScreen(popup);
 	}
 	@Override
 	protected void registerKeybindTask() {

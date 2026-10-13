@@ -1,30 +1,22 @@
 package io.github.forgestove.flexconfig.client.gui.components;
-import net.minecraft.client.gui.ComponentPath;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Renderable;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.events.AbstractContainerEventHandler;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.components.tabs.Tab;
-import net.minecraft.client.gui.components.tabs.TabManager;
+import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.events.*;
+import net.minecraft.client.gui.components.tabs.*;
 import net.minecraft.client.gui.layouts.LinearLayout;
-import net.minecraft.client.gui.narration.NarratableEntry;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.navigation.FocusNavigationEvent;
+import net.minecraft.client.gui.narration.*;
+import net.minecraft.client.gui.navigation.*;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent.TabNavigation;
-import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.util.Mth;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 /**
  * tab 栏 —— 替代原版 {@code TabNavigationBar}（它的构造是包私有、按钮由它内部 new，无法只换按钮）。
  * 切换逻辑仍走原版 {@link TabManager}，这里只做摆放、事件与键盘。
  */
-public final class OreTabNavigationBar extends AbstractContainerEventHandler implements Renderable, NarratableEntry {
+public class OreTabNavigationBar extends AbstractContainerEventHandler implements Renderable, NarratableEntry {
 	private static final int MAX_WIDTH = 400;
 	private static final int MARGIN_X = 14;
 	/** 列表顶部分隔线占的高度，栏底要给它留出来，tab 才正好坐在线上。 */
@@ -48,6 +40,31 @@ public final class OreTabNavigationBar extends AbstractContainerEventHandler imp
 	public boolean keyPressed(int keyCode) {
 		return keyPressed(keyCode, 0, 0);
 	}
+	/** Ctrl+数字选第 n 个、Ctrl+Tab / Ctrl+Shift+Tab 前后循环。 */
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (!Screen.hasControlDown()) return false;
+		var index = nextTabIndex(keyCode);
+		if (index == -1) return false;
+		selectTab(Mth.clamp(index, 0, tabs.size() - 1), true);
+		return true;
+	}
+	private int nextTabIndex(int keyCode) {
+		if (keyCode >= 49 && keyCode <= 57) return keyCode - 49;
+		if (keyCode != 258) return -1;
+		var step = Screen.hasShiftDown() ? -1 : 1;
+		return Mth.positiveModulo(tabs.indexOf(tabManager.getCurrentTab()) + step, tabs.size());
+	}
+	public void selectTab(int index, boolean playSound) {
+		if (isFocused()) setFocused(buttons.get(index));
+		else tabManager.setCurrentTab(tabs.get(index), playSound);
+	}
+	/** 焦点落到某个 tab 按钮上即切换该 tab。 */
+	@Override
+	public void setFocused(@Nullable GuiEventListener listener) {
+		super.setFocused(listener);
+		if (listener instanceof OreTabButton button) tabManager.setCurrentTab(button.tab(), true);
+	}
 	public void setWidth(int width) {
 		this.width = width;
 	}
@@ -59,21 +76,16 @@ public final class OreTabNavigationBar extends AbstractContainerEventHandler imp
 	public boolean isMouseOver(double mouseX, double mouseY) {
 		return getRectangle().containsPoint((int) mouseX, (int) mouseY);
 	}
-	/** 焦点落到某个 tab 按钮上即切换该 tab。 */
 	@Override
-	public void setFocused(@Nullable GuiEventListener listener) {
-		super.setFocused(listener);
-		if (listener instanceof OreTabButton button) tabManager.setCurrentTab(button.tab(), true);
+	public @NotNull ScreenRectangle getRectangle() {
+		var rect = layout.getRectangle();
+		return new ScreenRectangle(rect.left(), rect.top(), rect.width(), rect.height() + SEPARATOR_HEIGHT);
 	}
 	@Override
 	public void setFocused(boolean focused) {
 		super.setFocused(focused);
 		var current = getFocused();
 		if (!focused && current != null) current.setFocused(false);
-	}
-	public void selectTab(int index, boolean playSound) {
-		if (isFocused()) setFocused(buttons.get(index));
-		else tabManager.setCurrentTab(tabs.get(index), playSound);
 	}
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -100,26 +112,6 @@ public final class OreTabNavigationBar extends AbstractContainerEventHandler imp
 		layout.arrangeElements();
 		layout.setX(Mth.roundToward((width - usable) / 2, 2));
 		layout.setY(0);
-	}
-	@Override
-	public @NotNull ScreenRectangle getRectangle() {
-		var rect = layout.getRectangle();
-		return new ScreenRectangle(rect.left(), rect.top(), rect.width(), rect.height() + SEPARATOR_HEIGHT);
-	}
-	/** Ctrl+数字选第 n 个、Ctrl+Tab / Ctrl+Shift+Tab 前后循环。 */
-	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if (!Screen.hasControlDown()) return false;
-		var index = nextTabIndex(keyCode);
-		if (index == -1) return false;
-		selectTab(Mth.clamp(index, 0, tabs.size() - 1), true);
-		return true;
-	}
-	private int nextTabIndex(int keyCode) {
-		if (keyCode >= 49 && keyCode <= 57) return keyCode - 49;
-		if (keyCode != 258) return -1;
-		var step = Screen.hasShiftDown() ? -1 : 1;
-		return Mth.positiveModulo(tabs.indexOf(tabManager.getCurrentTab()) + step, tabs.size());
 	}
 	/** 焦点进入栏时落到当前 tab 按钮上。 */
 	@Override

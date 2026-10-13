@@ -3,7 +3,7 @@ import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.api.CrossRefreshable;
 import io.github.forgestove.flexconfig.client.gui.components.OreScrollbar;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
-import io.github.forgestove.flexconfig.client.gui.factory.*;
+import io.github.forgestove.flexconfig.client.gui.factory.Highlight;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> {
-	/** Ore UI 卡片底色（官方设计表 {@code #48494A}）。 */
-	private static final int CARD_COLOR = 0xFF48494A;
 	private final Screen screen;
 	private final Highlight highlight = new Highlight(() -> children().indexOf(getHovered()), this::getRowTop);
 	/** 滚动量这里有两个持有者：行定位仍走原版的 {@code scrollAmount}，每帧互相同步。 */
@@ -70,9 +68,9 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		scrollbar.wheel(vertical);
 		return true;
 	}
+	/** 列表背景透明：不铺任何底色，露出屏后的世界（原版模糊背景）。 */
 	@Override
 	protected void renderListBackground(@NotNull GuiGraphics gui) {
-		gui.fill(getX(), getY(), getRight(), getBottom(), CARD_COLOR);
 	}
 	/** 关掉原版滚动条，改由 {@link OreScrollbar} 画。 */
 	@Override

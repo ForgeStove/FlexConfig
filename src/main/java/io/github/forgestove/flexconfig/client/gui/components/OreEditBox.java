@@ -1,11 +1,9 @@
 package io.github.forgestove.flexconfig.client.gui.components;
 import io.github.forgestove.flexconfig.client.gui.FlexGuiTextures;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 /**
  * 输入框：填充 + 顶部内阴影 + 描边，聚焦时零间隙套一圈白环，禁用时整体转浅灰。
  * 每状态一张完整贴图 + atlas 三段切（同 tab / 按钮）。
@@ -14,8 +12,11 @@ import org.jetbrains.annotations.Nullable;
  * 但 {@link #getInnerWidth()} 也走那个方法，所以要一并拨回。
  */
 public class OreEditBox extends EditBox {
-	private record Box(FlexGuiTextures left, FlexGuiTextures mid, FlexGuiTextures right) {}
-	private static final Box NORMAL = new Box(FlexGuiTextures.FIELD_NORMAL_L, FlexGuiTextures.FIELD_NORMAL_M, FlexGuiTextures.FIELD_NORMAL_R);
+	private static final Box NORMAL = new Box(
+		FlexGuiTextures.FIELD_NORMAL_L,
+		FlexGuiTextures.FIELD_NORMAL_M,
+		FlexGuiTextures.FIELD_NORMAL_R
+	);
 	private static final Box DISABLED = new Box(
 		FlexGuiTextures.FIELD_DISABLED_L,
 		FlexGuiTextures.FIELD_DISABLED_M,
@@ -28,6 +29,10 @@ public class OreEditBox extends EditBox {
 		super(font, x, y, width, height, message);
 		setTextColor(0xFFFFFFFF);
 		setTextColorUneditable(TEXT_DISABLED);
+	}
+	public static void onScreenMouseClicked(double mouseX, double mouseY) {
+		if (focusedInstance == null) return;
+		if (!focusedInstance.isMouseOver(mouseX, mouseY)) focusedInstance.setFocused(false);
 	}
 	/** 关掉原版背景（自绘），但 {@code bordered} 字段保持 true 以保住文字排版。 */
 	@Override
@@ -56,10 +61,6 @@ public class OreEditBox extends EditBox {
 			gui.renderOutline(getX() - inset, getY() - inset, getWidth() + 2 * inset, getHeight() + 2 * inset, RING);
 		}
 	}
-	public static void onScreenMouseClicked(double mouseX, double mouseY) {
-		if (focusedInstance == null) return;
-		if (!focusedInstance.isMouseOver(mouseX, mouseY)) focusedInstance.setFocused(false);
-	}
 	@Override
 	public void setFocused(boolean focused) {
 		if (focused && focusedInstance != this) {
@@ -68,4 +69,5 @@ public class OreEditBox extends EditBox {
 		} else if (!focused && focusedInstance == this) focusedInstance = null;
 		super.setFocused(focused);
 	}
+	private record Box(FlexGuiTextures left, FlexGuiTextures mid, FlexGuiTextures right) {}
 }

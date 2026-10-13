@@ -46,8 +46,8 @@ public final class CategoryCollapsibleConfigEntry extends ConfigEntry {
 		clickWidget.setRectangle(entryWidth, entryHeight, x, y);
 		var prefix = expanded ? EXPANDED_PREFIX : COLLAPSED_PREFIX;
 		var font = ClientUtil.mc.font;
-		gui.drawString(font, prefix, x + indent, y + 5, 0xAAAAAA, false);
-		gui.drawString(font, label.getVisualOrderText(), x + indent + font.width(prefix), y + 5, -1, false);
+		gui.drawString(font, prefix, x + indent, y + 5, 0xAAAAAA, true);
+		gui.drawString(font, label.getVisualOrderText(), x + indent + font.width(prefix), y + 5, -1, true);
 	}
 	@NotNull
 	@Override

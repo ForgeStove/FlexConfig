@@ -12,7 +12,8 @@ public final class FlexConfigModMenu implements ModMenuApi {
 	@Environment(EnvType.CLIENT)
 	public ConfigScreenFactory<?> getModConfigScreenFactory() {
 		// 本模组没注册过配置时不提供入口（发布产物里没有演示配置），免得点开就抛未初始化异常
-		return ConfigRegistry.getHandlers(FlexConfig.ID).isEmpty() ? null :
-			parent -> FlexConfigScreenFactory.createConfigScreen(FlexConfig.ID);
+		return ConfigRegistry.getHandlers(FlexConfig.ID).isEmpty()
+			? null
+			: parent -> FlexConfigScreenFactory.createConfigScreen(FlexConfig.ID);
 	}
 }

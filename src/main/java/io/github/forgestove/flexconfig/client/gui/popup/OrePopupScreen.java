@@ -1,0 +1,233 @@
+package io.github.forgestove.flexconfig.client.gui.popup;
+import io.github.forgestove.flexconfig.client.ClientUtil;
+import io.github.forgestove.flexconfig.client.gui.components.OreCursor;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.*;
+import net.minecraft.util.Mth;
+import org.jetbrains.annotations.*;
+/**
+ * Ore UI 通用弹窗基类。
+ * <p>
+ * 做成独立 {@link Screen}：鼠标与键盘由 MC 隔离，父界面不必转发任何事件。
+ * 渲染时先把父界面压到 z 后方画一遍当背景，再画 Ore 面板 —— 全屏模糊由空的 {@link #renderBackground} 覆写顶掉。
+ * 控件循环不自己遍历：{@code Screen#renderables} 在 Fabric 侧是 private，只有 NeoForge 放宽成了 public。
+ * <p>
+ * 几何：子类只报内容尺寸，位置由基类算 —— 锚定触发控件（优先在其下展开）或居中，最后钳回屏内。
+ */
+public abstract class OrePopupScreen extends Screen {
+	/** Ore 面板配色：正文本底 / 描边 / 带子底 / 上·左亮边 / 下·右暗边（都是纯色，直接画、无需纹理）。 */
+	protected static final int SURFACE = 0xFF313233, BORDER = 0xFF1E1E1F, BAND = 0xFF48494A;
+	protected static final int LIGHT = 0xFF6B6B6C, DARK = 0xFF5A5B5C;
+	/** 标题与 ✕ 的文字/线条色。 */
+	protected static final int TEXT_COLOR = 0xFFFFFFFF;
+	/** 面板内边距、标题栏高度、底栏高度、九宫格角尺寸、三段切端帽宽。 */
+	protected static final int PAD = 3, HEADER_H = 18, FOOTER_H = 54;
+	/** ✕ 的边长、右留白；命中/高亮框边长见 {@link #closeSize()}。 */
+	private static final int CLOSE_SIZE = 7, CLOSE_MARGIN = 5;
+	private static final int CLOSE_HOVER = 0xFF56585B;
+	protected final Screen parent;
+	@Nullable private final Component title;
+	protected int panelX, panelY, panelWidth, panelHeight;
+	/** 触发控件矩形；为 null 表示居中模态。 */
+	@Nullable private Rect anchor;
+	protected OrePopupScreen(@NotNull Screen parent, @Nullable Component title) {
+		super(CommonComponents.EMPTY);
+		this.parent = parent;
+		this.title = title;
+	}
+	/** 锚定到触发控件：优先在其正下方展开，放不下则改到上方，最后钳回屏内。 */
+	public void anchorTo(int x, int y, int width, int height) {
+		anchor = new Rect(x, y, width, height);
+	}
+	/** 居中模态。 */
+	protected void useCenter() {
+		anchor = null;
+	}
+	/** 在面板内容区上绘制（子类）。 */
+	protected void renderContent(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {}
+	protected final int contentX() {
+		return panelX + PAD;
+	}
+	protected final int contentY() {
+		return panelY + PAD + headerHeight();
+	}
+	protected final int headerHeight() {
+		return title == null ? 0 : HEADER_H;
+	}
+	protected final int contentW() {
+		return panelWidth - PAD * 2;
+	}
+	protected final int contentH() {
+		return panelHeight - PAD * 2 - headerHeight() - footerHeight();
+	}
+	protected final int footerHeight() {
+		return hasFooter() ? FOOTER_H : 0;
+	}
+	/** 是否画底栏（放按钮的实色带）；默认无。 */
+	protected boolean hasFooter() {
+		return false;
+	}
+	@Override
+	protected void init() {
+		super.init();
+		relayout();       // 先定面板矩形，子控件按它创建（如搜索框宽度）
+		buildWidgets();
+		relayout();       // 控件就位后再摆一遍
+	}
+	/** 重算面板矩形并摆放内容。⚠️ 两条分支都必须走到 {@link #layoutContent()} —— 居中模态曾在这里提前 return，导致子控件从未被摆过。 */
+	protected final void relayout() {
+		panelWidth = Math.min(contentWidth() + PAD * 2, width);
+		panelHeight = Math.min(contentHeight() + PAD * 2 + headerHeight() + footerHeight(), height);
+		if (anchor == null) {
+			panelX = (width - panelWidth) / 2;
+			panelY = (height - panelHeight) / 2;
+		} else {
+			panelX = Mth.clamp(anchorCenterX() - panelWidth / 2, 0, Math.max(0, width - panelWidth));
+			var below = anchorBottom();
+			panelY = below + panelHeight <= height ? below : Math.max(0, anchor.y() - panelHeight);
+		}
+		layoutContent();
+	}
+	/** 子类在此 {@code addRenderableWidget}；{@link #init()} 里调用一次。 */
+	protected void buildWidgets() {}
+	/** 内容区尺寸（不含内边距与标题栏）。 */
+	protected abstract int contentWidth();
+	protected abstract int contentHeight();
+	/** @return 锚点 X（居中于它）。 */
+	protected final int anchorCenterX() {
+		return anchor == null ? width / 2 : anchor.x() + anchor.width() / 2;
+	}
+	/** @return 锚点下缘；无锚点时返回 -1。 */
+	protected final int anchorBottom() {
+		return anchor == null ? -1 : anchor.y() + anchor.height();
+	}
+	/** 按已定的面板矩形摆放子控件。 */
+	protected void layoutContent() {}
+	/** 窗口尺寸变化只走 {@code repositionElements}（见 {@link Screen#resize}），故在此重算。 */
+	@Override
+	protected void repositionElements() {
+		relayout();
+	}
+	@Override
+	public void resize(@NotNull Minecraft minecraft, int width, int height) {
+		super.resize(minecraft, width, height);
+		parent.resize(minecraft, width, height);
+		relayout();
+	}
+	@Override
+	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+		renderParent(gui, partialTick);
+		renderPanel(gui, mouseX, mouseY);
+		renderContent(gui, mouseX, mouseY, partialTick);
+		if (title != null && isOverClose(mouseX, mouseY)) OreCursor.hand();
+		super.render(gui, mouseX, mouseY, partialTick);
+	}
+	/** 空覆写顶掉原版的全屏模糊 / 全景底：底已由 {@link #renderParent} 顶替。 */
+	@Override
+	public void renderBackground(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {}
+	/** 父界面画在下方：压到 z −100，并临时把 {@code mc.screen} 指回父界面（父界面渲染里可能读它）。 */
+	private void renderParent(@NotNull GuiGraphics gui, float partialTick) {
+		var pose = gui.pose();
+		pose.pushPose();
+		pose.translate(0, 0, -100);
+		var mc = ClientUtil.mc;
+		var previous = mc.screen;
+		mc.screen = parent;
+		try {
+			parent.render(gui, -1, -1, partialTick);
+		} finally {
+			// 父界面渲染若抛异常，mc.screen 会永久停在父界面上
+			mc.screen = previous;
+		}
+		pose.popPose();
+	}
+	private void renderPanel(@NotNull GuiGraphics gui, int mouseX, int mouseY) {
+		drawPanel(gui);
+		if (title != null) renderHeader(gui, title, mouseX, mouseY);
+		if (footerHeight() > 0) renderFooter(gui);
+	}
+	/** 面板：正文本底 + 1px 描边。 */
+	private void drawPanel(@NotNull GuiGraphics gui) {
+		gui.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, SURFACE);
+		gui.renderOutline(panelX, panelY, panelWidth, panelHeight, BORDER);
+	}
+	/** 标题栏：底色 + 上·左亮边 + 下·右暗边 + 居中粗体标题 + 右侧关闭 ✕（悬停垫一层高亮）。 */
+	private void renderHeader(@NotNull GuiGraphics gui, @NotNull Component title, int mouseX, int mouseY) {
+		var x = panelX + 1;        // 内缩 1px：别盖住面板那圈描边
+		var y = panelY + 1;
+		var w = panelWidth - 2;
+		var bottom = y + HEADER_H;
+		gui.fill(x, y, x + w, bottom, BAND);
+		gui.fill(x, y, x + w, y + 1, LIGHT);                        // 上亮边
+		gui.fill(x, y + 1, x + 1, bottom - 1, LIGHT);               // 左亮边
+		gui.fill(x, bottom - 1, x + w, bottom, DARK);               // 下暗边
+		gui.fill(x + w - 1, y + 1, x + w, bottom - 1, DARK);        // 右暗边
+		var text = title.copy().withStyle(ChatFormatting.BOLD);
+		gui.drawString(font, text.getVisualOrderText(), x + w / 2 - font.width(text) / 2, y + (HEADER_H - 8) / 2, TEXT_COLOR, true);
+		if (isOverClose(mouseX, mouseY))
+			gui.fill(closeLeft(), closeTop(), closeLeft() + closeSize(), closeTop() + closeSize(), CLOSE_HOVER);
+		drawClose(gui);
+	}
+	/** 底栏：底色 + 上缘亮线。 */
+	private void renderFooter(@NotNull GuiGraphics gui) {
+		var x = panelX + 1;        // 内缩 1px：别盖住面板那圈描边
+		var w = panelWidth - 2;
+		var y = panelY + panelHeight - 1 - FOOTER_H;
+		gui.fill(x, y, x + w, y + FOOTER_H, BAND);
+		gui.fill(x, y, x + w, y + 1, DARK);
+	}
+	/** 关闭 ✕：两条 1px 对角线。 */
+	private void drawClose(@NotNull GuiGraphics gui) {
+		var x = closeX();
+		var y = closeY();
+		for (var i = 0; i < CLOSE_SIZE; i++) {
+			gui.fill(x + i, y + i, x + i + 1, y + i + 1, TEXT_COLOR);
+			gui.fill(x + CLOSE_SIZE - 1 - i, y + i, x + CLOSE_SIZE - i, y + i + 1, TEXT_COLOR);
+		}
+	}
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (isOutsidePanel(mouseX, mouseY) || title != null && isOverClose(mouseX, mouseY)) {
+			onClose();
+			return true;
+		}
+		return super.mouseClicked(mouseX, mouseY, button);
+	}
+	protected final boolean isOutsidePanel(double mouseX, double mouseY) {
+		return mouseX < panelX || mouseX >= panelX + panelWidth || mouseY < panelY || mouseY >= panelY + panelHeight;
+	}
+	private boolean isOverClose(double mouseX, double mouseY) {
+		return mouseX >= closeLeft() && mouseX < closeLeft() + closeSize() && mouseY >= closeTop() && mouseY < closeTop() + closeSize();
+	}
+	/** 关闭即回到父界面，不走 {@code Screen} 的弹出界面栈。 */
+	@Override
+	public void onClose() {
+		ClientUtil.mc.setScreen(parent);
+	}
+	private int closeLeft() {
+		return closeX() + (CLOSE_SIZE - closeSize()) / 2;
+	}
+	/** 命中 / 悬停高亮框：边长 = **标题栏高度 − 2**，与 ✕ 同心。 */
+	private int closeSize() {
+		return HEADER_H - 3;
+	}
+	private int closeTop() {
+		return closeY() + (CLOSE_SIZE - closeSize()) / 2;
+	}
+	private int closeX() {
+		return panelX + panelWidth - 1 - CLOSE_MARGIN - CLOSE_SIZE;
+	}
+	private int closeY() {
+		return panelY + 1 + (HEADER_H - CLOSE_SIZE) / 2;
+	}
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+		if (isOutsidePanel(mouseX, mouseY)) return true;
+		return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
+	}
+	/** 锚点矩形（避免为它依赖 {@code ScreenRectangle}）。 */
+	protected record Rect(int x, int y, int width, int height) {}
+}

@@ -65,13 +65,20 @@ public enum FlexGuiTextures {
 	// 滚动条：滑块三段切（上帽 / 可拉伸中段 / 下帽）；轨道是纯色细线，运行时直接 fill
 	SCROLLBAR_TOP("scrollbar/top"),
 	SCROLLBAR_MID("scrollbar/mid"),
-	SCROLLBAR_BOTTOM("scrollbar/bottom");
+	SCROLLBAR_BOTTOM("scrollbar/bottom"),
+	// 行内动作图标：9×9 单色精灵（重置 / 撤销 / 锁定 / 解锁 / 取色）
+	ICON_RESET("icon/reset"),
+	ICON_UNDO("icon/undo"),
+	ICON_LOCK("icon/lock"),
+	ICON_UNLOCK("icon/unlock"),
+	ICON_COLOR("icon/color");
 	private final ResourceLocation sprite;
 	FlexGuiTextures(String path) {
 		sprite = ResourceLocation.fromNamespaceAndPath("flexconfig", path);
 	}
-	private @NotNull TextureAtlasSprite sprite() {
-		return ClientUtil.mc.getGuiSprites().getSprite(sprite);
+	/** 按精灵自身尺寸绘制到 (x, y)。 */
+	public void render(@NotNull GuiGraphics gui, int x, int y) {
+		gui.blitSprite(sprite, x, y, width(), height());
 	}
 	/** 由 atlas region 决定，随资源包变。 */
 	@SuppressWarnings("resource")
@@ -83,12 +90,17 @@ public enum FlexGuiTextures {
 	public int height() {
 		return sprite().contents().height();
 	}
-	/** 按精灵自身尺寸绘制到 (x, y)。 */
-	public void render(@NotNull GuiGraphics gui, int x, int y) {
-		gui.blitSprite(sprite, x, y, width(), height());
+	private @NotNull TextureAtlasSprite sprite() {
+		return ClientUtil.mc.getGuiSprites().getSprite(sprite);
 	}
-	/** 拉伸到指定尺寸绘制（三段切的中段、要按控件宽高伸缩的精灵用）。 */
+	/**
+	 * 按尺寸绘制（**拉伸**）。
+	 * <p>
+	 * 中段/边这类精灵**沿拉伸方向是纯色**（生成器保证：1px 的描边/高光都落在九宫格的**角/边**上，不在被拉伸的中间单元里），
+	 * 所以拉伸与平铺**逐像素一致** —— 而平铺（尤其九宫格那种 2px 单元）会让一帧产生上万次 {@code blitSprite}，直接掉帧。
+	 */
 	public void render(@NotNull GuiGraphics gui, int x, int y, int width, int height) {
+		if (width <= 0 || height <= 0) return;
 		gui.blitSprite(sprite, x, y, width, height);
 	}
 }

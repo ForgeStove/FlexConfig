@@ -3,12 +3,12 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.*;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
-import io.github.forgestove.flexconfig.client.gui.components.OreButton;
 import io.github.forgestove.flexconfig.client.gui.api.*;
+import io.github.forgestove.flexconfig.client.gui.components.OreButton;
 import io.github.forgestove.flexconfig.client.gui.factory.KeybindState;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 

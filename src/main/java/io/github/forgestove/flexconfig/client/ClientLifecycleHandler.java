@@ -1,7 +1,7 @@
 package io.github.forgestove.flexconfig.client;
 import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.api.ConfigType;
-import io.github.forgestove.flexconfig.client.gui.*;
+import io.github.forgestove.flexconfig.client.gui.ConfigScreen;
 import io.github.forgestove.flexconfig.client.gui.components.OreEditBox;
 import io.github.forgestove.flexconfig.platform.Platform;
 import net.minecraft.client.resources.language.I18n;

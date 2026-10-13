@@ -1,8 +1,8 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.FileKey;
 import io.github.forgestove.flexconfig.client.*;
-import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
-import io.github.forgestove.flexconfig.client.gui.components.OreButton;
+import io.github.forgestove.flexconfig.client.gui.*;
+import io.github.forgestove.flexconfig.client.gui.components.OreIconButton;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -23,9 +23,9 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 	 * 比别的类型多出一个 GAP。
 	 */
 	public static final int HALF_VALUE_WIDTH = (WIDTH - GAP) / 2;
-	public final OreButton resetButton;
-	public final OreButton undoButton;
-	public final OreButton lockButton;
+	public final OreIconButton resetButton;
+	public final OreIconButton undoButton;
+	public final OreIconButton lockButton;
 	public final ConfigCategoryTab<C, V> tab;
 	public final List<AbstractWidget> children = new ArrayList<>();
 	public final ValueConfigNode<C, V> node;
@@ -41,20 +41,14 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		var font = ClientUtil.mc.font;
 		tooltip = this.node.getTooltip() == null ? null : font.split(this.node.getTooltip(), 350);
 		tooltipWithError = getTooltipWithError();
-		resetButton = OreButton.of(Translation.RESET_LABEL, b -> resetToDefault())
-			.size(Math.max(font.width(Translation.RESET_LABEL) + 6, SIZE), SIZE)
-			.tooltip(Tooltip.create(Translation.RESET_TOOLTIP))
-			.build();
-		undoButton = OreButton.of(Translation.UNDO_LABEL, b -> resetToActive())
-			.size(Math.max(font.width(Translation.UNDO_LABEL) + 6, SIZE), SIZE)
-			.tooltip(Tooltip.create(Translation.UNDO_TOOLTIP))
-			.build();
+		resetButton = new OreIconButton(SIZE, FlexGuiTextures.ICON_RESET, b -> resetToDefault());
+		resetButton.setTooltip(Tooltip.create(Translation.RESET_TOOLTIP));
 		resetButton.active = !this.node.isDefaultValue(this.tab.config);
+		undoButton = new OreIconButton(SIZE, FlexGuiTextures.ICON_UNDO, b -> resetToActive());
+		undoButton.setTooltip(Tooltip.create(Translation.UNDO_TOOLTIP));
 		undoButton.active = !this.node.isActiveValue(this.tab.config);
-		lockButton = OreButton.of(Translation.UNLOCK_LABEL, b -> onLockToggle())
-			.size(Math.max(font.width(Translation.UNLOCK_LABEL) + 6, SIZE), SIZE)
-			.tooltip(Tooltip.create(Translation.UNLOCK_TOOLTIP))
-			.build();
+		lockButton = new OreIconButton(SIZE, FlexGuiTextures.ICON_UNLOCK, b -> onLockToggle());
+		lockButton.setTooltip(Tooltip.create(Translation.UNLOCK_TOOLTIP));
 		lockButton.active = canLock();
 		lockButton.visible = shouldShowLockButton();
 		children.add(resetButton);
@@ -121,10 +115,10 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		lockButton.visible = shouldShowLockButton();
 		lockButton.active = lockButton.visible && canLock();
 		if (locked) {
-			lockButton.setMessage(Translation.LOCKED_LABEL.copy().withStyle(ChatFormatting.RED));
+			lockButton.setIcon(FlexGuiTextures.ICON_LOCK);
 			lockButton.setTooltip(Tooltip.create(Translation.LOCKED_TOOLTIP));
 		} else {
-			lockButton.setMessage(Translation.UNLOCK_LABEL.copy().withStyle(ChatFormatting.GREEN));
+			lockButton.setIcon(FlexGuiTextures.ICON_UNLOCK);
 			lockButton.setTooltip(Tooltip.create(Translation.UNLOCK_TOOLTIP));
 		}
 	}
@@ -176,7 +170,7 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		var label = ConfigCategoryTab.styleAsState(this.label, hasError(), hasChanged);
 		if (isLocked()) label = label.copy().withStyle(ChatFormatting.GRAY, ChatFormatting.STRIKETHROUGH);
 		else if (!tab.screen.isEditable()) label = label.copy().withStyle(ChatFormatting.GRAY);
-		gui.drawString(ClientUtil.mc.font, label.getVisualOrderText(), x + indent, y + 5, -1, false);
+		gui.drawString(ClientUtil.mc.font, label.getVisualOrderText(), x + indent, y + 5, -1, true);
 		var right = x + width;
 		for (var widget : widgets) {
 			if (!widget.visible) continue;

@@ -3,7 +3,7 @@ import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
 import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.*;
-import io.github.forgestove.flexconfig.network.*;
+import io.github.forgestove.flexconfig.network.ConfigLockPayload;
 import io.github.forgestove.flexconfig.platform.Platform;
 import org.jetbrains.annotations.*;
 import org.slf4j.Logger;

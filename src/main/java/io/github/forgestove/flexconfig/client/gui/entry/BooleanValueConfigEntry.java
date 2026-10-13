@@ -4,7 +4,7 @@ import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
 import io.github.forgestove.flexconfig.client.gui.components.OreSwitchButton;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.AbstractWidget;
 public final class BooleanValueConfigEntry<C> extends CapturableValueConfigEntry<C, Boolean> {
 	private final OreSwitchButton valueSwitch;
 	public BooleanValueConfigEntry(ConfigCategoryTab<C, Boolean> tab, ValueConfigNode<C, Boolean> node) {

@@ -1,6 +1,6 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.client.ClientUtil;
-import io.github.forgestove.flexconfig.client.gui.*;
+import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
 import io.github.forgestove.flexconfig.client.gui.components.OreEditBox;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;

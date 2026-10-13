@@ -4,7 +4,7 @@ import io.github.forgestove.flexconfig.client.gui.components.OreTabButton;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.tabs.Tab;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.network.chat.Component;

@@ -2,8 +2,7 @@ package io.github.forgestove.flexconfig.demo;
 import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.api.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 /**
  * 开发期演示配置的服务端一份：验证「同一模组多份配置」与 {@link ConfigType#SERVER} 的加载时机
  * （进世界才知道存档目录，连接时下发给客户端、客户端只读）。

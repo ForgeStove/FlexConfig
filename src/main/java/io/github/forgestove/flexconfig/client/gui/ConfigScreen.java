@@ -6,20 +6,20 @@ import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.api.CaptureHandler;
 import io.github.forgestove.flexconfig.client.gui.components.*;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
+import io.github.forgestove.flexconfig.client.gui.popup.OreConfirmPopupScreen;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.tabs.*;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.tabs.TabManager;
 import net.minecraft.client.gui.layouts.*;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
-import net.minecraft.client.gui.screens.*;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.*;
 import org.jetbrains.annotations.*;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 public final class ConfigScreen<C, V> extends Screen {
-	/** Ore UI 页面底色（官方设计表 {@code #313233}），与生成器 {@code TAB_SURFACE} 同值。 */
-	private static final int SURFACE_COLOR = 0xFF313233;
 	public static CategoryConfigNode<?> lastSelectedCategory;
 	public final RootConfigNode<C, V> root;
 	private final C config;
@@ -50,10 +50,37 @@ public final class ConfigScreen<C, V> extends Screen {
 			cacheTabIndex();
 			return true;
 		}
-		return super.keyPressed(keyCode, scanCode, modifiers);
+		if (super.keyPressed(keyCode, scanCode, modifiers)) return true;   // 聚焦的输入框先吃退格
+		if (keyCode == GLFW.GLFW_KEY_BACKSPACE) onClose();
+		return false;
 	}
 	private void cacheTabIndex() {
 		if (tabManager.getCurrentTab() instanceof ConfigCategoryTab<?, ?> tab) lastSelectedCategory = tab.node;
+	}
+	@Override
+	public void onClose() {
+		var mc = ClientUtil.mc;
+		if (isActiveValue()) {
+			mc.setScreen(parent);
+			return;
+		}
+		mc.setScreen(new OreConfirmPopupScreen(
+			this,
+			confirmed -> {
+				if (confirmed) handler.restoreTriggerKeybinds(savedTriggerKeybinds);
+				mc.setScreen(confirmed ? parent : this);
+			},
+			Translation.QUIT_CONFIRM_TITLE,
+			Translation.QUIT_CONFIRM_WARNING,
+			Translation.QUIT_CONFIRM_LABEL,
+			OreButton.Style.DESTRUCTIVE,
+			Translation.CANCEL_LABEL
+		));
+	}
+	private boolean isActiveValue() {
+		if (ClientLockManager.hasPendingLocks()) return false;
+		if (!root.isActiveValue(config) || keybindCategory != null && !keybindCategory.isActiveValue(config)) return false;
+		return savedTriggerKeybinds.equals(handler.getAllTriggerKeybinds());
 	}
 	@Override
 	protected void init() {
@@ -76,7 +103,7 @@ public final class ConfigScreen<C, V> extends Screen {
 		initTabLayout();
 		var buttonWidth = ConfigEntry.SIZE * 8;
 		cancelButton = new OreButton(buttonWidth, getCancelLabel(), getCancelStyle(), b -> onClose());
-		saveButton = new OreButton(buttonWidth, getSaveLabel(false), OreButton.Style.PRIMARY, b -> saveAndQuit());
+		saveButton = new OreButton(buttonWidth, Translation.SAVE_CHANGES_LABEL, OreButton.Style.PRIMARY, b -> saveAndQuit());
 		var footerLyt = layout.addToFooter(LinearLayout.horizontal().spacing(8));
 		footerLyt.addChild(cancelButton);
 		footerLyt.addChild(saveButton);
@@ -118,28 +145,6 @@ public final class ConfigScreen<C, V> extends Screen {
 	private OreButton.Style getCancelStyle() {
 		return isActiveValue() ? OreButton.Style.SECONDARY : OreButton.Style.DESTRUCTIVE;
 	}
-	@Override
-	public void onClose() {
-		var mc = ClientUtil.mc;
-		if (isActiveValue()) {
-			mc.setScreen(parent);
-			return;
-		}
-		mc.setScreen(new OreConfirmScreen(
-			confirmed -> {
-				if (confirmed) handler.restoreTriggerKeybinds(savedTriggerKeybinds);
-				mc.setScreen(confirmed ? parent : this);
-			},
-			Translation.QUIT_CONFIRM_TITLE,
-			Translation.QUIT_CONFIRM_WARNING,
-			Translation.QUIT_CONFIRM_LABEL,
-			OreButton.Style.DESTRUCTIVE,
-			Translation.CANCEL_LABEL
-		));
-	}
-	private Component getSaveLabel(boolean hasEntryError) {
-		return isEditable() && validate() == null && !hasEntryError ? Translation.SAVE_LABEL : Translation.CANNOT_SAVE_LABEL;
-	}
 	public void saveAndQuit() {
 		if (!isEditable()) return;
 		var restartType = root.restartType(config);
@@ -151,10 +156,6 @@ public final class ConfigScreen<C, V> extends Screen {
 		ClientLockManager.flushPendingLocks();
 		savedTriggerKeybinds = new LinkedHashMap<>(handler.getAllTriggerKeybinds());
 		mc.setScreen(restartScreen(restartType));
-	}
-	@Override
-	public void renderBackground(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-		gui.fill(0, 0, width, height, SURFACE_COLOR);
 	}
 	@Override
 	protected void repositionElements() {
@@ -171,24 +172,12 @@ public final class ConfigScreen<C, V> extends Screen {
 			if (tabs.get(i).node == lastSelectedCategory) return i;
 		return 0;
 	}
-	private boolean isActiveValue() {
-		if (ClientLockManager.hasPendingLocks()) return false;
-		if (!root.isActiveValue(config) || keybindCategory != null && !keybindCategory.isActiveValue(config)) return false;
-		return savedTriggerKeybinds.equals(handler.getAllTriggerKeybinds());
-	}
-	/** 远端连服、或单人存档已对局域网开放时，SERVER 型由服务端权威，客户端不可改。 */
+	/**
+	 * 客户端即服务端（房主）时可改：只看有没有内置服务端，<b>与存档是否开 LAN 无关</b> ——
+	 * 房主就是那台内置服务端的主人；入服的玩家（LAN / 远程）没有内置服务端，天然只读。
+	 */
 	public boolean isEditable() {
-		if (handler.getType() != ConfigType.SERVER) return true;
-		var mc = ClientUtil.mc;
-		if (!mc.isSingleplayer()) return false;
-		var server = mc.getSingleplayerServer();
-		return server == null || !server.isPublished();
-	}
-	private @Nullable Component validate() {
-		var rootError = root.validate(config);
-		if (rootError != null) return rootError;
-		if (keybindCategory != null) return keybindCategory.validate(config);
-		return null;
+		return handler.getType() != ConfigType.SERVER || ClientUtil.mc.hasSingleplayerServer();
 	}
 	/** 按重启级别给出后续界面：重载世界给「返回标题界面」，重启游戏给「退出游戏」。 */
 	private Screen restartScreen(@Nullable RestartType restartType) {
@@ -196,7 +185,8 @@ public final class ConfigScreen<C, V> extends Screen {
 		var mc = ClientUtil.mc;
 		if (restartType == RestartType.WORLD) {
 			if (mc.level == null) return parent;   // 不在世界里，没有可重载的世界
-			return new OreConfirmScreen(
+			return new OreConfirmPopupScreen(
+				this,
 				confirmed -> {
 					if (confirmed) mc.disconnect();
 					else mc.setScreen(parent);
@@ -208,7 +198,8 @@ public final class ConfigScreen<C, V> extends Screen {
 				Translation.IGNORE_RESTART_LABEL
 			);
 		}
-		return new OreConfirmScreen(
+		return new OreConfirmPopupScreen(
+			this,
 			confirmed -> {
 				if (confirmed) mc.stop();
 				else mc.setScreen(parent);
@@ -223,10 +214,11 @@ public final class ConfigScreen<C, V> extends Screen {
 	public void refresh() {
 		tabs.forEach(ConfigCategoryTab::refresh);
 		var hasEntryError = tabs.stream().anyMatch(ConfigCategoryTab::hasEntryError);
-		saveButton.active = isEditable() && !isActiveValue() && validate() == null && !hasEntryError;
+		var blocked = saveBlockedReason(hasEntryError);
+		saveButton.active = blocked == null;
+		saveButton.setTooltip(Tooltip.create(blocked != null ? blocked : Translation.SAVE_CHANGES_TOOLTIP));
 		cancelButton.setMessage(getCancelLabel());
 		cancelButton.setStyle(getCancelStyle());
-		saveButton.setMessage(getSaveLabel(hasEntryError));
 	}
 	private void repositionTabLayout() {
 		if (tabNavigationBar == null) return;
@@ -237,6 +229,20 @@ public final class ConfigScreen<C, V> extends Screen {
 		tabManager.setTabArea(screenRectangle);
 		layout.setHeaderHeight(i);
 		layout.arrangeElements();
+	}
+	/** 保存键不可保存的原因；可保存时返回 {@code null}。 */
+	private @Nullable Component saveBlockedReason(boolean hasEntryError) {
+		if (!isEditable()) return Translation.tooltip(Translation.SAVE_UNAVAILABLE, Translation.SAVE_UNAVAILABLE_READ_ONLY);
+		if (validate() != null || hasEntryError)
+			return Translation.tooltip(Translation.SAVE_UNAVAILABLE, Translation.SAVE_UNAVAILABLE_INVALID);
+		if (isActiveValue()) return Translation.tooltip(Translation.SAVE_UNAVAILABLE, Translation.SAVE_UNAVAILABLE_NO_CHANGES);
+		return null;
+	}
+	private @Nullable Component validate() {
+		var rootError = root.validate(config);
+		if (rootError != null) return rootError;
+		if (keybindCategory != null) return keybindCategory.validate(config);
+		return null;
 	}
 	/** 由全局快捷键触发调用：将已由 entry 写入配置的值持久化到磁盘。 */
 	public void saveByKeybind() {

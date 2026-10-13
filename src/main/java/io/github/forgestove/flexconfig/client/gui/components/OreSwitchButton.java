@@ -6,7 +6,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
-public final class OreSwitchButton extends OreAbstractButton {
+public class OreSwitchButton extends OreAbstractButton {
 	/** 滑动时长与缓动曲线，对应 125ms cubic-bezier(.34, 1.56, .64, 1)。 */
 	private static final float SLIDE_MS = 125f;
 	private static final float CURVE_X1 = 0.34f, CURVE_Y1 = 1.56f, CURVE_X2 = 0.64f;
@@ -24,26 +24,26 @@ public final class OreSwitchButton extends OreAbstractButton {
 		progress = initialValue ? 1f : 0f;
 		this.onToggle = onToggle;
 	}
+	/** 控件宽 = 轨道宽，显示与交互范围一致。 */
+	public static int preferredWidth() {
+		return FlexGuiTextures.TOGGLE_TRACK.width();
+	}
 	/** 外部同步值，不触发回调。 */
 	public void setValue(boolean newValue) {
 		if (value == newValue) return;
 		value = newValue;
 		startSlide();
 	}
-	@Override
-	public void onPress() {
-		value = !value;
-		startSlide();
-		onToggle.accept(value);
-	}
 	private void startSlide() {
 		slideFrom = progress;
 		slideStart = Util.getMillis();
 		sliding = true;
 	}
-	/** 控件宽 = 轨道宽，显示与交互范围一致。 */
-	public static int preferredWidth() {
-		return FlexGuiTextures.TOGGLE_TRACK.width();
+	@Override
+	public void onPress() {
+		value = !value;
+		startSlide();
+		onToggle.accept(value);
 	}
 	@Override
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
@@ -60,7 +60,7 @@ public final class OreSwitchButton extends OreAbstractButton {
 		var thumbX = trackX + Math.round((trackW - thumbSize) * progress);
 		renderThumb(gui, thumbX, getY());
 		if (shouldRenderFocus()) renderRing(gui, thumbX, getY(), thumbSize);
-		if (active && isHoveredOrFocused()) OreCursor.hand();
+		renderCursor();
 	}
 	/** 按真实时间推进滑钮位置。 */
 	private void stepSlide() {
@@ -81,9 +81,6 @@ public final class OreSwitchButton extends OreAbstractButton {
 	private void renderTrack(@NotNull GuiGraphics gui, int x, int y) {
 		(active ? FlexGuiTextures.TOGGLE_TRACK : FlexGuiTextures.TOGGLE_TRACK_DISABLED).render(gui, x, y);
 	}
-	private void renderRing(@NotNull GuiGraphics gui, int x, int y, int size) {
-		gui.renderOutline(x - RING_W, y - RING_W, size + 2 * RING_W, size + 2 * RING_W, RING_COLOR);
-	}
 	private void renderThumb(@NotNull GuiGraphics gui, int x, int y) {
 		var texture = !active
 			? FlexGuiTextures.TOGGLE_THUMB_DISABLED
@@ -91,6 +88,9 @@ public final class OreSwitchButton extends OreAbstractButton {
 				? FlexGuiTextures.TOGGLE_THUMB_PRESSED
 				: isHovered() ? FlexGuiTextures.TOGGLE_THUMB_HOVER : FlexGuiTextures.TOGGLE_THUMB;
 		texture.render(gui, x, y);
+	}
+	private void renderRing(@NotNull GuiGraphics gui, int x, int y, int size) {
+		gui.renderOutline(x - RING_W, y - RING_W, size + 2 * RING_W, size + 2 * RING_W, RING_COLOR);
 	}
 	/** 求解 cubic-bezier(.34, 1.56, .64, 1)：先用二分法由 x 反解参数 t，再取其 y。 */
 	private static float ease(float x) {

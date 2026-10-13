@@ -11,9 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * 输入转 {@link #mousePressed} / {@link #release} / {@link #wheel}。
  * 若滚动量另有持有者（如原版列表的 {@code scrollAmount}），由它负责 {@link #seek} 同步进来、再推回去。
  */
-public final class OreScrollbar {
+public class OreScrollbar {
 	public static final int TRACK_COLOR = 0xFF58585A;
-	public static final int TRACK_WIDTH = 2;
 	/** 每 tick 走掉剩余差距的比例，越小越慢。 */
 	private static final double DECAY_PER_TICK = 0.25;
 	/** 残差小于此值就落位（px），免得永远差一点点。 */
@@ -62,8 +61,8 @@ public final class OreScrollbar {
 		scroll = Mth.lerp(1 - Math.pow(DECAY_PER_TICK, seconds * 20), scroll, target);
 		if (Math.abs(target - scroll) < SNAP_PX) scroll = target;
 	}
-	public boolean shown() {
-		return content > height;
+	private int maxScroll() {
+		return Math.max(0, content - height);
 	}
 	public void release() {
 		dragging = false;
@@ -71,8 +70,7 @@ public final class OreScrollbar {
 	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY) {
 		if (!shown()) return;
 		var thumbW = FlexGuiTextures.SCROLLBAR_TOP.width();
-		var trackX = x + (thumbW - TRACK_WIDTH) / 2;
-		gui.fill(trackX, y, trackX + TRACK_WIDTH, y + height, TRACK_COLOR);
+		gui.fill(x, y, x + thumbW, y + height, TRACK_COLOR);
 		var knobH = knobHeight();
 		var knobY = knobY(knobH);
 		var top = FlexGuiTextures.SCROLLBAR_TOP.height();
@@ -84,6 +82,25 @@ public final class OreScrollbar {
 		var shadowY = knobY + knobH;
 		if (shadowY < y + height) gui.fill(x, shadowY, x + thumbW, Math.min(shadowY + SHADOW_H, y + height), SHADOW_COLOR);
 		if (mouseX >= x && mouseX < x + thumbW && mouseY >= y && mouseY < y + height) OreCursor.hand();
+	}
+	public boolean shown() {
+		return content > height;
+	}
+	private int knobHeight() {
+		return shown() ? Math.max(MIN_KNOB_H, height * height / content) : 0;
+	}
+	private int knobY(int knobH) {
+		return (int) knobYExact(knobH);
+	}
+	/**
+	 * 未取整的滑块顶端位置。
+	 * <p>
+	 * 拖动时 {@code grab} 必须用它来算（不能用取整后的 {@link #knobY}）：{@link #dragTo} 的反函数是精确的，
+	 * 而取整会丢掉小数，于是每按一下滚动量就回落一点点 —— 表现为原地连点滑块一直往上爬。
+	 */
+	private double knobYExact(int knobH) {
+		var max = maxScroll();
+		return max > 0 ? y + (height - knobH) * (scroll / (double) max) : y;
 	}
 	/** 点在滑块上为抓取拖动，点在轨道空白处为翻页。鼠标不在滚动条上时返回 false。 */
 	public boolean mousePressed(double mouseX, double mouseY) {
@@ -108,24 +125,5 @@ public final class OreScrollbar {
 		if (travel <= 0) return;
 		var max = maxScroll();
 		scroll = target = Mth.clamp((mouseY - grab - y) * (double) max / travel, 0, max);
-	}
-	private int maxScroll() {
-		return Math.max(0, content - height);
-	}
-	private int knobHeight() {
-		return shown() ? Math.max(MIN_KNOB_H, height * height / content) : 0;
-	}
-	private int knobY(int knobH) {
-		return (int) knobYExact(knobH);
-	}
-	/**
-	 * 未取整的滑块顶端位置。
-	 * <p>
-	 * 拖动时 {@code grab} 必须用它来算（不能用取整后的 {@link #knobY}）：{@link #dragTo} 的反函数是精确的，
-	 * 而取整会丢掉小数，于是每按一下滚动量就回落一点点 —— 表现为原地连点滑块一直往上爬。
-	 */
-	private double knobYExact(int knobH) {
-		var max = maxScroll();
-		return max > 0 ? y + (height - knobH) * (scroll / (double) max) : y;
 	}
 }

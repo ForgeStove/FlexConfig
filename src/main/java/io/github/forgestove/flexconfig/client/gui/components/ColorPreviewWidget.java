@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.IntSupplier;
 /** 颜色预览色块：填满指定颜色 + Ore 描边；带 alpha 的颜色先垫一层棋盘格。 */
-public final class ColorPreviewWidget extends AbstractWidget {
+public class ColorPreviewWidget extends AbstractWidget {
 	private static final int BORDER = 0xFF1E1E1F;
 	private static final int CHECKER_LIGHT = 0xFFD0D1D4, CHECKER_DARK = 0xFF8C8D90;
 	private static final int CHECKER_SIZE = 4;

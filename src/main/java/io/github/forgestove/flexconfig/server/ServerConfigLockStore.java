@@ -19,8 +19,8 @@ public final class ServerConfigLockStore {
 	/** 锁定项，结构与配置文件一致；键由客户端传来的路径按点号分层。 */
 	private CommentedConfig locks = ConfigSerializer.inMemory();
 	public ServerConfigLockStore(MinecraftServer server, String modId, String fileName) {
-		lockFilePath = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/flexconfig/" + lockBaseName(fileName) + "_locks"
-			+ ".toml");
+		lockFilePath = server.getWorldPath(LevelResource.ROOT)
+			.resolve("serverconfig/flexconfig/" + lockBaseName(fileName) + "_locks" + ".toml");
 		legacyLockFilePath = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/" + modId + "_locks.toml");
 	}
 	/** 锁文件名去掉 .toml 后缀，例如 {@code flexconfig-client.toml} → {@code flexconfig-client}。 */

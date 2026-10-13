@@ -2,8 +2,7 @@ package io.github.forgestove.flexconfig.client.gui.components;
 import io.github.forgestove.flexconfig.client.gui.FlexGuiTextures;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.tabs.Tab;
-import net.minecraft.client.gui.components.tabs.TabManager;
+import net.minecraft.client.gui.components.tabs.*;
 import net.minecraft.client.sounds.SoundManager;
 import org.jetbrains.annotations.NotNull;
 /**
@@ -11,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * 盒子横向均匀、纵向才分层，所以用三段切拼（左右端帽贴齐 + 中段横向拉伸），配色全在纹理里。
  * 文字沿用 {@link AbstractButton} 的渲染 —— 禁用只改文字、不改盒子。
  */
-public final class OreTabButton extends OreAbstractButton {
-	private record Box(FlexGuiTextures left, FlexGuiTextures mid, FlexGuiTextures right) {}
+public class OreTabButton extends OreAbstractButton {
 	// 只有 3 种外观：ON（选中全状态 + 未选中按下）、OFF、OFF_HOVER；选中的差别只多一条下划线
 	private static final Box ON = new Box(FlexGuiTextures.TAB_ON_L, FlexGuiTextures.TAB_ON_M, FlexGuiTextures.TAB_ON_R);
 	private static final Box OFF = new Box(FlexGuiTextures.TAB_OFF_L, FlexGuiTextures.TAB_OFF_M, FlexGuiTextures.TAB_OFF_R);
@@ -37,11 +35,13 @@ public final class OreTabButton extends OreAbstractButton {
 	public Tab tab() {
 		return tab;
 	}
+	/** 已选中的 tab 不再给手型（点它没有动作）。 */
+	@Override
+	protected boolean wantsHandCursor() {
+		return super.wantsHandCursor() && !isSelected();
+	}
 	public boolean isSelected() {
 		return tabManager.getCurrentTab() == tab;
-	}
-	public static int preferredHeight() {
-		return FlexGuiTextures.TAB_OFF_L.height();
 	}
 	@Override
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
@@ -57,7 +57,23 @@ public final class OreTabButton extends OreAbstractButton {
 		renderTabString(gui, y + TEXT_TOP, y + height - 1 - (box == ON ? 0 : TEXT_BAND));
 		if (isFocused()) renderRing(gui, y, height);
 		// 选中的 tab 视觉上就是"按下"状态，点它不会切到别处，指针保持普通箭头
-		if (active && isHoveredOrFocused() && !isSelected()) OreCursor.hand();
+		renderCursor();
+	}
+	/** 按下与选中共用同一套盒子（ON）；按下要排在聚焦之前，否则点一下拿到焦点后按下态会被盖掉。 */
+	private Box box() {
+		var on = isSelected();
+		if (!active) return on ? ON : OFF;
+		if (on || isPressed()) return ON;
+		if (isFocused()) return OFF;
+		return isHovered() ? OFF_HOVER : OFF;
+	}
+	public static int preferredHeight() {
+		return FlexGuiTextures.TAB_OFF_L.height();
+	}
+	private void renderUnderline(@NotNull GuiGraphics gui, int y, int height) {
+		var width = Math.min(Minecraft.getInstance().font.width(getMessage()), getWidth() - 4);
+		var x = getX() + (getWidth() - width) / 2;
+		gui.fill(x, y + height - 1 - UNDERLINE_H, x + width, y + height - 1, UNDERLINE_COLOR);
 	}
 	private void renderTabString(@NotNull GuiGraphics gui, int top, int bottom) {
 		renderScrollingString(
@@ -71,19 +87,6 @@ public final class OreTabButton extends OreAbstractButton {
 			active ? 0xFFFFFFFF : 0xFFA0A0A0
 		);
 	}
-	/** 按下与选中共用同一套盒子（ON）；按下要排在聚焦之前，否则点一下拿到焦点后按下态会被盖掉。 */
-	private Box box() {
-		var on = isSelected();
-		if (!active) return on ? ON : OFF;
-		if (on || isPressed()) return ON;
-		if (isFocused()) return OFF;
-		return isHovered() ? OFF_HOVER : OFF;
-	}
-	private void renderUnderline(@NotNull GuiGraphics gui, int y, int height) {
-		var width = Math.min(Minecraft.getInstance().font.width(getMessage()), getWidth() - 4);
-		var x = getX() + (getWidth() - width) / 2;
-		gui.fill(x, y + height - 1 - UNDERLINE_H, x + width, y + height - 1, UNDERLINE_COLOR);
-	}
 	private void renderRing(@NotNull GuiGraphics gui, int y, int height) {
 		gui.renderOutline(getX() - RING_INSET, y - RING_INSET, getWidth() + 2 * RING_INSET, height + 2 * RING_INSET, RING_COLOR);
 	}
@@ -93,4 +96,5 @@ public final class OreTabButton extends OreAbstractButton {
 	/** 点击音由 {@link TabManager#setCurrentTab} 播。 */
 	@Override
 	public void playDownSound(@NotNull SoundManager soundManager) {}
+	private record Box(FlexGuiTextures left, FlexGuiTextures mid, FlexGuiTextures right) {}
 }
