@@ -5,7 +5,6 @@ import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.api.CaptureHandler;
 import io.github.forgestove.flexconfig.client.gui.components.*;
-import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import io.github.forgestove.flexconfig.client.gui.popup.OreConfirmPopupScreen;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.client.KeyMapping;
@@ -102,9 +101,8 @@ public final class ConfigScreen<C, V> extends Screen {
 			tabs.add(keybindTab);
 		} else keybindCategory = null;
 		initTabLayout();
-		var buttonWidth = ConfigEntry.SIZE * 8;
-		cancelButton = new OreButton(buttonWidth, getCancelLabel(), getCancelStyle(), b -> onClose());
-		saveButton = new OreButton(buttonWidth, Translation.SAVE_CHANGES_LABEL, OreButton.Style.PRIMARY, b -> saveAndQuit());
+		cancelButton = new OreButton(OreButton.DEFAULT_WIDTH, getCancelLabel(), getCancelStyle(), b -> onClose());
+		saveButton = new OreButton(OreButton.DEFAULT_WIDTH, Translation.SAVE_CHANGES_LABEL, OreButton.Style.PRIMARY, b -> saveAndQuit());
 		var footerLyt = layout.addToFooter(LinearLayout.horizontal().spacing(8));
 		footerLyt.addChild(cancelButton);
 		footerLyt.addChild(saveButton);
@@ -173,14 +171,9 @@ public final class ConfigScreen<C, V> extends Screen {
 			if (tabs.get(i).node == lastSelectedCategory) return i;
 		return 0;
 	}
-	/**
-	 * 客户端即服务端（房主）时可改：只看有没有内置服务端，<b>与存档是否开 LAN 无关</b> ——
-	 * 房主就是那台内置服务端的主人；入服的玩家（LAN / 远程）没有内置服务端，天然只读。
-	 */
 	public boolean isEditable() {
 		return handler.getType() != ConfigType.SERVER || ClientUtil.mc.hasSingleplayerServer();
 	}
-	/** 按重启级别给出后续界面：重载世界给「返回标题界面」，重启游戏给「退出游戏」。 */
 	private Screen restartScreen(@Nullable RestartType restartType) {
 		if (restartType == null) return parent;
 		var mc = ClientUtil.mc;
@@ -253,7 +246,7 @@ public final class ConfigScreen<C, V> extends Screen {
 	public ConfigHandler<C, V> getHandler() {
 		return handler;
 	}
-	/** 界面正在编辑的配置文件；热重载会跳过它们，免得冲掉未保存的编辑。 */
+	/** 界面正在编辑的配置文件；热重载会跳过它们。 */
 	public Set<FileKey> editedFiles() {
 		return Set.of(new FileKey(root.modId(), root.fileName()));
 	}

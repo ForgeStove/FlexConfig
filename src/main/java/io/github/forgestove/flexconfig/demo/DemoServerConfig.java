@@ -15,7 +15,7 @@ public final class DemoServerConfig {
 	@Category public Gameplay gameplay = new Gameplay();
 	@Category public Limits limits = new Limits();
 	public static class Gameplay {
-		@IntRange(min = 1, max = 64) public int maxPlayersPerTeam = 8;
+		@IntRange(min = 1, max = 64, slider = true) public int maxPlayersPerTeam = 8;
 		public boolean friendlyFire = true;
 		public boolean keepInventory = false;
 		@RequiresRestart(RestartType.WORLD) public boolean hardcore = false;
@@ -26,7 +26,7 @@ public final class DemoServerConfig {
 	public static class Limits {
 		@IntRange(min = 1, max = 1000) public int maxEntitiesPerChunk = 128;
 		@LongRange(min = 0) public long worldSeed = 0L;
-		@DoubleRange(min = 0.0, max = 100.0) public double mobSpawnRate = 1.0;
+		@DoubleRange(min = 0.0, max = 100.0, slider = true) public double mobSpawnRate = 1.0;
 		@WarnCheat public boolean allowCheats = false;
 		@Condition(value = "minecraft") public boolean visibleWithMod = true;
 	}

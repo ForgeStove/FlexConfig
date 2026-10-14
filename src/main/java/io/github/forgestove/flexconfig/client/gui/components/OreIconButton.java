@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * 方形图标按钮：盒子（三段切 + 三态 + 禁用）与 {@link OreButton} 完全同款，内容换成居中的精灵图标。
  * <p>
- * 图标是**白色蒙版**，用 {@code setShaderColor} 按按钮的文字色着色 —— 一张图在 Secondary（深字）与 Primary（白字）两端通用。
+ * 图标是白色蒙版，用 {@code setShaderColor} 按按钮的文字色着色。同一张图在 Secondary（深字）和 Primary（白字）上都能用。
  */
 public class OreIconButton extends OreButton {
 	private FlexGuiTextures icon;

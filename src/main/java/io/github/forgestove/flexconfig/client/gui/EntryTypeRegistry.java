@@ -14,13 +14,20 @@ public final class EntryTypeRegistry {
 	private static final Map<Class<?>, EntryFactory> factories = new LinkedHashMap<>();
 	static {
 		register(Boolean.class, BooleanValueConfigEntry::new);
-		register(
-			Integer.class,
-			(tab, node) -> node.isColorValue() ? new ColorValueConfigEntry<>(tab, node) : new IntegerValueConfigEntry<>(tab, node)
-		);
-		register(Long.class, LongValueConfigEntry::new);
-		register(Float.class, FloatValueConfigEntry::new);
-		register(Double.class, DoubleValueConfigEntry::new);
+		register(Integer.class, (tab, node) -> {
+			if (node.isColorValue()) return new ColorValueConfigEntry<>(tab, node);
+			if (node.getSliderRange() != null) return new SliderValueConfigEntry<>(tab, node, 1, d -> (int) Math.round(d));
+			return new IntegerValueConfigEntry<>(tab, node);
+		});
+		register(Long.class, (tab, node) -> node.getSliderRange() != null
+			? new SliderValueConfigEntry<>(tab, node, 1, Math::round)
+			: new LongValueConfigEntry<>(tab, node));
+		register(Float.class, (tab, node) -> node.getSliderRange() != null
+			? new SliderValueConfigEntry<>(tab, node, 0, d -> (float) d)
+			: new FloatValueConfigEntry<>(tab, node));
+		register(Double.class, (tab, node) -> node.getSliderRange() != null
+			? new SliderValueConfigEntry<>(tab, node, 0, d -> d)
+			: new DoubleValueConfigEntry<>(tab, node));
 		register(Enum.class, EnumValueConfigEntry::new);
 		register(String.class, StringValueConfigEntry::new);
 		register(Key.class, KeybindValueConfigEntry::new);

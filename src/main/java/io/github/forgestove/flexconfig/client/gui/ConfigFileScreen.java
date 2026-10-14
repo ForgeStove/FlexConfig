@@ -35,22 +35,21 @@ public final class ConfigFileScreen extends Screen {
 	@Override
 	protected void init() {
 		layout.addTitleHeader(title, font);
-		var buttonWidth = width / 5;
 		var files = LinearLayout.vertical().spacing(SPACING);
-		handlers.forEach(handler -> files.addChild(fileButton(handler, buttonWidth)));
+		handlers.forEach(handler -> files.addChild(fileButton(handler)));
 		centerFrame.addChild(files);
 		layout.addToContents(centerFrame);
 		var footer = LinearLayout.horizontal().spacing(FOOTER_SPACING);
-		footer.addChild(OreButton.of(Translation.BACK_LABEL, b -> onClose()).width(buttonWidth).build());
-		footer.addChild(othersButton(buttonWidth));
+		footer.addChild(OreButton.of(Translation.BACK_LABEL, b -> onClose()).width(OreButton.DEFAULT_WIDTH).build());
+		footer.addChild(othersButton());
 		layout.addToFooter(footer);
 		layout.visitWidgets(this::addRenderableWidget);
 		repositionElements();
 	}
 	/** 一份配置文件一行；{@link FlexConfigScreenFactory#available} 为假时置灰并说明。 */
-	private OreButton fileButton(ConfigHandler<?, ?> handler, int width) {
+	private OreButton fileButton(ConfigHandler<?, ?> handler) {
 		var available = FlexConfigScreenFactory.available(handler);
-		var button = OreButton.of(label(handler), b -> open(handler)).width(width).build();
+		var button = OreButton.of(label(handler), b -> open(handler)).width(OreButton.DEFAULT_WIDTH).build();
 		button.active = available;
 		button.setTooltip(available
 			? Tooltip.create(Component.literal(handler.getFileName()))
@@ -61,19 +60,15 @@ public final class ConfigFileScreen extends Screen {
 	public void onClose() {
 		ClientUtil.mc.setScreen(parent);
 	}
-	private OreButton othersButton(int width) {
+	private OreButton othersButton() {
 		var others = otherMods();
-		var button = OreButton.of(Translation.OTHER_MODS_LABEL, b -> openModList(others)).width(width).build();
+		var button = OreButton.of(Translation.OTHER_MODS_LABEL, b -> openModList(others)).width(OreButton.DEFAULT_WIDTH).build();
 		button.active = !others.isEmpty();
 		if (others.isEmpty()) button.setTooltip(Tooltip.create(Translation.OTHER_MODS_NONE));
 		return button;
 	}
 	@Override
 	protected void repositionElements() {
-		var buttonWidth = width / 5;
-		layout.visitWidgets(widget -> {
-			if (widget instanceof OreButton button) button.setWidth(buttonWidth);
-		});
 		centerFrame.setMinHeight(layout.getContentHeight());   // 内容区高同样随窗口尺寸变
 		layout.arrangeElements();
 	}

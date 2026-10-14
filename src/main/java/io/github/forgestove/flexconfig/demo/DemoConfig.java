@@ -66,15 +66,15 @@ public final class DemoConfig {
 	}
 	/** 数值：整数/长整/浮点/双精度，含范围限制与颜色值（{@code Integer} + {@link ColorValue}）。 */
 	public static class Numbers {
-		@IntRange(min = 0, max = 100) public int percent = 50;
+		@IntRange(min = 0, max = 100, slider = true) public int percent = 50;
 		@LongRange(min = 0) public long seed = 123456789L;
-		@FloatRange(min = 0f, max = 1f) public float scale = 0.5f;
-		@DoubleRange(min = 0.0, max = 10.0) public double multiplier = 1.5;
+		@FloatRange(min = 0f, max = 1f, slider = true) public float scale = 0.5f;
+		@DoubleRange(min = 0.0, max = 10.0, slider = true) public double multiplier = 1.5;
 		@ColorValue public int accentColor = 0x3C8527;
 		@ColorValue(true) public int overlayColor = 0x801E1E1F;
-		@IntRange(min = -50, max = 50) public int offsetX = 0;
-		@IntRange(min = -50, max = 50) public int offsetY = 0;
-		@IntRange(min = 1, max = 5) public int precision = 2;
+		@IntRange(min = -50, max = 50, slider = true) public int offsetX = 0;
+		@IntRange(min = -50, max = 50, slider = true) public int offsetY = 0;
+		@IntRange(min = 1, max = 5, slider = true) public int precision = 2;
 		@LongRange(min = 0) public long cacheSize = 4096L;
 		@FloatRange(min = 0f, max = 4f) public float animationSpeed = 1f;
 		@FloatRange(min = 0f, max = 360f) public float hueShift = 0f;

@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 
 import java.io.StringReader;
 import java.util.*;
-/** 追踪服务端锁定的配置项，维度是 (模组 ID, 配置文件名)：备份锁定前的原值，解锁或断开时恢复。 */
+/** 追踪服务端锁定的配置项，按 (模组 ID, 配置文件名) 记：备份锁定前的原值，解锁或断开时恢复。 */
 public final class ClientLockManager {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/** 待发送的锁定操作，延迟到保存时才发给服务端。 */

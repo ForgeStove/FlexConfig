@@ -19,7 +19,7 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 	 * 值区拆两半时每半的宽度。
 	 * <p>
 	 * 值区总宽固定是 {@link #WIDTH}（<b>所有类型都要对齐</b>，否则整排左缘会参差），
-	 * 半宽 = {@code (WIDTH - GAP) / 2} 已扣掉中间那一个 {@link #GAP} —— 直接写 {@code WIDTH / 2} 会让这一行
+	 * 半宽 = {@code (WIDTH - GAP) / 2} 已经扣掉中间那一个 {@link #GAP}。直接写 {@code WIDTH / 2} 会让这一行
 	 * 比别的类型多出一个 GAP。
 	 */
 	public static final int HALF_VALUE_WIDTH = (WIDTH - GAP) / 2;

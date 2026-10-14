@@ -227,6 +227,7 @@ public record RootConfigNode<C, V>(
 				.valueWriter(makePathValueWriter(type, path, valueField))
 				.restartType(restartTypeOf(valueField))
 				.changeCallback(makeChangeCallback(valueField, fullPath))
+				.sliderRange(FieldValidators.sliderRange(valueField))
 				.validator(FieldValidators.validatorFor(type, valueField)));
 		}
 		/** 读取 {@link RequiresRestart} 声明的重启级别并校验它适用于本配置类型；未标注返回 {@code null}。 */

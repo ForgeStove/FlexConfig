@@ -5,4 +5,6 @@ import java.lang.annotation.*;
 public @interface LongRange {
 	long min() default Long.MIN_VALUE;
 	long max() default Long.MAX_VALUE;
+	/** 用滑块编辑；要求 min 与 max **都显式写出来**（默认值 = 类型上下限，那种范围滑块没法用）。 */
+	boolean slider() default false;
 }

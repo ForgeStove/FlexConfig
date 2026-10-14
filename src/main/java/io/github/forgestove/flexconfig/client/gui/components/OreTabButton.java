@@ -7,18 +7,14 @@ import net.minecraft.client.sounds.SoundManager;
 import org.jetbrains.annotations.NotNull;
 /**
  * tab 按钮：方盒 + 选中态白色下划线 + 聚焦时零间隙白环。
- * 盒子横向均匀、纵向才分层，所以用三段切拼（左右端帽贴齐 + 中段横向拉伸），配色全在纹理里。
- * 文字沿用 {@link AbstractButton} 的渲染 —— 禁用只改文字、不改盒子。
+ * 盒子横向均匀、纵向才分层，所以用横向九宫格拉伸，配色全在纹理里。
+ * 文字沿用 {@link AbstractButton} 的渲染，禁用只改文字，不改盒子。
  */
 public class OreTabButton extends OreAbstractButton {
 	// 只有 3 种外观：ON（选中全状态 + 未选中按下）、OFF、OFF_HOVER；选中的差别只多一条下划线
-	private static final Box ON = new Box(FlexGuiTextures.TAB_ON_L, FlexGuiTextures.TAB_ON_M, FlexGuiTextures.TAB_ON_R);
-	private static final Box OFF = new Box(FlexGuiTextures.TAB_OFF_L, FlexGuiTextures.TAB_OFF_M, FlexGuiTextures.TAB_OFF_R);
-	private static final Box OFF_HOVER = new Box(
-		FlexGuiTextures.TAB_OFF_HOVER_L,
-		FlexGuiTextures.TAB_OFF_HOVER_M,
-		FlexGuiTextures.TAB_OFF_HOVER_R
-	);
+	private static final FlexGuiTextures ON = FlexGuiTextures.TAB_ON;
+	private static final FlexGuiTextures OFF = FlexGuiTextures.TAB_OFF;
+	private static final FlexGuiTextures OFF_HOVER = FlexGuiTextures.TAB_OFF_HOVER;
 	private static final int RING_INSET = 1, RING_COLOR = 0xFFFFFFFF;
 	/** 文字左右留白（同原版 {@code AbstractButton} 的滚动文案边距）。 */
 	private static final int TEXT_MARGIN = 2;
@@ -46,12 +42,9 @@ public class OreTabButton extends OreAbstractButton {
 	@Override
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
 		var box = box();
-		var capW = box.left().width();
-		var height = box.left().height();
-		var y = getY() + preferredHeight() - height;   // 未选中的比选中的高，两者底部对齐
-		box.left().render(gui, getX(), y);
-		box.mid().render(gui, getX() + capW, y, getWidth() - 2 * capW, height);
-		box.right().render(gui, getX() + getWidth() - capW, y);
+		var height = box.height();
+		var y = getY() + getHeight() - height;   // 未选中的比选中的高，两者底部对齐
+		box.render(gui, getX(), y, getWidth(), height);
 		if (isSelected()) renderUnderline(gui, y, height);
 		// 文字居中于盒子的**填充区**：让开上描边，以及未选中盒底部那段空档（选中盒没有）
 		renderTabString(gui, y + TEXT_TOP, y + height - 1 - (box == ON ? 0 : TEXT_BAND));
@@ -60,7 +53,7 @@ public class OreTabButton extends OreAbstractButton {
 		renderCursor();
 	}
 	/** 按下与选中共用同一套盒子（ON）；按下要排在聚焦之前，否则点一下拿到焦点后按下态会被盖掉。 */
-	private Box box() {
+	private FlexGuiTextures box() {
 		var on = isSelected();
 		if (!active) return on ? ON : OFF;
 		if (on || isPressed()) return ON;
@@ -68,7 +61,7 @@ public class OreTabButton extends OreAbstractButton {
 		return isHovered() ? OFF_HOVER : OFF;
 	}
 	public static int preferredHeight() {
-		return FlexGuiTextures.TAB_OFF_L.height();
+		return FlexGuiTextures.TAB_OFF.height();
 	}
 	private void renderUnderline(@NotNull GuiGraphics gui, int y, int height) {
 		var width = Math.min(Minecraft.getInstance().font.width(getMessage()), getWidth() - 4);
@@ -96,5 +89,4 @@ public class OreTabButton extends OreAbstractButton {
 	/** 点击音由 {@link TabManager#setCurrentTab} 播。 */
 	@Override
 	public void playDownSound(@NotNull SoundManager soundManager) {}
-	private record Box(FlexGuiTextures left, FlexGuiTextures mid, FlexGuiTextures right) {}
 }

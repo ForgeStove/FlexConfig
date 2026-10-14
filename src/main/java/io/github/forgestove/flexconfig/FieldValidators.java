@@ -2,6 +2,7 @@ package io.github.forgestove.flexconfig;
 import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.client.Translation;
+import io.github.forgestove.flexconfig.tree.ValueConfigNode.SliderRange;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode.ValueValidator;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -63,6 +64,52 @@ public final class FieldValidators {
 			if (aboveMax.test(value)) return Translation.VALIDATOR_MAX.copy().append(String.valueOf(max));
 			return null;
 		};
+	}
+	/**
+	 * 滑块的取值范围 {@code {min, max}}：只在注解写了 {@code slider = true} 时返回，否则 {@code null}。
+	 * <p>
+	 * ⚠️ 写了 {@code slider = true} 就必须把 min 与 max **都显式写出来**（默认值是类型上下限，那种范围滑块没法用），
+	 * 只写一个会直接抛异常，别让它悄悄退化成拖不动的滑块。
+	 */
+	public static @Nullable SliderRange sliderRange(Field field) {
+		var intRange = field.getAnnotation(IntRange.class);
+		if (intRange != null && intRange.slider()) return bounds(
+			field,
+			intRange.min() != Integer.MIN_VALUE,
+			intRange.max() != Integer.MAX_VALUE,
+			intRange.min(),
+			intRange.max()
+		);
+		var longRange = field.getAnnotation(LongRange.class);
+		if (longRange != null && longRange.slider()) return bounds(
+			field,
+			longRange.min() != Long.MIN_VALUE,
+			longRange.max() != Long.MAX_VALUE,
+			longRange.min(),
+			longRange.max()
+		);
+		var floatRange = field.getAnnotation(FloatRange.class);
+		if (floatRange != null && floatRange.slider()) return bounds(
+			field,
+			floatRange.min() != -Float.MAX_VALUE,
+			floatRange.max() != Float.MAX_VALUE,
+			floatRange.min(),
+			floatRange.max()
+		);
+		var doubleRange = field.getAnnotation(DoubleRange.class);
+		if (doubleRange != null && doubleRange.slider()) return bounds(
+			field,
+			doubleRange.min() != -Double.MAX_VALUE,
+			doubleRange.max() != Double.MAX_VALUE,
+			doubleRange.min(),
+			doubleRange.max()
+		);
+		return null;
+	}
+	private static SliderRange bounds(Field field, boolean hasMin, boolean hasMax, double min, double max) {
+		if (!hasMin || !hasMax) throw new IllegalArgumentException(
+			"Option '%s' sets slider = true, so its range must spell out both min and max".formatted(field.getName()));
+		return new SliderRange(min, max);
 	}
 	// ========== 加载期校正 ==========
 	/** 按 Range 注解把越界数值夹到边界；无注解或未越界时原样返回。 */

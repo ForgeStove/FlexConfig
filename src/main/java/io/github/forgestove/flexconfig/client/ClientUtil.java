@@ -32,7 +32,7 @@ public class ClientUtil {
 		RenderSystem.disableBlend();
 	}
 	/**
-	 * 取按键当前绑定的键。{@code KeyMapping} 在 vanilla 里没有公开 getter（字段是 private）——
+	 * 取按键当前绑定的键。{@code KeyMapping} 在 vanilla 里没有公开 getter（字段是 private）。
 	 * NeoForge 注入了 {@code getKey()}，Fabric 要用 Fabric API，故差异下沉到各自源集的 {@code KeybindsLoader}。
 	 */
 	public static Key boundKey(KeyMapping mapping) {

@@ -9,13 +9,11 @@ import net.minecraft.network.chat.*;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.*;
 /**
- * Ore UI 通用弹窗基类。
+ * Ore UI 通用弹窗基类：独立 {@link Screen}，父界面不必转发事件。
  * <p>
- * 做成独立 {@link Screen}：鼠标与键盘由 MC 隔离，父界面不必转发任何事件。
- * 渲染时先把父界面压到 z 后方画一遍当背景，再画 Ore 面板 —— 全屏模糊由空的 {@link #renderBackground} 覆写顶掉。
- * 控件循环不自己遍历：{@code Screen#renderables} 在 Fabric 侧是 private，只有 NeoForge 放宽成了 public。
+ * 渲染顺序：父界面（z −100）→ {@link #renderBackdrop} → 面板 → 内容 → 控件。
  * <p>
- * 几何：子类只报内容尺寸，位置由基类算 —— 锚定触发控件（优先在其下展开）或居中，最后钳回屏内。
+ * 几何：子类只报内容尺寸，位置由基类算，锚定触发控件（优先在其下展开）或居中，最后钳回屏内。
  */
 public abstract class OrePopupScreen extends Screen {
 	/** Ore 面板配色：正文本底 / 描边 / 带子底 / 上·左亮边 / 下·右暗边（都是纯色，直接画、无需纹理）。 */
@@ -23,10 +21,10 @@ public abstract class OrePopupScreen extends Screen {
 	protected static final int LIGHT = 0xFF6B6B6C, DARK = 0xFF5A5B5C;
 	/** 标题与 ✕ 的文字/线条色。 */
 	protected static final int TEXT_COLOR = 0xFFFFFFFF;
-	/** 面板内边距、标题栏高度、底栏高度、九宫格角尺寸、三段切端帽宽。 */
-	protected static final int PAD = 3, HEADER_H = 18, FOOTER_H = 54;
+	/** 面板内边距、标题栏高度、底栏高度。 */
+	protected static final int PAD = 3, HEADER_H = 19, FOOTER_H = 54;
 	/** ✕ 的边长、右留白；命中/高亮框边长见 {@link #closeSize()}。 */
-	private static final int CLOSE_SIZE = 7, CLOSE_MARGIN = 5;
+	private static final int CLOSE_SIZE = 7, CLOSE_MARGIN = 6;
 	private static final int CLOSE_HOVER = 0xFF56585B;
 	protected final Screen parent;
 	@Nullable private final Component title;
@@ -53,6 +51,10 @@ public abstract class OrePopupScreen extends Screen {
 	}
 	protected final int contentY() {
 		return panelY + PAD + headerHeight();
+	}
+	/** 把高 {@code blockHeight} 的内容块在内容区里垂直居中后的顶端。 */
+	protected final int contentY(int blockHeight) {
+		return contentY() + Math.max(0, (contentH() - blockHeight) / 2);
 	}
 	protected final int headerHeight() {
 		return title == null ? 0 : HEADER_H;
@@ -122,14 +124,15 @@ public abstract class OrePopupScreen extends Screen {
 	@Override
 	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
 		renderParent(gui, partialTick);
+		renderBackdrop(gui, mouseX, mouseY, partialTick);
 		renderPanel(gui, mouseX, mouseY);
 		renderContent(gui, mouseX, mouseY, partialTick);
 		if (title != null && isOverClose(mouseX, mouseY)) OreCursor.hand();
 		super.render(gui, mouseX, mouseY, partialTick);
 	}
-	/** 空覆写顶掉原版的全屏模糊 / 全景底：底已由 {@link #renderParent} 顶替。 */
 	@Override
 	public void renderBackground(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {}
+	protected void renderBackdrop(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {}
 	/** 父界面画在下方：压到 z −100，并临时把 {@code mc.screen} 指回父界面（父界面渲染里可能读它）。 */
 	private void renderParent(@NotNull GuiGraphics gui, float partialTick) {
 		var pose = gui.pose();
@@ -212,9 +215,8 @@ public abstract class OrePopupScreen extends Screen {
 	private int closeLeft() {
 		return closeX() + (CLOSE_SIZE - closeSize()) / 2;
 	}
-	/** 命中 / 悬停高亮框：边长 = **标题栏高度 − 2**，与 ✕ 同心。 */
 	private int closeSize() {
-		return HEADER_H - 3;
+		return HEADER_H - 4;
 	}
 	private int closeTop() {
 		return closeY() + (CLOSE_SIZE - closeSize()) / 2;
@@ -222,6 +224,7 @@ public abstract class OrePopupScreen extends Screen {
 	private int closeX() {
 		return panelX + panelWidth - 1 - CLOSE_MARGIN - CLOSE_SIZE;
 	}
+	/** 内缩 1px 避开面板描边，上下余量各一半。 */
 	private int closeY() {
 		return panelY + 1 + (HEADER_H - CLOSE_SIZE) / 2;
 	}

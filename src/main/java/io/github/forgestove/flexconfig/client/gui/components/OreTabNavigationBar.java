@@ -13,7 +13,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 /**
- * tab 栏 —— 替代原版 {@code TabNavigationBar}（它的构造是包私有、按钮由它内部 new，无法只换按钮）。
+ * tab 栏，替代原版 {@code TabNavigationBar}。原版构造是包私有、按钮由它内部 new，没法只换按钮。
  * 切换逻辑仍走原版 {@link TabManager}，这里只做摆放、事件与键盘。
  */
 public class OreTabNavigationBar extends AbstractContainerEventHandler implements Renderable, NarratableEntry {

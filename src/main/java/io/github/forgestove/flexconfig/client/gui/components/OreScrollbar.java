@@ -2,6 +2,7 @@ package io.github.forgestove.flexconfig.client.gui.components;
 import io.github.forgestove.flexconfig.client.gui.FlexGuiTextures;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 /**
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * 输入转 {@link #mousePressed} / {@link #release} / {@link #wheel}。
  * 若滚动量另有持有者（如原版列表的 {@code scrollAmount}），由它负责 {@link #seek} 同步进来、再推回去。
  */
-public class OreScrollbar {
+public class OreScrollbar implements Renderable {
 	public static final int TRACK_COLOR = 0xFF58585A;
 	/** 每 tick 走掉剩余差距的比例，越小越慢。 */
 	private static final double DECAY_PER_TICK = 0.25;
@@ -67,21 +68,20 @@ public class OreScrollbar {
 	public void release() {
 		dragging = false;
 	}
-	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY) {
+	@Override
+	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
 		if (!shown()) return;
-		var thumbW = FlexGuiTextures.SCROLLBAR_TOP.width();
+		var thumbW = FlexGuiTextures.SCROLLBAR.width();
 		gui.fill(x, y, x + thumbW, y + height, TRACK_COLOR);
 		var knobH = knobHeight();
 		var knobY = knobY(knobH);
-		var top = FlexGuiTextures.SCROLLBAR_TOP.height();
-		var bottom = FlexGuiTextures.SCROLLBAR_BOTTOM.height();
-		FlexGuiTextures.SCROLLBAR_TOP.render(gui, x, knobY);
-		FlexGuiTextures.SCROLLBAR_MID.render(gui, x, knobY + top, thumbW, Math.max(0, knobH - top - bottom));
-		FlexGuiTextures.SCROLLBAR_BOTTOM.render(gui, x, knobY + knobH - bottom);
+		var onBar = mouseX >= x && mouseX < x + thumbW && mouseY >= y && mouseY < y + height;
+		// 悬停按整列算（同光标），拖动中保持点亮
+		(onBar || dragging ? FlexGuiTextures.SCROLLBAR_HOVER : FlexGuiTextures.SCROLLBAR).render(gui, x, knobY, thumbW, knobH);
 		// 滑块下缘的投影：按滑块宽度罩在轨道上，滑到底时被轨道下界截断
 		var shadowY = knobY + knobH;
 		if (shadowY < y + height) gui.fill(x, shadowY, x + thumbW, Math.min(shadowY + SHADOW_H, y + height), SHADOW_COLOR);
-		if (mouseX >= x && mouseX < x + thumbW && mouseY >= y && mouseY < y + height) OreCursor.hand();
+		if (onBar) OreCursor.hand();
 	}
 	public boolean shown() {
 		return content > height;
@@ -96,15 +96,16 @@ public class OreScrollbar {
 	 * 未取整的滑块顶端位置。
 	 * <p>
 	 * 拖动时 {@code grab} 必须用它来算（不能用取整后的 {@link #knobY}）：{@link #dragTo} 的反函数是精确的，
-	 * 而取整会丢掉小数，于是每按一下滚动量就回落一点点 —— 表现为原地连点滑块一直往上爬。
+	 * 而取整会丢掉小数，于是每按一下滚动量就回落一点，表现成原地连点滑块会一直往上爬。
 	 */
 	private double knobYExact(int knobH) {
 		var max = maxScroll();
 		return max > 0 ? y + (height - knobH) * (scroll / (double) max) : y;
 	}
-	/** 点在滑块上为抓取拖动，点在轨道空白处为翻页。鼠标不在滚动条上时返回 false。 */
+	/** 点在滑块上为抓取拖动，点在轨道空白处为翻页。 */
 	public boolean mousePressed(double mouseX, double mouseY) {
-		if (!shown() || mouseX < x || mouseX >= x + FlexGuiTextures.SCROLLBAR_TOP.width()) return false;
+		if (!shown() || mouseX < x || mouseX >= x + FlexGuiTextures.SCROLLBAR.width() || mouseY < y || mouseY >= y + height)
+			return false;
 		var knobH = knobHeight();
 		var knobY = knobY(knobH);
 		if (mouseY >= knobY && mouseY < knobY + knobH) {

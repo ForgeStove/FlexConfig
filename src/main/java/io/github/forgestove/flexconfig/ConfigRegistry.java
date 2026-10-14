@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /** 多配置注册表：一个模组可以按 {@link ConfigType} 注册多份配置，各自一个文件。 */
 public final class ConfigRegistry {
 	/** 模组 ID → 该模组全部配置。 */
-	private static final Map<String, ConfigSet> SETS = new ConcurrentHashMap<>();
+	private static final Map<String, EnumMap<ConfigType, ConfigHandler<?, ?>>> SETS = new ConcurrentHashMap<>();
 	/** (模组 ID, 文件名) → 配置；供按文件精确定位（锁、下发、热重载）。 */
 	private static final Map<FileKey, ConfigHandler<?, ?>> BY_FILE = new ConcurrentHashMap<>();
 	/** 「主」配置的优先顺序，用于保持只认 modId 的既有调用点（GUI 入口、旧锁代码）。 */
@@ -29,10 +29,10 @@ public final class ConfigRegistry {
 		var set = SETS.computeIfAbsent(
 			modId, id -> {
 				initConfigScreenForClient(id);
-				return new ConfigSet(id);
+				return new EnumMap<>(ConfigType.class);
 			}
 		);
-		var handler = set.handlers.computeIfAbsent(
+		var handler = set.computeIfAbsent(
 			type, ignored -> {
 				var built = ConfigHandler.builder(clazz).type(type).fileName(fileName).build();
 				BY_FILE.put(new FileKey(modId, fileName), built);
@@ -64,19 +64,13 @@ public final class ConfigRegistry {
 		return requireAnnotation(configClass).value();
 	}
 	// ========== 按 modId（主配置）访问 ==========
-	/** 获取该模组的「主」配置处理器（CLIENT → COMMON → SERVER 优先）。 */
-	public static @NotNull ConfigHandler<?, ?> getHandler(String modId) {
-		var set = SETS.get(modId);
-		if (set == null) throw new IllegalStateException("Config handler for id '%s' is not initialized.".formatted(modId));
-		return set.primary();
-	}
 	/** 获取该模组的全部配置处理器，按「主配置」优先顺序排列（CLIENT → COMMON → SERVER → STARTUP）。 */
 	public static List<ConfigHandler<?, ?>> getHandlers(String modId) {
 		var set = SETS.get(modId);
 		if (set == null) return List.of();
-		var handlers = new ArrayList<ConfigHandler<?, ?>>(set.handlers.size());
+		var handlers = new ArrayList<ConfigHandler<?, ?>>(set.size());
 		for (var type : PRIMARY_ORDER) {
-			var handler = set.handlers.get(type);
+			var handler = set.get(type);
 			if (handler != null) handlers.add(handler);
 		}
 		return List.copyOf(handlers);
@@ -121,8 +115,7 @@ public final class ConfigRegistry {
 	/**
 	 * 该配置是否支持服务端锁定：只有 {@link ConfigType#CLIENT}（客户端自己读的那份）可以被锁。
 	 * <p>
-	 * 锁的语义是「服务端强制客户端的本地配置」—— COMMON 双端各存一份、{@link ConfigType#SERVER} 本就由服务端权威下发，
-	 * 都不适用。
+	 * 锁的语义是「服务端强制客户端的本地配置」
 	 */
 	public static boolean isLockable(FileKey key) {
 		var handler = BY_FILE.get(key);
@@ -130,19 +123,5 @@ public final class ConfigRegistry {
 	}
 	public static Set<FileKey> getRegisteredFileKeys() {
 		return Set.copyOf(BY_FILE.keySet());
-	}
-	private static final class ConfigSet {
-		private final String modId;
-		private final Map<ConfigType, ConfigHandler<?, ?>> handlers = new EnumMap<>(ConfigType.class);
-		private ConfigSet(String modId) {
-			this.modId = modId;
-		}
-		private ConfigHandler<?, ?> primary() {
-			for (var type : PRIMARY_ORDER) {
-				var handler = handlers.get(type);
-				if (handler != null) return handler;
-			}
-			throw new IllegalStateException("Config handler for id '%s' is not initialized.".formatted(modId));
-		}
 	}
 }

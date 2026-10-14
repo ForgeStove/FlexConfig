@@ -16,7 +16,7 @@ public interface ConfigNode<C> {
 	boolean isActiveValue(C config);
 	@Nullable Component validate(C config);
 	void copy(C from, C to);
-	/** 把 from 复制到运行时对象 to，跳过「已改动但还未生效」的延迟项——它们的运行时值要等重启才更新。 */
+	/** 把 from 复制到运行时对象 to，跳过「已改动但还未生效」的延迟项，它们的运行时值要等重启才更新。 */
 	void copyForRuntime(C from, C to);
 	/** 把「已改动但还未生效」的新值写入 to（文件模型）；没有待生效改动时是空操作。 */
 	void flushPending(C to);

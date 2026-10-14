@@ -15,7 +15,7 @@ import java.util.*;
  * 「访问其他模组的配置」：列出所有注册了本库配置的模组，点一行进它的配置界面；带搜索框，Ctrl+F 可聚焦。
  * <p>
  * 几何只有一处：内容区高 = 屏高 − 页眉 − 页脚，列表再从中让出搜索框那一行。刻意不读
- * {@code HeaderAndFooterLayout.getContentHeight()} —— 它给的是内容容器自己的高，列表控件按它撑开就会盖住页脚。
+ * {@code HeaderAndFooterLayout.getContentHeight()} 给的是内容容器自己的高，列表控件按它撑开就会盖住页脚。
  */
 public final class ConfigModListScreen extends Screen {
 	/** 搜索框高度、它与列表之间的间距、内容区左右留白。 */
@@ -45,7 +45,7 @@ public final class ConfigModListScreen extends Screen {
 		content.addChild(search);
 		content.addChild(listWidget);
 		layout.addToContents(content);
-		layout.addToFooter(OreButton.of(Translation.BACK_LABEL, b -> onClose()).width(width / 5).build());
+		layout.addToFooter(OreButton.of(Translation.BACK_LABEL, b -> onClose()).width(OreButton.DEFAULT_WIDTH).build());
 		layout.visitWidgets(this::addRenderableWidget);
 		// 先定列表高度，布局才量得到正确的内容高；排完再补一次位置（列表按矩形自己算命中，无需别的同步）
 		listWidget.setHeight(listWidget.pixelHeight(contentHeight() - SEARCH_H - SPACING));

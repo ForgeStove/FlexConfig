@@ -8,7 +8,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 import java.util.function.*;
-/** 取值用的列表弹窗：一列可滚动的文字项，选中即回调，然后关掉自己回父界面 —— 枚举下拉用它。 */
+/** 取值用的列表弹窗：一列可滚动的文字项，选中即回调，然后关掉自己回父界面。枚举下拉用它。 */
 public class OreListPopupScreen<T> extends OrePopupScreen {
 	private final OreList<T> list;
 	private final Consumer<T> onSelect;
@@ -49,7 +49,7 @@ public class OreListPopupScreen<T> extends OrePopupScreen {
 	}
 	@Override
 	protected void renderContent(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-		list.render(gui, font, mouseX, mouseY);
+		list.render(gui, font, mouseX, mouseY, partialTick);
 		if (list.hovering(mouseX, mouseY)) OreCursor.hand();
 	}
 	@Override

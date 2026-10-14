@@ -52,7 +52,7 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		setScrollAmount(scrollbar.scroll());
 		highlight.tick(gui, getX(), getY(), width, height, itemHeight, delta);
 		super.renderWidget(gui, mouseX, mouseY, delta);
-		scrollbar.render(gui, mouseX, mouseY);
+		scrollbar.render(gui, mouseX, mouseY, delta);
 		var entry = getHovered();
 		if (entry == null) return;
 		var widgetTooltip = entry.getHoveredWidgetTooltip(mouseX, mouseY);
@@ -100,6 +100,6 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 	}
 	@Override
 	public int getRowWidth() {
-		return width * 2 / 3;
+		return width * 3 / 5;
 	}
 }

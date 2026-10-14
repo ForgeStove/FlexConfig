@@ -51,7 +51,7 @@ public class OreSwitchButton extends OreAbstractButton {
 		// 尺寸也归纹理表管（= atlas region），每帧读，资源包改 region 即生效
 		var trackW = FlexGuiTextures.TOGGLE_TRACK.width();
 		var trackH = FlexGuiTextures.TOGGLE_TRACK.height();
-		var thumbSize = FlexGuiTextures.TOGGLE_THUMB.width();
+		var thumbSize = FlexGuiTextures.THUMB.width();
 		var trackX = getX() + (width - trackW) / 2;
 		// 轨道底边与滑钮底边齐平，钮只在顶部高出
 		var trackY = getY() + thumbSize - trackH;
@@ -83,10 +83,10 @@ public class OreSwitchButton extends OreAbstractButton {
 	}
 	private void renderThumb(@NotNull GuiGraphics gui, int x, int y) {
 		var texture = !active
-			? FlexGuiTextures.TOGGLE_THUMB_DISABLED
+			? FlexGuiTextures.THUMB_DISABLED
 			: isPressed()
-				? FlexGuiTextures.TOGGLE_THUMB_PRESSED
-				: isHovered() ? FlexGuiTextures.TOGGLE_THUMB_HOVER : FlexGuiTextures.TOGGLE_THUMB;
+				? FlexGuiTextures.THUMB_PRESSED
+				: isHovered() ? FlexGuiTextures.THUMB_HOVER : FlexGuiTextures.THUMB;
 		texture.render(gui, x, y);
 	}
 	private void renderRing(@NotNull GuiGraphics gui, int x, int y, int size) {

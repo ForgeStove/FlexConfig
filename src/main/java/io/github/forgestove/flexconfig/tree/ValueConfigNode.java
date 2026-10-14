@@ -17,6 +17,8 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	/** 已写入文件、但运行时还没切过去的新值（延迟生效）；为 {@code null} 表示运行时与文件一致。 */
 	@Nullable private V pendingValue;
 	@Nullable private ColorValue colorValue;
+	/** 滑块的取值范围；{@code null} 表示这个选项用输入框编辑。 */
+	@Nullable private SliderRange sliderRange;
 	private ValueReader<C, V> valueReader;
 	private ValueWriter<C, V> valueWriter;
 	@Nullable private ValueValidator<V> validator;
@@ -134,6 +136,13 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public String getPath() {
 		return path;
 	}
+	/** 滑块的取值范围；{@code null} 表示这个选项不用滑块。 */
+	@Nullable
+	public SliderRange getSliderRange() {
+		return sliderRange;
+	}
+	/** 滑块的取值范围（注解里写了 {@code slider = true}、且 min 与 max 都显式才有）。 */
+	public record SliderRange(double min, double max) {}
 	public boolean colorHasAlpha() {
 		return isColorValue() && colorValue.value();
 	}
@@ -203,6 +212,10 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 		}
 		public Builder<C, V> valueWriter(ValueWriter<C, V> valueWriter) {
 			node.valueWriter = valueWriter;
+			return this;
+		}
+		public Builder<C, V> sliderRange(@Nullable SliderRange sliderRange) {
+			node.sliderRange = sliderRange;
 			return this;
 		}
 		public Builder<C, V> validator(ValueValidator<V> validator) {

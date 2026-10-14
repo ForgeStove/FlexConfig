@@ -12,10 +12,10 @@ import java.util.List;
 /**
  * 确认弹窗：标题栏 + 自动换行的正文 + 两个 {@link OreButton}，居中模态。
  * <p>
- * 按钮只转调 {@code callback}，**不自动关窗** —— 回调自己负责切换界面（与调用方约定一致）。
+ * 按钮只转调 {@code callback}，自己不关窗。回调负责切换界面（与调用方约定一致）。
  */
 public class OreConfirmPopupScreen extends OrePopupScreen {
-	private static final int WIDTH = 300, BUTTON_MARGIN = 4, BUTTON_GAP = 4, MESSAGE_GAP = 12, LINE_GAP = 1;
+	private static final int WIDTH = 200, BUTTON_MARGIN = 4, BUTTON_GAP = 4, MESSAGE_GAP = 12, LINE_GAP = 1;
 	private static final int TEXT_COLOR = 0xFFE0E0E0;
 	private final BooleanConsumer callback;
 	private final Component message, yesLabel, noLabel;
@@ -71,11 +71,17 @@ public class OreConfirmPopupScreen extends OrePopupScreen {
 		noButton.setRectangle(buttonW, buttonH, x, y + buttonH + BUTTON_GAP);
 	}
 	@Override
+	protected void renderBackdrop(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+		renderTransparentBackground(gui);
+	}
+	@Override
 	protected void renderContent(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-		var y = contentY();
+		var lineH = font.lineHeight + LINE_GAP;
+		// 文本块（不含末行之后的那点余量）在内容区里垂直居中
+		var y = contentY(lines.size() * lineH - LINE_GAP);
 		for (var line : lines) {
 			gui.drawString(font, line, contentX() + (contentW() - font.width(line)) / 2, y, TEXT_COLOR, true);
-			y += font.lineHeight + LINE_GAP;
+			y += lineH;
 		}
 	}
 }

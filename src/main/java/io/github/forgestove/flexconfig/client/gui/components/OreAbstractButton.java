@@ -30,8 +30,8 @@ public abstract class OreAbstractButton extends AbstractButton {
 	/**
 	 * 记录本帧的光标请求，必须在 {@code renderWidget} 里调用。
 	 * <p>
-	 * 只按**悬停**判定，不能带 {@code isFocused}：点击后焦点会一直留在控件上（松手触发必需），
-	 * 而渲染每帧都跑 —— 若带焦点，被聚焦的控件会每帧把光标顶成手型、盖过鼠标实际位置，移开也变不回来。
+	 * 只看悬停，不能带上 {@code isFocused}：点击后焦点会一直留在控件上（松手触发必需），
+	 * 而渲染每帧都跑。若带焦点，被聚焦的控件会每帧把光标顶成手型，盖过鼠标实际位置，移开也变不回来。
 	 */
 	protected void renderCursor() {
 		if (wantsHandCursor()) OreCursor.hand();

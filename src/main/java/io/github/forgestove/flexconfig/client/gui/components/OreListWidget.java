@@ -10,12 +10,12 @@ import java.util.function.*;
 /**
  * {@link OreList} 的控件外壳：把「无 render / 无事件的纯绘制列表」接进原版布局与事件分发。
  * <p>
- * 控件矩形即列表矩形 —— {@link #syncArea()} 是唯一的几何来源，所以鼠标事件的命中范围与画出来的列表永远一致；
+ * 控件矩形就是列表矩形，几何只有 {@link #syncArea()} 一个来源，所以鼠标命中范围和画出来的列表永远一致；
  * 想让列表多高，调用方只需 {@code setHeight(list.pixelHeight(可用高))}。
  * <p>
  * 点空白与滚轮**不吞事件**（相应返回 {@code false}）：列表不是模态的，下面的控件该拿到的点击不能被它拦掉。
  * <p>
- * 光标也在这里请求：只在真的落在某一行上、或（有溢出时）落在滚动条上才出手型 —— 列表内其余空白保持箭头。
+ * 光标也在这里请求：只有真的落在某一行上，或者有溢出时落在滚动条上，才出手型。列表里的空白处保持箭头。
  */
 public final class OreListWidget<T> extends AbstractWidget {
 	private final OreList<T> list;
@@ -32,7 +32,7 @@ public final class OreListWidget<T> extends AbstractWidget {
 	public void filter(String query) {
 		list.filter(query);
 	}
-	/** 当前可见行的落点，键盘确认用；没有可选项时为 {@code null}。 */
+	/** 当前可见行里被选中的那个，键盘确认用；没有可选项时为 {@code null}。 */
 	public @Nullable T defaultOption() {
 		return list.defaultOption();
 	}
@@ -51,7 +51,7 @@ public final class OreListWidget<T> extends AbstractWidget {
 	}
 	@Override
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-		list.render(gui, ClientUtil.mc.font, mouseX, mouseY);
+		list.render(gui, ClientUtil.mc.font, mouseX, mouseY, partialTick);
 		if (wantsHandCursor(mouseX, mouseY)) OreCursor.hand();
 	}
 	/** 落在某一行上，或有溢出时落在滚动条上。 */
