@@ -108,6 +108,14 @@ public abstract class OrePopupScreen extends Screen {
 	protected final int anchorBottom() {
 		return anchor == null ? -1 : anchor.y() + anchor.height();
 	}
+	/** 锚点下方能给的净空间（不含面板内边距）；无锚点时为全屏。 */
+	protected final int spaceBelow() {
+		return anchor == null ? height - PAD * 2 : height - anchorBottom() - PAD * 2;
+	}
+	/** 锚点上方能给的净空间；无锚点时为全屏。 */
+	protected final int spaceAbove() {
+		return anchor == null ? height - PAD * 2 : anchor.y() - PAD * 2;
+	}
 	/** 按已定的面板矩形摆放子控件。 */
 	protected void layoutContent() {}
 	/** 窗口尺寸变化只走 {@code repositionElements}（见 {@link Screen#resize}），故在此重算。 */
@@ -154,8 +162,8 @@ public abstract class OrePopupScreen extends Screen {
 		if (title != null) renderHeader(gui, title, mouseX, mouseY);
 		if (footerHeight() > 0) renderFooter(gui);
 	}
-	/** 面板：正文本底 + 1px 描边。 */
-	private void drawPanel(@NotNull GuiGraphics gui) {
+	/** 面板底：正文本底 + 1px 描边。 */
+	protected void drawPanel(@NotNull GuiGraphics gui) {
 		gui.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, SURFACE);
 		gui.renderOutline(panelX, panelY, panelWidth, panelHeight, BORDER);
 	}

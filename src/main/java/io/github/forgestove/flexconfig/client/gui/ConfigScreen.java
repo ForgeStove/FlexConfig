@@ -8,7 +8,6 @@ import io.github.forgestove.flexconfig.client.gui.components.*;
 import io.github.forgestove.flexconfig.client.gui.popup.OreConfirmPopupScreen;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.tabs.TabManager;
 import net.minecraft.client.gui.layouts.*;
@@ -269,9 +268,5 @@ public final class ConfigScreen<C, V> extends Screen {
 	}
 	public int getFooterHeight() {
 		return layout.getFooterHeight();
-	}
-	@Override
-	public void renderBackground(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-		ClientUtil.renderBands(gui, width, height, getHeaderHeight(), getFooterHeight());
 	}
 }

@@ -35,6 +35,7 @@ public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C,
 			this::selectValue
 		);
 		popup.anchorTo(dropdownButton.getX(), dropdownButton.getY(), dropdownButton.getWidth(), dropdownButton.getHeight());
+		popup.rowHeight(HEIGHT);
 		mc.setScreen(popup);
 	}
 	@Override

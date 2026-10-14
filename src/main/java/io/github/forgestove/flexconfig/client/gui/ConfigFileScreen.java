@@ -19,8 +19,6 @@ import java.util.*;
 public final class ConfigFileScreen extends Screen {
 	/** 文件按钮之间的间距。 */
 	private static final int SPACING = 4;
-	/** 底栏两个按钮之间的间距（与 {@link ConfigScreen} 的底栏一致）。 */
-	private static final int FOOTER_SPACING = 8;
 	private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 	private final FrameLayout centerFrame = new FrameLayout();
 	private final String modId;
@@ -39,10 +37,7 @@ public final class ConfigFileScreen extends Screen {
 		handlers.forEach(handler -> files.addChild(fileButton(handler)));
 		centerFrame.addChild(files);
 		layout.addToContents(centerFrame);
-		var footer = LinearLayout.horizontal().spacing(FOOTER_SPACING);
-		footer.addChild(OreButton.of(Translation.BACK_LABEL, b -> onClose()).width(OreButton.DEFAULT_WIDTH).build());
-		footer.addChild(othersButton());
-		layout.addToFooter(footer);
+		layout.addToFooter(OreButton.of(Translation.BACK_LABEL, b -> onClose()).width(OreButton.DEFAULT_WIDTH).build());
 		layout.visitWidgets(this::addRenderableWidget);
 		repositionElements();
 	}
@@ -60,13 +55,6 @@ public final class ConfigFileScreen extends Screen {
 	public void onClose() {
 		ClientUtil.mc.setScreen(parent);
 	}
-	private OreButton othersButton() {
-		var others = otherMods();
-		var button = OreButton.of(Translation.OTHER_MODS_LABEL, b -> openModList(others)).width(OreButton.DEFAULT_WIDTH).build();
-		button.active = !others.isEmpty();
-		if (others.isEmpty()) button.setTooltip(Tooltip.create(Translation.OTHER_MODS_NONE));
-		return button;
-	}
 	@Override
 	protected void repositionElements() {
 		centerFrame.setMinHeight(layout.getContentHeight());   // 内容区高同样随窗口尺寸变
@@ -79,21 +67,6 @@ public final class ConfigFileScreen extends Screen {
 	}
 	private void open(ConfigHandler<?, ?> handler) {
 		ClientUtil.mc.setScreen(new ConfigScreen<>(handler));
-	}
-	private List<String> otherMods() {
-		return ConfigRegistry.getRegisteredFileKeys()
-			.stream()
-			.map(FileKey::modId)
-			.distinct()
-			.sorted(Comparator.comparing(id -> ClientUtil.modName(id).getString(), String.CASE_INSENSITIVE_ORDER))
-			.toList();
-	}
-	private void openModList(List<String> modIds) {
-		ClientUtil.mc.setScreen(new ConfigModListScreen(this, modIds));
-	}
-	@Override
-	public void renderBackground(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-		ClientUtil.renderBands(gui, width, height, layout.getHeaderHeight(), layout.getFooterHeight());
 	}
 	@Override
 	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {

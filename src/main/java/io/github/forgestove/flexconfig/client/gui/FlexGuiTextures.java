@@ -47,7 +47,14 @@ public enum FlexGuiTextures {
 	ICON_RESET("icon/reset"),
 	ICON_UNDO("icon/undo"),
 	ICON_LOCK("icon/lock"),
-	ICON_UNLOCK("icon/unlock");
+	ICON_UNLOCK("icon/unlock"),
+	// 列表选中标记：选中 / 未选中 × 常态 / 悬停 / 按下
+	CHECKBOX_ON("icon/checkbox_on"),
+	CHECKBOX_ON_HOVER("icon/checkbox_on_hover"),
+	CHECKBOX_ON_PRESSED("icon/checkbox_on_pressed"),
+	CHECKBOX_OFF("icon/checkbox_off"),
+	CHECKBOX_OFF_HOVER("icon/checkbox_off_hover"),
+	CHECKBOX_OFF_PRESSED("icon/checkbox_off_pressed");
 	private final ResourceLocation sprite;
 	FlexGuiTextures(String path) {
 		sprite = ResourceLocation.fromNamespaceAndPath("flexconfig", path);
