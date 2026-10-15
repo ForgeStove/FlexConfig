@@ -1,26 +1,19 @@
-package flexconfig
+@file:Suppress("unused", "KotlinPrintToLogpoint")
 
+import me.modmuss50.mpp.ModPublishExtension
+import me.modmuss50.mpp.ReleaseType
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePluginExtension
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.language.jvm.tasks.ProcessResources
 
-/** 开发期演示代码的包路径：只在 runClient 里生效，不参与打包。 */
-private const val DEMO_PACKAGE = "io/github/forgestove/flexconfig/demo/**"
-
-/**
- * 各加载器构建脚本的公共配置，供 `build.<loader>.gradle.kts` 调用。
- * [loader] 决定专属源码/模板目录（`src/<loader>/...`）。
- *
- * 用 `extensions.getByType(...)` 而非 Kotlin DSL 访问器：`.kt` 文件没有那些访问器。
- */
-@Suppress("unused", "KotlinPrintToLogpoint")
-fun Project.configureCommon(loader: String) {
+fun Project.configure(loader: String) {
 	extensions.getByType(BasePluginExtension::class.java).archivesName.set(p("modId"))
 	group = p("modGroupId")
 	version = "${p("mcVersion")}-${p("modVersion")}-$loader"
@@ -30,12 +23,10 @@ fun Project.configureCommon(loader: String) {
 	}
 	tasks.named<Jar>("jar") {
 		from(rootProject.file("LICENSE"))
-		exclude(DEMO_PACKAGE)
 	}
-	tasks.named<Jar>("sourcesJar") { exclude(DEMO_PACKAGE) }
 	val generateMetadata = tasks.register<ProcessResources>("generateMetadata") {
 		description = "Generate this project metadata from templates."
-		val values = project.extensions.extraProperties.properties.mapValues { it.value.toString() }
+		val values = project.extra.properties.mapValues { it.value.toString() }
 		inputs.properties(values)
 		expand(values)
 		from(rootProject.file("src/$loader/templates"))
@@ -49,5 +40,30 @@ fun Project.configureCommon(loader: String) {
 		mavenLocal()
 		mavenCentral()
 	}
-	println("Java: ${System.getProperty("java.version")}, JVM: ${System.getProperty("java.vm.version")} (${System.getProperty("java.vendor")}), Arch: ${System.getProperty("os.arch")}")
+	println(buildString {
+		append("Java: ")
+		append(System.getProperty("java.version"))
+		append(", JVM: ")
+		append(System.getProperty("java.vm.version"))
+		append(" (")
+		append(System.getProperty("java.vendor"))
+		append("), Arch: ")
+		append(System.getProperty("os.arch"))
+	})
+	extensions.getByType(ModPublishExtension::class.java).apply {
+		file.set(tasks.named<Jar>("jar").flatMap { it.archiveFile })
+		additionalFiles.from(tasks.named<Jar>("sourcesJar").flatMap { it.archiveFile })
+		changelog.set(rootProject.file("CHANGELOG.md").readText())
+		type.set(ReleaseType.BETA)
+		version.set(project.version.toString())
+		displayName.set("[$loader] ${p("modVersion")}")
+		modLoaders.add(loader)
+		github {
+			repository.set("ForgeStove/FlexConfig")
+			commitish.set("main")
+			accessToken.set(providers.environmentVariable("GITHUB_TOKEN"))
+		}
+	}
 }
+
+fun Project.p(key: String) = extra[key].toString()

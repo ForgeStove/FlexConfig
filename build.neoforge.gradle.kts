@@ -1,12 +1,8 @@
-import flexconfig.configureCommon
-import flexconfig.configurePublishMods
-import flexconfig.p
-
 plugins {
-	id("net.neoforged.moddev") version "+"
+	id("net.neoforged.moddev") version "2.0.148" // https://plugins.gradle.org/m2/net/neoforged/moddev/net.neoforged.moddev.gradle.plugin/maven-metadata.xml
 	id("me.modmuss50.mod-publish-plugin")
 }
-configureCommon("neoforge")
+configure("neoforge")
 neoForge {
 	version = p("loaderVersion")
 	parchment {
@@ -28,4 +24,3 @@ neoForge {
 	}
 	mods.create(p("modId")).sourceSet(sourceSets.main.get())
 }
-configurePublishMods("neoforge")
