@@ -10,15 +10,11 @@ import org.slf4j.Logger;
 
 import java.nio.file.*;
 import java.util.*;
-/**
- * 按世界存档存储锁定的配置条目，落盘为存档下的 {@code serverconfig/flexconfig/<modId>_locks.toml}（结构与配置文件一致）。
- * <p>
- * 放在 {@code flexconfig} 子目录是为了不和官方认的「server 配置覆盖文件」混在一起。
- */
+/** 按世界存档存储锁定的配置条目，落盘为存档下的 {@code serverconfig/flexconfig/<modId>_locks.toml}；{@code flexconfig} 子目录是为了不和官方认的「server 配置覆盖文件」混在一起。 */
 public final class ServerConfigLockStore {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Path lockFilePath;
-	/** 锁定项，结构与配置文件一致；键由客户端传来的路径按点号分层。 */
+	/** 锁定项结构同配置文件；键由客户端传来的路径按点号分层。 */
 	private CommentedConfig locks = ConfigSerializer.inMemory();
 	public ServerConfigLockStore(MinecraftServer server, String modId) {
 		lockFilePath = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/flexconfig/" + modId + "_locks.toml");
@@ -31,7 +27,9 @@ public final class ServerConfigLockStore {
 			else out.add(path);
 		}
 	}
-	/** 服务器启动时调用。 */
+	private static List<String> splitPath(String configId) {
+		return List.of(configId.split("\\."));
+	}
 	public void load() {
 		var path = lockFilePath;
 		if (!Files.exists(path)) {
@@ -47,15 +45,11 @@ public final class ServerConfigLockStore {
 			locks = ConfigSerializer.inMemory();
 		}
 	}
-	/** 将配置条目锁定为特定的值（已由 {@link io.github.forgestove.flexconfig.LockValueCodec} 转成 TOML 原生类型）。 */
+	/** {@code value} 已由 {@link io.github.forgestove.flexconfig.LockValueCodec} 转为 TOML 原生类型。 */
 	public void lockEntry(String configId, Object value) {
 		locks.set(splitPath(configId), value);
 		save();
 	}
-	private static List<String> splitPath(String configId) {
-		return List.of(configId.split("\\."));
-	}
-	/** 服务器停止时与每次更改后调用。 */
 	public void save() {
 		try {
 			Files.createDirectories(lockFilePath.getParent());
@@ -64,18 +58,16 @@ public final class ServerConfigLockStore {
 			LOGGER.error("Failed to save config locks to {}", lockFilePath, e);
 		}
 	}
-	/** 从锁定存储中移除。 */
 	public void unlockEntry(String configId) {
 		locks.remove(splitPath(configId));
 		save();
 	}
-	/** 当前锁定的配置项路径（点分形式）的只读视图。 */
 	public Set<String> lockedPaths() {
 		var result = new LinkedHashSet<String>();
 		collectPaths(locks, "", result);
 		return Collections.unmodifiableSet(result);
 	}
-	/** 锁定项的结构化表示，供服务端直接应用（无需再走文本往返）。 */
+	/** 直接交出底层配置对象，服务端应用时无需再走文本往返。 */
 	public CommentedConfig toConfig() {
 		return locks;
 	}

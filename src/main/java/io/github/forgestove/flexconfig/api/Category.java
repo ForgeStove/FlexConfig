@@ -1,9 +1,8 @@
 package io.github.forgestove.flexconfig.api;
 import java.lang.annotation.*;
-/** 标记包含分类 POJO 的字段。 */
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Category {
-	/** 在配置界面里是否默认展开（子分类可点标题折叠 / 展开）。 */
+	/** 分类标题初始是否展开；界面中顶层分类固定展开，该值目前只在子分类上生效。 */
 	boolean value() default true;
 }

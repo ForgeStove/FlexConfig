@@ -8,15 +8,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.*;
 /**
- * 普通 Ore 按钮。
- * <p>
- * 每状态一张完整贴图 + 九宫格元数据（横向拉伸），宽度归控件、配色与分层全在纹理里。
- * 按下态没有底部暗带（矮 2px、底对齐）；禁用态没有高光、三类型共用一张图。
+ * 每状态一张完整贴图加九宫格元数据（横向拉伸）：宽度归控件，配色与分层均由纹理提供。按下态无底部暗带而
+ * 矮 2px 且底对齐，禁用态无高光、三类型共用一张。
  */
 public class OreButton extends OreAbstractButton {
-	/** 屏幕级按钮的标准宽度。 */
 	public static final int DEFAULT_WIDTH = 150;
-	/** [类型][状态]，行序同 {@link Style}，列序为常态 / 悬停 / 按下；禁用三类型共用一张。 */
+	/** [类型][状态]：行序同 {@link Style}，列序为常态 / 悬停 / 按下。 */
 	private static final FlexGuiTextures[][] BOXES = {
 		{FlexGuiTextures.BUTTON_PRIMARY, FlexGuiTextures.BUTTON_PRIMARY_HOVER, FlexGuiTextures.BUTTON_PRIMARY_PRESSED},
 		{FlexGuiTextures.BUTTON_SECONDARY, FlexGuiTextures.BUTTON_SECONDARY_HOVER, FlexGuiTextures.BUTTON_SECONDARY_PRESSED},
@@ -45,9 +42,6 @@ public class OreButton extends OreAbstractButton {
 	public void onPress() {
 		onPress.onPress(this);
 	}
-	public void setStyle(@NotNull Style style) {
-		this.style = style;
-	}
 	@Override
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
 		var box = box();
@@ -58,6 +52,9 @@ public class OreButton extends OreAbstractButton {
 		if (shouldRenderFocus()) renderRing(gui, y, height);
 		renderCursor();
 	}
+	public void setStyle(@NotNull Style style) {
+		this.style = style;
+	}
 	/** 按下要排在聚焦之前，否则点一下拿到焦点后，按下态会被聚焦态盖掉。 */
 	private FlexGuiTextures box() {
 		if (!active) return FlexGuiTextures.BUTTON_DISABLED;
@@ -67,8 +64,7 @@ public class OreButton extends OreAbstractButton {
 		return states[isHovered() ? 1 : 0];
 	}
 	/**
-	 * 画盒子里的内容（默认居中文字）。{@code boxY} 指盒子顶端，按下态盒子矮 2px 又底对齐，所以这个值会随状态变，
-	 * 内容位置一律由 {@link #centeredY} 算。
+	 * {@code boxY} 指盒子顶端；按下态盒子矮 2px 又底对齐，故该值随状态变，内容纵坐标须经 {@link #centeredY} 折算。
 	 */
 	protected void renderContent(@NotNull GuiGraphics gui, int boxY) {
 		renderButtonString(gui, boxY);
@@ -103,9 +99,8 @@ public class OreButton extends OreAbstractButton {
 		return style == Style.SECONDARY ? TEXT_DARK : TEXT_LIGHT;
 	}
 	/**
-	 * 内容区（盒顶 +{@link #TEXT_TOP} .. 盒顶 +{@link #TEXT_BOTTOM}）里垂直居中一个高 {@code height} 的内容。
-	 * <p>
-	 * 文字与图标共用这一套：内容区**相对盒顶恒定**，所以按下态盒子变矮时内容只随盒顶平移，不会自己往上收。
+	 * 内容区（盒顶 +{@link #TEXT_TOP} 至盒顶 +{@link #TEXT_BOTTOM}）内垂直居中一个高 {@code height} 的内容。
+	 * 文字与图标共用：内容区相对盒顶恒定，按下态盒子变矮时内容只随盒顶平移。
 	 */
 	protected final int centeredY(int boxY, int height) {
 		return boxY + (TEXT_TOP + TEXT_BOTTOM - height) / 2;

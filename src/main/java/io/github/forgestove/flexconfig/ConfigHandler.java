@@ -2,7 +2,6 @@ package io.github.forgestove.flexconfig;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
-import io.github.forgestove.flexconfig.client.FlexConfigScreenFactory;
 import io.github.forgestove.flexconfig.client.gui.factory.EntryKeybind;
 import io.github.forgestove.flexconfig.platform.Platform;
 import io.github.forgestove.flexconfig.tree.RootConfigNode;
@@ -12,10 +11,7 @@ import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.util.*;
-/**
- * 通用配置处理器，管理单个配置文件的加载、保存与 GUI 创建。
- * 文件路径由 {@link ConfigNaming} 解析，除 SERVER 型要进世界才知道存档目录外，其余在构造期即读盘。
- */
+/** 文件路径由 {@link ConfigNaming} 解析；SERVER 型要进世界才能定位存档目录，故构造期不读盘，其余类型在构造期读取。 */
 public final class ConfigHandler<C, V> {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Map<String, Runnable> triggerActions = new LinkedHashMap<>();
@@ -42,6 +38,9 @@ public final class ConfigHandler<C, V> {
 		activeConfig = newInstance();
 		if (loadsAtRegistration()) loadFromDisk(null);
 	}
+	public static <C, V> @NotNull Builder<C, V> builder(Class<C> configClass) {
+		return new Builder<>(configClass);
+	}
 	private @NotNull C newInstance() {
 		try {
 			return configClass.getDeclaredConstructor().newInstance();
@@ -49,7 +48,6 @@ public final class ConfigHandler<C, V> {
 			throw new RuntimeException("Failed to create config instance", e);
 		}
 	}
-	/** 注册期是否立即读盘：SERVER 要进世界才知道存档目录，CLIENT 只在客户端。 */
 	private boolean loadsAtRegistration() {
 		return switch (type) {
 			case SERVER -> false;
@@ -57,13 +55,12 @@ public final class ConfigHandler<C, V> {
 			case COMMON -> true;
 		};
 	}
-	/** 解析路径并读盘；SERVER 型需传入服务器以定位存档目录，其余类型忽略该参数。 */
 	public void loadFromDisk(@Nullable MinecraftServer server) {
 		resolvedPath = ConfigNaming.resolve(modId, type, fileName, server);
 		serializer.setTargetPath(resolvedPath);
 		reloadAndCopy();
 	}
-	/** 从已解析的路径重读，并把值与快捷键复制到 saved 与 active，撤销一切运行时改动（含锁值与应用过的下发值）。 */
+	/** 重读磁盘并覆盖 saved 与 active，连同锁值与已下发的服务端值一并撤销。 */
 	public void reloadAndCopy() {
 		if (resolvedPath == null) return;
 		CommentedConfig toml;
@@ -90,17 +87,13 @@ public final class ConfigHandler<C, V> {
 			return newInstance();
 		}
 	}
-	@Contract(value = "_ -> new", pure = true)
-	public static <C, V> @NotNull Builder<C, V> builder(Class<C> configClass) {
-		return new Builder<>(configClass);
-	}
-	/** 用服务端下发的整份内容覆盖 saved 与 active（只改内存，不落盘、不读本地文件）。 */
+	/** 用服务端下发的整份内容覆盖 saved 与 active；仅改内存，不落盘也不读本地文件。 */
 	public void applySynced(CommentedConfig toml) {
 		var fresh = deserialize(toml);
 		configTree.copy(fresh, savedConfig);
 		configTree.copy(fresh, activeConfig);
 	}
-	/** 卸载（SERVER 型在世界停止时调用）：恢复默认值并丢弃已解析路径。 */
+	/** SERVER 型在世界停止时调用：恢复默认值并丢弃已解析路径。 */
 	public void unload() {
 		resolvedPath = null;
 		var defaults = newInstance();
@@ -108,50 +101,38 @@ public final class ConfigHandler<C, V> {
 		configTree.copy(defaults, activeConfig);
 		triggerKeybinds.clear();
 	}
-	@Contract(pure = true)
 	public RootConfigNode<C, V> getConfigTree() {
 		return configTree;
 	}
-	@Contract(pure = true)
 	public C getConfig() {
 		return activeConfig;
 	}
-	/** 由 {@link FlexConfigScreenFactory} 用于访问已保存的配置实例。 */
-	@Contract(pure = true)
 	public C getSavedConfig() {
 		return savedConfig;
 	}
-	/** 供网络包等场景做类型转换与反序列化。 */
-	@Contract(pure = true)
 	public ConfigSerializer<C> getSerializer() {
 		return serializer;
 	}
-	@Contract(pure = true)
 	public String getModId() {
 		return modId;
 	}
-	@Contract(pure = true)
 	public ConfigType getType() {
 		return type;
 	}
-	@Contract(pure = true)
 	public String getFileName() {
 		return fileName;
 	}
-	/** 已解析的磁盘路径；SERVER 型在进世界前为 {@code null}。 */
-	@Contract(pure = true)
 	public @Nullable Path getPath() {
 		return resolvedPath;
 	}
-	@Contract(value = " -> this", pure = true)
 	@SuppressWarnings("unchecked")
 	public ConfigHandler<Object, Object> cast() {
 		return (ConfigHandler<Object, Object>) this;
 	}
 	// ========== 全局快捷键系统 ==========
-	/** 保存：值、本地化注释与快捷键段一次性原子写出（临时文件 + 原子替换）。 */
+	/** 值、本地化注释与快捷键段一次性写出，采用临时文件加原子替换，写入失败时原文件保持完整。 */
 	public void save(C config) {
-		// 全量进文件模型 → 补上延迟生效项的新值（运行时仍守旧值）→ 运行时只接收即时生效的改动
+		// 全量写入文件模型 → 补上延迟生效项的新值（运行时仍守旧值）→ 运行时仅接收即时生效的改动
 		configTree.copy(config, savedConfig);
 		configTree.flushPending(savedConfig);
 		configTree.copyForRuntime(config, activeConfig);
@@ -164,11 +145,11 @@ public final class ConfigHandler<C, V> {
 		// 刚写过盘，把修改时间记为基线，免得热重载把自己的这次写入当成外部改动
 		ConfigWatchService.markCurrent(new FileKey(modId, fileName));
 	}
-	/** 让 WORLD 型延迟生效的改动真正生效（退出世界、服务端停止时调用）。 */
+	/** 退出世界或服务端停止时调用，让 WORLD 型延迟生效的改动写入活动配置。 */
 	public void applyWorldRestart() {
 		configTree.applyRestart(savedConfig, activeConfig, RestartType.WORLD);
 	}
-	/** 设置指定路径的快捷键绑定与触发动作。serialized 为空时清除绑定；action 为 null 时不覆盖已有动作。 */
+	/** {@code serialized} 为空时清除绑定；{@code action} 为 {@code null} 时保留已有动作。 */
 	public void setTriggerKeybind(String path, @Nullable String serialized, @Nullable Runnable action) {
 		if (serialized == null || serialized.isEmpty()) triggerKeybinds.remove(path);
 		else triggerKeybinds.put(path, serialized);
@@ -193,7 +174,7 @@ public final class ConfigHandler<C, V> {
 			}
 		});
 	}
-	/** 将快捷键绑定恢复到指定的快照（用于取消时回撤清屏幕时还原）。 */
+	/** 以快照整体覆盖当前快捷键绑定，用于取消编辑时回撤。 */
 	public void restoreTriggerKeybinds(Map<String, String> snapshot) {
 		triggerKeybinds.clear();
 		triggerKeybinds.putAll(snapshot);
@@ -203,22 +184,18 @@ public final class ConfigHandler<C, V> {
 		private final ConfigSerializer.Builder<C> serializerBuilder;
 		private ConfigType type = ConfigType.CLIENT;
 		private String fileName;
-		@Contract(pure = true)
 		private Builder(Class<C> configClass) {
 			this.configClass = configClass;
 			serializerBuilder = ConfigSerializer.builder(configClass);
 		}
-		@Contract(value = "_ -> this", pure = true)
 		public Builder<C, V> type(ConfigType type) {
 			this.type = type;
 			return this;
 		}
-		@Contract(value = "_ -> this", pure = true)
 		public Builder<C, V> fileName(String fileName) {
 			this.fileName = fileName;
 			return this;
 		}
-		@Contract(" -> new")
 		public @NotNull ConfigHandler<C, V> build() {
 			return new ConfigHandler<>(this);
 		}

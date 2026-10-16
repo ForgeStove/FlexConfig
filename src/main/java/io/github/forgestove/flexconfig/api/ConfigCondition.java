@@ -3,10 +3,10 @@ import io.github.forgestove.flexconfig.platform.Platform;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-/** 配置分类或字段加载时必须满足的条件，实现类须有无参构造。 */
+/** 实现类须有无参构造（框架按无参构造实例化）。 */
 @FunctionalInterface
 public interface ConfigCondition {
-	/** 没有 {@link Condition} 注解的字段始终通过。 */
+	/** 无 {@link Condition} 注解的字段视为通过。 */
 	static boolean evaluate(Field field) {
 		var condition = field.getAnnotation(Condition.class);
 		return condition == null || evaluate(condition);
@@ -23,6 +23,5 @@ public interface ConfigCondition {
 			throw new RuntimeException("Failed to evaluate config condition '%s'".formatted(conditionClass.getSimpleName()), e);
 		}
 	}
-	/** 条件是否满足。 */
 	boolean test();
 }

@@ -8,18 +8,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-/** 多配置注册表：一个模组可以按 {@link ConfigType} 注册多份配置，各自一个文件。 */
+/** 一个模组可按 {@link ConfigType} 注册多份配置，各自对应一个文件。 */
 public final class ConfigRegistry {
-	/** 模组 ID → 该模组全部配置。 */
 	private static final Map<String, EnumMap<ConfigType, ConfigHandler<?, ?>>> SETS = new ConcurrentHashMap<>();
-	/** (模组 ID, 文件名) → 配置；供按文件精确定位（锁、下发、热重载）。 */
+	/** 供锁定、下发与热重载按文件精确定位。 */
 	private static final Map<FileKey, ConfigHandler<?, ?>> BY_FILE = new ConcurrentHashMap<>();
-	/** 「主」配置的优先顺序，用于保持只认 modId 的既有调用点（GUI 入口、旧锁代码）。 */
+	/** 「主」配置的优先顺序，供按 modId 取配置的调用点（GUI 入口、旧锁代码）使用。 */
 	private static final List<ConfigType> PRIMARY_ORDER = List.of(ConfigType.CLIENT, ConfigType.COMMON, ConfigType.SERVER);
-	/**
-	 * 注册并返回配置 POJO。同一 (模组 ID, 类型) 只会构建一次；
-	 * 同类型重复注册不同配置类会抛异常。
-	 */
+	/** 同一 (模组 ID, 类型) 仅构建一次；同类型重复注册不同配置类会抛异常。 */
 	@SuppressWarnings({"unused", "UnusedReturnValue"})
 	public static <C> C init(Class<C> clazz) {
 		var annotation = requireAnnotation(clazz);
@@ -48,14 +44,12 @@ public final class ConfigRegistry {
 			clazz.getName()
 		));
 	}
-	/** 读取并校验配置类上的 {@link Config} 注解。 */
 	public static @NotNull Config requireAnnotation(Class<?> configClass) {
 		var annotation = configClass.getAnnotation(Config.class);
 		if (annotation == null) throw new IllegalStateException("Config class %s is missing @Config".formatted(configClass.getName()));
 		if (annotation.value().isBlank()) throw new IllegalStateException("Mod id must be provided before building ConfigHandler");
 		return annotation;
 	}
-	/** 客户端上把配置入口挂到模组列表：只有一份配置时直接打开，多份则先进入选择界面。 */
 	private static void initConfigScreenForClient(String modId) {
 		if (!Platform.get().isClient()) return;
 		Platform.get().registerConfigScreen(modId, () -> FlexConfigScreenFactory.createConfigScreen(modId));
@@ -64,7 +58,6 @@ public final class ConfigRegistry {
 		return requireAnnotation(configClass).value();
 	}
 	// ========== 按 modId（主配置）访问 ==========
-	/** 获取该模组的全部配置处理器，按「主配置」优先顺序排列（CLIENT → COMMON → SERVER → STARTUP）。 */
 	public static List<ConfigHandler<?, ?>> getHandlers(String modId) {
 		var set = SETS.get(modId);
 		if (set == null) return List.of();
@@ -90,33 +83,28 @@ public final class ConfigRegistry {
 	public static void resetToSaved(FileKey key) {
 		getHandler(key).cast().reloadAndCopy();
 	}
-	/** 将锁定值应用到活动配置（运行时）。不会修改 savedConfig，因此TOML文件不会被污染。 */
+	/** 仅作用于活动配置，不修改 savedConfig，因此不会污染 TOML 文件。 */
 	public static void applyLockedValue(FileKey key, ValueConfigNode<Object, Object> node, Object parsed) {
 		node.setActiveValue(getHandler(key).cast().getConfig(), parsed);
 	}
-	/** 让所有 WORLD 型延迟生效的改动真正生效（退出世界、服务端停止时调用）。 */
+	/** 退出世界或服务端停止时调用，让各份配置的 WORLD 型延迟改动写入活动配置。 */
 	public static void applyWorldRestart() {
 		BY_FILE.values().forEach(ConfigHandler::applyWorldRestart);
 	}
 	// ========== 生命周期 ==========
-	/** 世界即将开始：解析并加载全部 SERVER 型配置（存档优先，回退全局 config）。 */
+	/** 世界即将开始：解析并加载 SERVER 型配置（存档优先，回退全局 config）。 */
 	public static void loadServerConfigs(MinecraftServer server) {
 		BY_FILE.values().forEach(handler -> {
 			if (handler.getType() == ConfigType.SERVER) handler.loadFromDisk(server);
 		});
 	}
-	/** 世界已停止：卸载全部 SERVER 型配置。 */
 	public static void unloadServerConfigs() {
 		BY_FILE.values().forEach(handler -> {
 			if (handler.getType() == ConfigType.SERVER) handler.unload();
 		});
 	}
 	// ========== 查询 ==========
-	/**
-	 * 该配置是否支持服务端锁定：只有 {@link ConfigType#CLIENT}（客户端自己读的那份）可以被锁。
-	 * <p>
-	 * 锁的语义是「服务端强制客户端的本地配置」
-	 */
+	/** 锁的语义是服务端强制客户端的本地配置，故可锁的仅是 {@link ConfigType#CLIENT}（客户端自己读的那份）。 */
 	public static boolean isLockable(FileKey key) {
 		var handler = BY_FILE.get(key);
 		return handler != null && handler.getType() == ConfigType.CLIENT;

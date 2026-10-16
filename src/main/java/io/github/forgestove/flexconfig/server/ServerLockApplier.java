@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 /** 把锁定的配置项也应用到服务端自身的活动配置（与客户端那个对等）；先重载撤销旧锁值再逐条应用，解锁后能恢复原值。 */
 public final class ServerLockApplier {
 	private static final Logger LOGGER = LogUtils.getLogger();
-	/** 从 TOML 重载该配置后应用全部锁定；解锁能因此恢复原值。 */
 	public static void applyAll(FileKey key, ServerConfigLockStore store) {
 		if (!ConfigRegistry.getRegisteredFileKeys().contains(key)) return;
 		ConfigRegistry.resetToSaved(key);

@@ -5,7 +5,6 @@ import io.github.forgestove.flexconfig.client.gui.entry.*;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import org.jetbrains.annotations.Contract;
 
 import java.awt.Point;
 import java.util.*;
@@ -14,20 +13,31 @@ public final class EntryTypeRegistry {
 	private static final Map<Class<?>, EntryFactory> factories = new LinkedHashMap<>();
 	static {
 		register(Boolean.class, BooleanValueConfigEntry::new);
-		register(Integer.class, (tab, node) -> {
-			if (node.isColorValue()) return new ColorValueConfigEntry<>(tab, node);
-			if (node.getSliderRange() != null) return new SliderValueConfigEntry<>(tab, node, 1, d -> (int) Math.round(d));
-			return new IntegerValueConfigEntry<>(tab, node);
-		});
-		register(Long.class, (tab, node) -> node.getSliderRange() != null
-			? new SliderValueConfigEntry<>(tab, node, 1, Math::round)
-			: new LongValueConfigEntry<>(tab, node));
-		register(Float.class, (tab, node) -> node.getSliderRange() != null
-			? new SliderValueConfigEntry<>(tab, node, 0, d -> (float) d)
-			: new FloatValueConfigEntry<>(tab, node));
-		register(Double.class, (tab, node) -> node.getSliderRange() != null
-			? new SliderValueConfigEntry<>(tab, node, 0, d -> d)
-			: new DoubleValueConfigEntry<>(tab, node));
+		register(
+			Integer.class, (tab, node) -> {
+				if (node.isColorValue()) return new ColorValueConfigEntry<>(tab, node);
+				if (node.getSliderRange() != null) return new SliderValueConfigEntry<>(tab, node, 1, d -> (int) Math.round(d));
+				return new IntegerValueConfigEntry<>(tab, node);
+			}
+		);
+		register(
+			Long.class,
+			(tab, node) -> node.getSliderRange() != null
+				? new SliderValueConfigEntry<>(tab, node, 1, Math::round)
+				: new LongValueConfigEntry<>(tab, node)
+		);
+		register(
+			Float.class,
+			(tab, node) -> node.getSliderRange() != null
+				? new SliderValueConfigEntry<>(tab, node, 0, d -> (float) d)
+				: new FloatValueConfigEntry<>(tab, node)
+		);
+		register(
+			Double.class,
+			(tab, node) -> node.getSliderRange() != null
+				? new SliderValueConfigEntry<>(tab, node, 0, d -> d)
+				: new DoubleValueConfigEntry<>(tab, node)
+		);
 		register(Enum.class, EnumValueConfigEntry::new);
 		register(String.class, StringValueConfigEntry::new);
 		register(Key.class, KeybindValueConfigEntry::new);
@@ -47,7 +57,6 @@ public final class EntryTypeRegistry {
 			if (entry.getKey().isAssignableFrom(type)) return entry.getValue().create(tab, node);
 		return new TextConfigEntry(Translation.UNSUPPORTED_TYPE.copy().append(type.getSimpleName()).withStyle(ChatFormatting.RED));
 	}
-	@Contract("_, _, _, _ -> new")
 	public static ConfigEntry createCategoryEntry(Component label, boolean expanded, int depth, Runnable onToggle) {
 		return new CategoryCollapsibleConfigEntry(label, expanded, depth, onToggle);
 	}

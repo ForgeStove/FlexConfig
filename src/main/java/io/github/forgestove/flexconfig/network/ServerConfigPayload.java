@@ -5,7 +5,7 @@ import net.minecraft.network.codec.*;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
-/** S2C数据包：服务器把某个 SERVER 型配置的整份内容下发给客户端（客户端只存内存，不落盘）。 */
+/** 服务器把某个 SERVER 型配置的整份内容下发给客户端；客户端只存内存，不落盘。 */
 public record ServerConfigPayload(String modId, String fileName, String tomlContent) implements CustomPacketPayload {
 	public static final Type<ServerConfigPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, "server_config"));
 	public static final StreamCodec<FriendlyByteBuf, ServerConfigPayload> STREAM_CODEC = StreamCodec.composite(

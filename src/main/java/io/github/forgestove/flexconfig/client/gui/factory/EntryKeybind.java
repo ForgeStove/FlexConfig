@@ -11,7 +11,6 @@ public record EntryKeybind(@NotNull Key key, int modifierFlags) {
 	public static final int SHIFT = 1;
 	public static final int CONTROL = 1 << 1;
 	public static final int ALT = 1 << 2;
-	/** 获取当前按下的修饰键标志（可多项）。 */
 	public static int getActiveModifierFlags() {
 		var flags = NONE;
 		if (Screen.hasShiftDown()) flags |= SHIFT;
@@ -19,7 +18,6 @@ public record EntryKeybind(@NotNull Key key, int modifierFlags) {
 		if (Screen.hasAltDown()) flags |= ALT;
 		return flags;
 	}
-	/** 从 {@link #serialize()} 的字符串反序列化。 */
 	public static EntryKeybind deserialize(String str) {
 		if (str == null || str.isEmpty()) return UNBOUND;
 		var parts = str.split("\\+");
@@ -48,7 +46,7 @@ public record EntryKeybind(@NotNull Key key, int modifierFlags) {
 			return UNBOUND;
 		}
 	}
-	/** 检测原始按键是否匹配此快捷键（含修饰键检测）。 */
+	/** 未绑定修饰键时要求当前没有修饰键按下，否则 Ctrl+S 也会触发绑定为 S 的动作。 */
 	public static boolean isKeyPressed(long window, EntryKeybind keybind) {
 		var key = keybind.key();
 		if (key.equals(InputConstants.UNKNOWN)) return false;
@@ -99,9 +97,8 @@ public record EntryKeybind(@NotNull Key key, int modifierFlags) {
 		return key.equals(InputConstants.UNKNOWN);
 	}
 	/**
-	 * 序列化为字符串格式："[modifiers+]code"，
-	 * modifier 用单字母：c=Ctrl, s=Shift, a=Alt，
-	 * 例如 "c+32"（Ctrl+Space），"c+s+83"（Ctrl+Shift+S）。
+	 * 序列化为 {@code "[modifiers+]code"}，修饰键记单字母 {@code c}/{@code s}/{@code a}，如 {@code "c+s+83"}；鼠标与扫描码分别带 {@code mouse:}、{@code scan:}
+	 * 前缀。
 	 */
 	public String serialize() {
 		if (isUnbound()) return "";

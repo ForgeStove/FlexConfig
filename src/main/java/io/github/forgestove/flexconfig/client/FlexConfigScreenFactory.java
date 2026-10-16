@@ -3,14 +3,12 @@ import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.api.ConfigType;
 import io.github.forgestove.flexconfig.client.gui.*;
 import net.minecraft.client.gui.screens.Screen;
-import org.jetbrains.annotations.*;
-/** 配置界面的构建入口；挂到模组列表的动作由加载器实现（{@code Platform#registerConfigScreen}）负责。 */
+import org.jetbrains.annotations.NotNull;
+/** 配置界面的构建入口；挂到模组列表的动作由加载器侧的 {@code Platform#registerConfigScreen} 实现。 */
 public final class FlexConfigScreenFactory {
 	/**
-	 * 该模组的配置入口。
-	 * 只有一份配置、且此刻可用时直接打开它；多份、或唯一那份不可用时先进 {@link ConfigFileScreen}（那边会把不可用的置灰）。
+	 * 仅有一份配置且此刻可用时直接打开，否则先进 {@link ConfigFileScreen}（其中不可用项置灰）。
 	 */
-	@Contract("_ -> new")
 	public static @NotNull Screen createConfigScreen(String modId) {
 		var handlers = ConfigRegistry.getHandlers(modId);
 		if (handlers.size() == 1 && available(handlers.getFirst())) return new ConfigScreen<>(handlers.get(0));

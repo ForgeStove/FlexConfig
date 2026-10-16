@@ -10,14 +10,14 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	private Component title;
 	private Component tooltip;
 	private Class<? extends V> valueType;
-	/** 列表字段声明的元素类型；非列表为 {@code null}。 */
+	/** 列表字段声明的元素类型；非列表或无 Class 实参时为 {@code null}。 */
 	@Nullable private Class<?> elementType;
 	/** 生效所需的重启级别；{@code null} 表示改完即生效。 */
 	@Nullable private RestartType requiredRestart;
-	/** 已写入文件、但运行时还没切过去的新值（延迟生效）；为 {@code null} 表示运行时与文件一致。 */
+	/** 已写入文件、运行时尚未切换过去的新值（延迟生效）；{@code null} 表示运行时与文件一致。 */
 	@Nullable private V pendingValue;
 	@Nullable private ColorValue colorValue;
-	/** 滑块的取值范围；{@code null} 表示这个选项用输入框编辑。 */
+	/** 滑块的取值范围；{@code null} 表示该选项用输入框编辑。 */
 	@Nullable private SliderRange sliderRange;
 	private ValueReader<C, V> valueReader;
 	private ValueWriter<C, V> valueWriter;
@@ -33,7 +33,6 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public Class<? extends V> getValueType() {
 		return valueType;
 	}
-	/** 列表字段的元素类型；非列表字段或无泛型实参时为 {@code null}。 */
 	@Nullable
 	public Class<?> getElementType() {
 		return elementType;
@@ -51,42 +50,21 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public void resetToDefault() {
 		setEditingValue(getDefaultValue());
 	}
-	public void setEditingValue(V value) {
-		editingValue = value;
-	}
-	public V getDefaultValue() {
-		return defaultValue;
-	}
 	@Override
 	public void resetToActive(C config) {
 		setEditingValue(currentBase(config));
-	}
-	/**
-	 * 编辑基线：有未生效的改动时取那份新值（已在文件里），否则取运行时值。
-	 * <p>
-	 * 界面按基线初始化编辑值，所以「保存过但还没生效」的项显示的是新值，再点保存不会把文件回退成旧值。</p>
-	 */
-	private V currentBase(C config) {
-		return pendingValue != null ? pendingValue : getActiveValue(config);
-	}
-	public V getActiveValue(C config) {
-		return valueReader.read(config);
 	}
 	@Override
 	public @Nullable RestartType restartType(C config) {
 		return pendingValue != null ? requiredRestart : null;
 	}
 	@Override
-	public boolean isActiveValue(C config) {
-		return Objects.equals(currentBase(config), getEditingValue(config));
-	}
-	public V getEditingValue(C config) {
-		if (editingValue == null) setEditingValue(currentBase(config));
-		return editingValue;
-	}
-	@Override
 	public boolean isDefaultValue(C config) {
 		return Objects.equals(getDefaultValue(), getEditingValue(config));
+	}
+	@Override
+	public boolean isActiveValue(C config) {
+		return Objects.equals(currentBase(config), getEditingValue(config));
 	}
 	@Override
 	public @Nullable Component validate(C config) {
@@ -95,9 +73,6 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	@Override
 	public void copy(C from, C to) {
 		setActiveValue(to, getActiveValue(from));
-	}
-	public void setActiveValue(C config, V value) {
-		valueWriter.write(config, value);
 	}
 	@Override
 	public void copyForRuntime(C from, C to) {
@@ -136,13 +111,33 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public String getPath() {
 		return path;
 	}
-	/** 滑块的取值范围；{@code null} 表示这个选项不用滑块。 */
+	public void setEditingValue(V value) {
+		editingValue = value;
+	}
+	public V getDefaultValue() {
+		return defaultValue;
+	}
+	/**
+	 * 编辑基线：存在未生效改动时取那份新值（已在文件里），否则取运行时值。
+	 * 界面按基线初始化编辑值，「保存过但尚未生效」的项因此显示新值，再点保存不会把文件回退成旧值。
+	 */
+	private V currentBase(C config) {
+		return pendingValue != null ? pendingValue : getActiveValue(config);
+	}
+	public V getActiveValue(C config) {
+		return valueReader.read(config);
+	}
+	public V getEditingValue(C config) {
+		if (editingValue == null) setEditingValue(currentBase(config));
+		return editingValue;
+	}
+	public void setActiveValue(C config, V value) {
+		valueWriter.write(config, value);
+	}
 	@Nullable
 	public SliderRange getSliderRange() {
 		return sliderRange;
 	}
-	/** 滑块的取值范围（注解里写了 {@code slider = true}、且 min 与 max 都显式才有）。 */
-	public record SliderRange(double min, double max) {}
 	public boolean colorHasAlpha() {
 		return isColorValue() && colorValue.value();
 	}
@@ -160,11 +155,12 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public interface ValueValidator<V> {
 		@Nullable Component validate(V value);
 	}
-	/** 值变更回调；是否去重/异常隔离由 {@link io.github.forgestove.flexconfig.ConfigChangeDispatcher} 负责 */
+	/** 值变更回调；去重与异常隔离由 {@link io.github.forgestove.flexconfig.ConfigChangeDispatcher} 负责。 */
 	@FunctionalInterface
 	public interface ConfigChangeCallback {
 		void onChange(Object oldValue, Object newValue);
 	}
+	public record SliderRange(double min, double max) {}
 	public static class Builder<C, V> {
 		private ValueConfigNode<C, V> node;
 		private Builder() {

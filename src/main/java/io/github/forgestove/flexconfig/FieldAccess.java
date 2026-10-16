@@ -6,10 +6,8 @@ import java.lang.reflect.*;
 import java.util.*;
 public final class FieldAccess {
 	/**
-	 * 收集类自身声明的字段并按 {@link Order @Order} 排序。
-	 * 无注解者视为 0 排在前面并保持声明顺序；有正数值者按值排序再按声明顺序。
-	 * <p>
-	 * 配置树与序列化器必须共用此方法，否则「GUI 能看到但永不落盘」一类不一致会再次出现。
+	 * 按 {@link Order @Order} 值排序，同值者保持声明顺序，无注解者视为 0。
+	 * 配置树与序列化器须共用本方法，否则会出现「GUI 能看到但永不落盘」一类不一致。
 	 */
 	public static Field[] collectOrderedFields(Class<?> clazz) {
 		var fields = clazz.getDeclaredFields();
@@ -23,13 +21,13 @@ public final class FieldAccess {
 		);
 		return fields;
 	}
-	/** 取 {@code List<T>} 声明的元素类型；裸 {@code List} 或非 Class 实参时返回 {@code null}。 */
+	/** 裸 {@code List} 或实参不是 {@code Class} 时返回 {@code null}。 */
 	public static Class<?> elementType(Field field) {
 		if (field.getGenericType() instanceof ParameterizedType parameterized
 			&& parameterized.getActualTypeArguments()[0] instanceof Class<?> element) return boxed(element);
 		return null;
 	}
-	/** 原始类型映射到包装类型（值类型注册表按包装类型索引），其余原样返回。 */
+	/** 原始类型映射到包装类型，因为值类型注册表按包装类型索引。 */
 	public static Class<?> boxed(Class<?> type) {
 		if (type == int.class) return Integer.class;
 		if (type == boolean.class) return Boolean.class;

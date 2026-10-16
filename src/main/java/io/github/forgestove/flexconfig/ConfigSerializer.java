@@ -13,13 +13,12 @@ import java.awt.Point;
 import java.lang.reflect.Field;
 import java.nio.file.*;
 import java.util.*;
-/** 通用的 TOML 配置序列化工具，支持本地化注释。写入交给 NightConfig 的 {@link TomlWriter}（原子替换）。 */
 public final class ConfigSerializer<C> {
 	private static final String KEYBINDS_SECTION = "-keybinds-";
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Class<C> configClass;
 	private final String translationPrefix;
-	/** 读写的目标文件，由 {@link ConfigHandler} 在解析路径后注入。 */
+	/** 由 {@link ConfigHandler} 解析路径后注入。 */
 	private Path targetPath;
 	private ConfigSerializer(Builder<C> builder) {
 		configClass = builder.configClass;
@@ -28,7 +27,7 @@ public final class ConfigSerializer<C> {
 	public static <C> Builder<C> builder(Class<C> configClass) {
 		return new Builder<>(configClass);
 	}
-	/** 把配置值转成 NightConfig 可写入的表示；不支持或非法的值返回 {@code null}（跳过该条）。 */
+	/** 不支持或非法的值返回 {@code null}，由调用方跳过该条。 */
 	private static @Nullable Object toTomlValue(Field field, @Nullable Object value) {
 		if (value == null) return warnNull(field, "value is null");
 		if (field.isAnnotationPresent(ColorValue.class) && !(value instanceof Integer))
@@ -37,7 +36,7 @@ public final class ConfigSerializer<C> {
 		if (value instanceof List<?> list) return toTomlList(field, list);
 		return scalar(field, value);
 	}
-	/** 列表元素转成可写入的表示；有一个元素不支持就整条跳过。 */
+	/** 出现不支持的列表元素时整条放弃，返回 {@code null}。 */
 	@Nullable
 	private static List<Object> toTomlList(Field field, List<?> list) {
 		var result = new ArrayList<>(list.size());
@@ -52,7 +51,6 @@ public final class ConfigSerializer<C> {
 		}
 		return result;
 	}
-	/** 标量转成 TOML 原生类型；枚举转成名字字符串。 */
 	@Nullable
 	private static Object scalar(Field field, Object value) {
 		return switch (value) {
@@ -68,7 +66,7 @@ public final class ConfigSerializer<C> {
 			default -> warnNull(field, "unsupported type " + value.getClass().getName());
 		};
 	}
-	/** 非有限浮点跳过并告警（NaN/Infinity 不是合法的 TOML 浮点）。 */
+	/** NaN 与 Infinity 不是合法的 TOML 浮点，跳过并告警。 */
 	@Nullable
 	private static Double finite(Field field, double value) {
 		if (Double.isNaN(value) || Double.isInfinite(value)) {
@@ -85,20 +83,19 @@ public final class ConfigSerializer<C> {
 		}
 		return value;
 	}
-	/** Point 写成子表，读侧仍按 x/y 取值。 */
+	/** 点写成子表 {@code {x, y}}，读侧按同样的子表结构取值。 */
 	private static CommentedConfig pointConfig(Point point) {
 		var config = inMemory();
 		config.set("x", point.x);
 		config.set("y", point.y);
 		return config;
 	}
-	/** 记录跳过原因并返回 {@code null}，便于在表达式位置直接使用。 */
 	@Nullable
 	private static Object warnNull(Field field, String reason) {
 		LOGGER.warn("Skipping option '{}': {}", field.getName(), reason);
 		return null;
 	}
-	/** 字符串字段赋值（含长度校正）；字段不是 String 或长度低于下限无法修正时返回 {@code false}。 */
+	/** 含长度校正；字段类型不符或字符串过短无法修正时返回 {@code false}。 */
 	private static boolean setString(Object category, Field field, String value) throws IllegalAccessException {
 		if (field.getType() != String.class) return false;
 		var corrected = FieldValidators.correct(field, value);
@@ -106,7 +103,7 @@ public final class ConfigSerializer<C> {
 		field.set(category, corrected);
 		return true;
 	}
-	/** 把 TOML 数组转成字段声明的元素类型；出现不支持的元素时整条放弃。 */
+	/** 出现不支持的元素时整条放弃，返回 {@code null}。 */
 	@Nullable
 	private static List<Object> toList(Field field, List<?> raw) {
 		var elementType = FieldAccess.elementType(field);
@@ -173,33 +170,6 @@ public final class ConfigSerializer<C> {
 			else if (value instanceof String string) out.put(path, string);
 		}
 	}
-	/** 由 {@link ConfigHandler#loadFromDisk} 在路径解析后调用。 */
-	public void setTargetPath(Path targetPath) {
-		this.targetPath = targetPath;
-	}
-	/** 原子写入：先写临时文件再原子替换，写入失败时原文件保持完整。 */
-	public void serialize(C config, Map<String, String> keybinds) throws SerializationException {
-		try {
-			var toml = toConfig(config);
-			writeKeybinds(toml, keybinds);
-			new TomlWriter().write(toml, targetPath(), WritingMode.REPLACE_ATOMIC);
-		} catch (Exception e) {
-			throw new SerializationException(e);
-		}
-	}
-	/** 把配置写成 TOML 文本（不含快捷键段）；供网络下发等场景。 */
-	public String writeToString(C config) throws SerializationException {
-		try {
-			return new TomlWriter().writeToString(toConfig(config));
-		} catch (Exception e) {
-			throw new SerializationException(e);
-		}
-	}
-	/** 读取目标文件；文件不存在返回 {@code null}。 */
-	public @Nullable CommentedConfig read() throws SerializationException {
-		return read(targetPath());
-	}
-	/** 读取指定文件；文件不存在返回 {@code null}。 */
 	public static @Nullable CommentedConfig read(Path path) throws SerializationException {
 		if (!Files.exists(path)) return null;
 		try (var reader = Files.newBufferedReader(path)) {
@@ -210,14 +180,38 @@ public final class ConfigSerializer<C> {
 			throw new SerializationException(e);
 		}
 	}
+	public static CommentedConfig inMemory() {
+		return CommentedConfig.of(LinkedHashMap::new, InMemoryCommentedFormat.defaultInstance());
+	}
+	public void setTargetPath(Path targetPath) {
+		this.targetPath = targetPath;
+	}
+	/** 先写临时文件再原子替换，写入失败时原文件保持完整。 */
+	public void serialize(C config, Map<String, String> keybinds) throws SerializationException {
+		try {
+			var toml = toConfig(config);
+			writeKeybinds(toml, keybinds);
+			new TomlWriter().write(toml, targetPath(), WritingMode.REPLACE_ATOMIC);
+		} catch (Exception e) {
+			throw new SerializationException(e);
+		}
+	}
+	/** 不含快捷键段，供网络下发等场景使用。 */
+	public String writeToString(C config) throws SerializationException {
+		try {
+			return new TomlWriter().writeToString(toConfig(config));
+		} catch (Exception e) {
+			throw new SerializationException(e);
+		}
+	}
+	/** 文件不存在时返回 {@code null}。 */
+	public @Nullable CommentedConfig read() throws SerializationException {
+		return read(targetPath());
+	}
 	private Path targetPath() {
 		if (targetPath == null) throw new IllegalStateException("Config target path has not been resolved yet");
 		return targetPath;
 	}
-	public static CommentedConfig inMemory() {
-		return CommentedConfig.of(LinkedHashMap::new, InMemoryCommentedFormat.defaultInstance());
-	}
-	/** 构建整份配置的 TOML 表示（值 + 本地化注释）；不写盘。 */
 	private CommentedConfig toConfig(C config) throws SerializationException {
 		var toml = inMemory();
 		try {
@@ -230,10 +224,7 @@ public final class ConfigSerializer<C> {
 		}
 		return toml;
 	}
-	/**
-	 * 从已解析的 {@link CommentedConfig} 反序列化配置实例，不从文件读取。
-	 * 供网络包等场景使用，复用相同的字段映射和类型转换逻辑。
-	 */
+	/** 从已解析的 {@link CommentedConfig} 反序列化，不经文件读取。 */
 	public C deserializeFrom(CommentedConfig config) throws SerializationException {
 		try {
 			var instance = newInstance();
@@ -260,7 +251,6 @@ public final class ConfigSerializer<C> {
 			throw new SerializationException(e);
 		}
 	}
-	/** 递归写出一个分类子表；{@code path} 是用于翻译键的完整点分路径。 */
 	private void writeCategory(CommentedConfig parent, Object category, String path) throws IllegalAccessException {
 		var name = path.substring(path.lastIndexOf('.') + 1);
 		var comment = translate("category." + path);
@@ -300,10 +290,7 @@ public final class ConfigSerializer<C> {
 		key = "%s.%s".formatted(translationPrefix, key);
 		return Translation.getString(key);
 	}
-	/**
-	 * 递归遍历整个配置树，构建字段名→值的平铺映射。
-	 * 当字段被移动到不同分类路径时，可通过该映射按名称找回旧值。
-	 */
+	/** 字段名到值的平铺映射：字段被移到别的分类路径后，仍可按名称找回旧值。 */
 	private Map<String, Object> buildFlatValueMap(CommentedConfig config) {
 		var map = new HashMap<String, Object>();
 		buildFlatValueMapRecursive(config, map);
@@ -329,7 +316,7 @@ public final class ConfigSerializer<C> {
 			Object value = subConfig != null ? subConfig.get(field.getName()) : null;
 			if (value == null && fallbackValues != null) value = fallbackValues.get(field.getName());
 			if (value == null) continue;
-			// 单条非法或类型不符只跳过该条并保留默认值，绝不让一个坏值把整份配置拖回默认
+			// 单条非法或类型不符时跳过该条并保留默认值，避免一个坏值把整份配置拖回默认
 			try {
 				if (!applyValue(category, field, value)) LOGGER.warn(
 					"Ignoring option '{}': value '{}' does not match type {}",
@@ -342,7 +329,7 @@ public final class ConfigSerializer<C> {
 			}
 		}
 	}
-	/** 按字段类型转换文件中的原始值并写入（含范围校正）；类型不匹配或不受支持时返回 {@code false}，由调用方保留默认值。 */
+	/** 含范围校正；类型不匹配或不受支持时返回 {@code false}，由调用方保留默认值。 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private boolean applyValue(Object category, Field field, Object value) throws IllegalAccessException {
 		var type = field.getType();

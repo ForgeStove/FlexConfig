@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Point;
 import java.util.*;
 public final class LockValueCodec {
-	/** 值 → 锁字符串。 */
 	public static String format(ValueConfigNode<?, ?> node, Object value) {
 		if (node.isColorValue()) return String.format(node.colorHasAlpha() ? "0x%08X" : "0x%06X", value);
 		return switch (value) {
@@ -20,7 +19,7 @@ public final class LockValueCodec {
 		for (var value : values) if (value != null) parts.add(String.valueOf(value));
 		return String.join(", ", parts);
 	}
-	/** 锁字符串 → TOML 原生值；空串、类型不支持或字面量解析失败时返回 {@code null}（调用方按"这条锁无效"处理）。 */
+	/** 空串、类型不支持或字面量解析失败时返回 {@code null}，调用方按「这条锁无效」处理。 */
 	public static @Nullable Object toToml(ValueConfigNode<?, ?> node, String raw) {
 		if (raw.isEmpty()) return null;
 		var type = node.getValueType();
@@ -39,7 +38,7 @@ public final class LockValueCodec {
 			return null;
 		}
 	}
-	/** 逗号分隔（也接受 {@code [a, b]} 形式）→ TOML 数组，元素按 {@code List<T>} 的声明类型转。 */
+	/** 接受逗号分隔与 {@code [a, b]} 两种写法，元素按 {@code List<T>} 的声明类型转换。 */
 	private static @Nullable Object toList(@Nullable Class<?> elementType, String raw) {
 		var body = raw.trim();
 		if (body.startsWith("[") && body.endsWith("]")) body = body.substring(1, body.length() - 1).trim();
@@ -54,7 +53,7 @@ public final class LockValueCodec {
 		}
 		return result;
 	}
-	/** {@code "x, y"} → 子表 {@code {x, y}}：点字段在 TOML 里就是这么存的（读侧 {@code ConfigSerializer} 按子表读）。 */
+	/** {@code "x, y"} → 子表 {@code {x, y}}：点字段在 TOML 中即以此形式存储，读侧 {@code ConfigSerializer} 按子表读取。 */
 	private static @Nullable Object toPoint(String raw) {
 		var parts = raw.split(",");
 		if (parts.length != 2) return null;

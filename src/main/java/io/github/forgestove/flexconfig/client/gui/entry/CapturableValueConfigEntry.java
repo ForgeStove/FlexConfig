@@ -13,14 +13,10 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
-/**
- * 支持快捷键绑定的值配置条目基类。
- * 提供快捷键按钮、按键捕获、快捷键触发注册等公共逻辑。
- */
 public abstract class CapturableValueConfigEntry<C, V> extends ValueConfigEntry<C, V>
 	implements CaptureHandler, TabLifecycle, CrossRefreshable {
 	protected final OreButton keybindButton;
-	/** 进入屏幕时的 keybind 快照（用于 undo）。 */
+	/** 条目构造时的绑定快照，供「撤销」回退到进入界面时的状态。 */
 	@Nullable private final String initialKeybindSerialized;
 	protected boolean capturing;
 	private CaptureCallback captureCallback = (e, c) -> {};
@@ -39,9 +35,8 @@ public abstract class CapturableValueConfigEntry<C, V> extends ValueConfigEntry<
 		).size(HALF_VALUE_WIDTH, HEIGHT).build();
 		children.add(keybindButton);
 	}
-	/** 子类实现：注册全局快捷键触发动作（值变更逻辑 + 提示消息）。 */
 	protected abstract void registerKeybindTask();
-	/** 将值变更动作注册到 handler 的全局快捷键系统。由子类的 {@link #registerKeybindTask()} 调用。 */
+	/** 由子类的 {@link #registerKeybindTask()} 调用。 */
 	protected final void registerTriggerAction(Runnable valueChanger) {
 		var handler = tab.screen.getHandler();
 		var path = node.getPath();
@@ -55,27 +50,6 @@ public abstract class CapturableValueConfigEntry<C, V> extends ValueConfigEntry<
 			}
 		);
 	}
-	@Override
-	public void refresh() {
-		super.refresh();
-		var readOnly = isReadOnly();
-		keybindButton.active = !readOnly;
-		var keybind = getCurrentKeybind();
-		var keyText = keybind.getDisplayName().copy().withStyle(state.color());
-		if (capturing) keybindButton.setMessage(Component.literal("> ").append(keyText).append(" <"));
-		else keybindButton.setMessage(keyText);
-		if (state == KeybindState.CONFLICT && !conflictUsages.isEmpty()) keybindButton.setTooltip(Tooltip.create(getConflictTooltip()));
-		else keybindButton.setTooltip(null);
-		// 撤销：keybind 与初始快照不同
-		var currentSerialized = getCurrentKeybindSerialized();
-		if (!Objects.equals(currentSerialized, initialKeybindSerialized) && !readOnly) {
-			hasChanged = true;
-			undoButton.active = true;
-		}
-		// 重置：keybind 不为默认（null）时启用
-		if (currentSerialized != null && !readOnly) resetButton.active = true;
-	}
-	/** 获取当前绑定快捷键。 */
 	private EntryKeybind getCurrentKeybind() {
 		var serialized = tab.screen.getHandler().getTriggerKeybind(node.getPath());
 		return serialized != null ? EntryKeybind.deserialize(serialized) : EntryKeybind.UNBOUND;
@@ -108,7 +82,6 @@ public abstract class CapturableValueConfigEntry<C, V> extends ValueConfigEntry<
 		valueWidget.active = !isReadOnly();
 		renderGui(gui, y, x, width, mouseX, mouseY, delta, lockButton, undoButton, resetButton, keybindButton, valueWidget);
 	}
-	/** 子类实现：返回值控件（valueButton、dropdownButton 等），用于 render。 */
 	protected abstract AbstractWidget getValueWidget();
 	@Override
 	public boolean handleCaptureKey(int keyCode) {
@@ -203,5 +176,25 @@ public abstract class CapturableValueConfigEntry<C, V> extends ValueConfigEntry<
 	public void resetToActive() {
 		tab.screen.getHandler().setTriggerKeybind(node.getPath(), initialKeybindSerialized, null);
 		super.resetToActive();
+	}
+	@Override
+	public void refresh() {
+		super.refresh();
+		var readOnly = isReadOnly();
+		keybindButton.active = !readOnly;
+		var keybind = getCurrentKeybind();
+		var keyText = keybind.getDisplayName().copy().withStyle(state.color());
+		if (capturing) keybindButton.setMessage(Component.literal("> ").append(keyText).append(" <"));
+		else keybindButton.setMessage(keyText);
+		if (state == KeybindState.CONFLICT && !conflictUsages.isEmpty()) keybindButton.setTooltip(Tooltip.create(getConflictTooltip()));
+		else keybindButton.setTooltip(null);
+		// 撤销按钮随绑定与初始快照的差异启用
+		var currentSerialized = getCurrentKeybindSerialized();
+		if (!Objects.equals(currentSerialized, initialKeybindSerialized) && !readOnly) {
+			hasChanged = true;
+			undoButton.active = true;
+		}
+		// 重置：keybind 不为默认（null）时启用
+		if (currentSerialized != null && !readOnly) resetButton.active = true;
 	}
 }

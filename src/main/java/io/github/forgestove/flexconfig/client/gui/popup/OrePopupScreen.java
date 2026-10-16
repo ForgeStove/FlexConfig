@@ -8,13 +8,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.*;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.*;
-/**
- * Ore UI 通用弹窗基类：独立 {@link Screen}，父界面不必转发事件。
- * <p>
- * 渲染顺序：父界面（z −100）→ {@link #renderBackdrop} → 面板 → 内容 → 控件。
- * <p>
- * 几何：子类只报内容尺寸，位置由基类算，锚定触发控件（优先在其下展开）或居中，最后钳回屏内。
- */
+/** 独立 {@link Screen}，父界面不必转发事件；渲染顺序为父界面（z −100）→ 背景 → 面板 → 内容 → 控件。 */
 public abstract class OrePopupScreen extends Screen {
 	/** Ore 面板配色：正文本底 / 描边 / 带子底 / 上·左亮边 / 下·右暗边（都是纯色，直接画、无需纹理）。 */
 	protected static final int SURFACE = 0xFF313233, BORDER = 0xFF1E1E1F, BAND = 0xFF48494A;
@@ -23,7 +17,7 @@ public abstract class OrePopupScreen extends Screen {
 	protected static final int TEXT_COLOR = 0xFFFFFFFF;
 	/** 面板内边距、标题栏高度、底栏高度。 */
 	protected static final int PAD = 3, HEADER_H = 19, FOOTER_H = 54;
-	/** ✕ 的边长、右留白；命中/高亮框边长见 {@link #closeSize()}。 */
+	/** ✕ 的边长与右留白；命中与高亮框的边长另见 {@link #closeSize()}。 */
 	private static final int CLOSE_SIZE = 7, CLOSE_MARGIN = 6;
 	private static final int CLOSE_HOVER = 0xFF56585B;
 	protected final Screen parent;
@@ -36,15 +30,12 @@ public abstract class OrePopupScreen extends Screen {
 		this.parent = parent;
 		this.title = title;
 	}
-	/** 锚定到触发控件：优先在其正下方展开，放不下则改到上方，最后钳回屏内。 */
 	public void anchorTo(int x, int y, int width, int height) {
 		anchor = new Rect(x, y, width, height);
 	}
-	/** 居中模态。 */
 	protected void useCenter() {
 		anchor = null;
 	}
-	/** 在面板内容区上绘制（子类）。 */
 	protected void renderContent(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {}
 	protected final int contentX() {
 		return panelX + PAD;
@@ -52,7 +43,6 @@ public abstract class OrePopupScreen extends Screen {
 	protected final int contentY() {
 		return panelY + PAD + headerHeight();
 	}
-	/** 把高 {@code blockHeight} 的内容块在内容区里垂直居中后的顶端。 */
 	protected final int contentY(int blockHeight) {
 		return contentY() + Math.max(0, (contentH() - blockHeight) / 2);
 	}
@@ -68,18 +58,11 @@ public abstract class OrePopupScreen extends Screen {
 	protected final int footerHeight() {
 		return hasFooter() ? FOOTER_H : 0;
 	}
-	/** 是否画底栏（放按钮的实色带）；默认无。 */
+	/** 底栏是放按钮的实色带，默认不画。 */
 	protected boolean hasFooter() {
 		return false;
 	}
-	@Override
-	protected void init() {
-		super.init();
-		relayout();       // 先定面板矩形，子控件按它创建（如搜索框宽度）
-		buildWidgets();
-		relayout();       // 控件就位后再摆一遍
-	}
-	/** 重算面板矩形并摆放内容；两条分支都要走到 {@link #layoutContent()}。 */
+	/** 重算面板矩形并摆放内容；{@link #layoutContent()} 须等尺寸定下后才可读 panelWidth 等字段。 */
 	protected final void relayout() {
 		// 面板至少要跟锚定控件一样宽：下拉挂在按钮正下方，宽度不齐看着就错位
 		panelWidth = Math.min(contentWidth() + PAD * 2, width);
@@ -95,16 +78,14 @@ public abstract class OrePopupScreen extends Screen {
 		}
 		layoutContent();
 	}
-	/** 子类在此 {@code addRenderableWidget}；{@link #init()} 里调用一次。 */
 	protected void buildWidgets() {}
-	/** 内容区尺寸（不含内边距与标题栏）。 */
+	/** 内容区尺寸，不含内边距与标题栏。 */
 	protected abstract int contentWidth();
 	protected abstract int contentHeight();
-	/** @return 锚点 X（居中于它）。 */
 	protected final int anchorCenterX() {
 		return anchor == null ? width / 2 : anchor.x() + anchor.width() / 2;
 	}
-	/** @return 锚点下缘；无锚点时返回 -1。 */
+	/** 无锚点时为 -1，调用方据此区分居中模态。 */
 	protected final int anchorBottom() {
 		return anchor == null ? -1 : anchor.y() + anchor.height();
 	}
@@ -116,8 +97,30 @@ public abstract class OrePopupScreen extends Screen {
 	protected final int spaceAbove() {
 		return anchor == null ? height - PAD * 2 : anchor.y() - PAD * 2;
 	}
-	/** 按已定的面板矩形摆放子控件。 */
 	protected void layoutContent() {}
+	@Override
+	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+		renderParent(gui, partialTick);
+		renderBackdrop(gui, mouseX, mouseY, partialTick);
+		renderPanel(gui, mouseX, mouseY);
+		renderContent(gui, mouseX, mouseY, partialTick);
+		if (title != null && isOverClose(mouseX, mouseY)) OreCursor.hand();
+		super.render(gui, mouseX, mouseY, partialTick);
+	}
+	/** 关闭即回到父界面，不走 {@code Screen} 的弹出界面栈。 */
+	@Override
+	public void onClose() {
+		ClientUtil.mc.setScreen(parent);
+	}
+	@Override
+	protected void init() {
+		super.init();
+		relayout();       // 先定面板矩形，子控件按它创建（如搜索框宽度）
+		buildWidgets();
+		relayout();       // 控件就位后再摆一遍
+	}
+	@Override
+	public void renderBackground(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {}
 	/** 窗口尺寸变化只走 {@code repositionElements}（见 {@link Screen#resize}），故在此重算。 */
 	@Override
 	protected void repositionElements() {
@@ -129,17 +132,6 @@ public abstract class OrePopupScreen extends Screen {
 		parent.resize(minecraft, width, height);
 		relayout();
 	}
-	@Override
-	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-		renderParent(gui, partialTick);
-		renderBackdrop(gui, mouseX, mouseY, partialTick);
-		renderPanel(gui, mouseX, mouseY);
-		renderContent(gui, mouseX, mouseY, partialTick);
-		if (title != null && isOverClose(mouseX, mouseY)) OreCursor.hand();
-		super.render(gui, mouseX, mouseY, partialTick);
-	}
-	@Override
-	public void renderBackground(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {}
 	protected void renderBackdrop(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {}
 	/** 父界面画在下方：压到 z −100，并临时把 {@code mc.screen} 指回父界面（父界面渲染里可能读它）。 */
 	private void renderParent(@NotNull GuiGraphics gui, float partialTick) {
@@ -209,16 +201,16 @@ public abstract class OrePopupScreen extends Screen {
 		}
 		return super.mouseClicked(mouseX, mouseY, button);
 	}
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+		if (isOutsidePanel(mouseX, mouseY)) return true;
+		return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
+	}
 	protected final boolean isOutsidePanel(double mouseX, double mouseY) {
 		return mouseX < panelX || mouseX >= panelX + panelWidth || mouseY < panelY || mouseY >= panelY + panelHeight;
 	}
 	private boolean isOverClose(double mouseX, double mouseY) {
 		return mouseX >= closeLeft() && mouseX < closeLeft() + closeSize() && mouseY >= closeTop() && mouseY < closeTop() + closeSize();
-	}
-	/** 关闭即回到父界面，不走 {@code Screen} 的弹出界面栈。 */
-	@Override
-	public void onClose() {
-		ClientUtil.mc.setScreen(parent);
 	}
 	private int closeLeft() {
 		return closeX() + (CLOSE_SIZE - closeSize()) / 2;
@@ -235,11 +227,6 @@ public abstract class OrePopupScreen extends Screen {
 	/** 内缩 1px 避开面板描边，上下余量各一半。 */
 	private int closeY() {
 		return panelY + 1 + (HEADER_H - CLOSE_SIZE) / 2;
-	}
-	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
-		if (isOutsidePanel(mouseX, mouseY)) return true;
-		return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
 	}
 	/** 锚点矩形（避免为它依赖 {@code ScreenRectangle}）。 */
 	protected record Rect(int x, int y, int width, int height) {}

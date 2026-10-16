@@ -28,6 +28,21 @@ public class OreSwitchButton extends OreAbstractButton {
 	public static int preferredWidth() {
 		return FlexGuiTextures.TOGGLE_TRACK.width();
 	}
+	/** 求解 cubic-bezier(.34, 1.56, .64, 1)：先用二分法由 x 反解参数 t，再取其 y。 */
+	private static float ease(float x) {
+		var lo = 0f;
+		var hi = 1f;
+		for (var i = 0; i < 16; i++) {
+			var mid = (lo + hi) / 2;
+			if (bezier(CURVE_X1, CURVE_X2, mid) < x) lo = mid;
+			else hi = mid;
+		}
+		return bezier(CURVE_Y1, 1f, (lo + hi) / 2);
+	}
+	private static float bezier(float p1, float p2, float t) {
+		var u = 1 - t;
+		return 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t;
+	}
 	/** 外部同步值，不触发回调。 */
 	public void setValue(boolean newValue) {
 		if (value == newValue) return;
@@ -48,7 +63,7 @@ public class OreSwitchButton extends OreAbstractButton {
 	@Override
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
 		stepSlide();
-		// 尺寸也归纹理表管（= atlas region），每帧读，资源包改 region 即生效
+		// 尺寸取自纹理表（atlas region），每帧读取，资源包改 region 即生效
 		var trackW = FlexGuiTextures.TOGGLE_TRACK.width();
 		var trackH = FlexGuiTextures.TOGGLE_TRACK.height();
 		var thumbSize = FlexGuiTextures.THUMB.width();
@@ -62,7 +77,6 @@ public class OreSwitchButton extends OreAbstractButton {
 		if (shouldRenderFocus()) renderRing(gui, thumbX, getY(), thumbSize);
 		renderCursor();
 	}
-	/** 按真实时间推进滑钮位置。 */
 	private void stepSlide() {
 		var target = value ? 1f : 0f;
 		if (!sliding) {
@@ -77,34 +91,17 @@ public class OreSwitchButton extends OreAbstractButton {
 		}
 		progress = slideFrom + (target - slideFrom) * ease(t);
 	}
-	/** 轨道是一张常驻的两段式，滑钮挡住哪半就显示另半。 */
+	/** 轨道是一张常驻的两段式贴图，滑钮遮住哪半就显出另半。 */
 	private void renderTrack(@NotNull GuiGraphics gui, int x, int y) {
 		(active ? FlexGuiTextures.TOGGLE_TRACK : FlexGuiTextures.TOGGLE_TRACK_DISABLED).render(gui, x, y);
 	}
 	private void renderThumb(@NotNull GuiGraphics gui, int x, int y) {
 		var texture = !active
 			? FlexGuiTextures.THUMB_DISABLED
-			: isPressed()
-				? FlexGuiTextures.THUMB_PRESSED
-				: isHovered() ? FlexGuiTextures.THUMB_HOVER : FlexGuiTextures.THUMB;
+			: isPressed() ? FlexGuiTextures.THUMB_PRESSED : isHovered() ? FlexGuiTextures.THUMB_HOVER : FlexGuiTextures.THUMB;
 		texture.render(gui, x, y);
 	}
 	private void renderRing(@NotNull GuiGraphics gui, int x, int y, int size) {
 		gui.renderOutline(x - RING_W, y - RING_W, size + 2 * RING_W, size + 2 * RING_W, RING_COLOR);
-	}
-	/** 求解 cubic-bezier(.34, 1.56, .64, 1)：先用二分法由 x 反解参数 t，再取其 y。 */
-	private static float ease(float x) {
-		var lo = 0f;
-		var hi = 1f;
-		for (var i = 0; i < 16; i++) {
-			var mid = (lo + hi) / 2;
-			if (bezier(CURVE_X1, CURVE_X2, mid) < x) lo = mid;
-			else hi = mid;
-		}
-		return bezier(CURVE_Y1, 1f, (lo + hi) / 2);
-	}
-	private static float bezier(float p1, float p2, float t) {
-		var u = 1 - t;
-		return 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t;
 	}
 }

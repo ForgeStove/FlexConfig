@@ -7,11 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.function.DoubleFunction;
-/**
- * 带范围的数值条目：值区就是一个滑块（注解里写了 {@code slider = true} 才走这里）。
- * <p>
- * 拖动期间只写节点的编辑值，松手才 {@code refresh()}。拖一趟刷新几十次没必要。
- */
+/** 带范围的数值条目：注解里写了 {@code slider = true} 才走这里；拖动期间只写节点的编辑值，松手才 {@code refresh()}。 */
 public final class SliderValueConfigEntry<C, N extends Number> extends ValueConfigEntry<C, N> {
 	public final OreSlider slider;
 	public SliderValueConfigEntry(ConfigCategoryTab<C, N> tab, ValueConfigNode<C, N> node, double step, DoubleFunction<N> fromDouble) {

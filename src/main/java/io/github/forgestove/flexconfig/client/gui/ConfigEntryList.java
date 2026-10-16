@@ -42,6 +42,10 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		newEntries.forEach(this::addEntry);
 	}
 	@Override
+	public int getRowWidth() {
+		return width * 3 / 5;
+	}
+	@Override
 	public void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
 		// +4 是为了对齐原版 getMaxScroll() = maxPosition − (height − 4)
 		scrollbar.area(getScrollbarPosition(), getY(), height, getMaxPosition() + 4);
@@ -63,19 +67,14 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		var tooltip = entry.getTooltip();
 		if (tooltip != null) screen.setTooltipForNextRenderPass(tooltip);
 	}
-	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
-		scrollbar.wheel(vertical);
-		return true;
-	}
-	/** 列表背景透明：不铺任何底色，露出屏后的世界（原版模糊背景）。 */
-	@Override
-	protected void renderListBackground(@NotNull GuiGraphics gui) {
-	}
 	/** 关掉原版滚动条，改由 {@link OreScrollbar} 画。 */
 	@Override
 	protected boolean scrollbarVisible() {
 		return false;
+	}
+	/** 列表背景透明：不铺任何底色，露出屏后的世界（原版模糊背景）。 */
+	@Override
+	protected void renderListBackground(@NotNull GuiGraphics gui) {
 	}
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -88,6 +87,11 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		return super.mouseReleased(mouseX, mouseY, button);
 	}
 	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+		scrollbar.wheel(vertical);
+		return true;
+	}
+	@Override
 	protected void renderListItems(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
 		var left = getRowLeft();
 		var width = getRowWidth();
@@ -97,9 +101,5 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 			var bottom = getRowBottom(i);
 			if (bottom >= getY() && top <= getBottom()) renderItem(gui, mouseX, mouseY, delta, i, left, top, width, itemHeight);
 		}
-	}
-	@Override
-	public int getRowWidth() {
-		return width * 3 / 5;
 	}
 }

@@ -65,6 +65,77 @@ public final class ColorPickerScreen extends Screen {
 		renderSelectors(gui, hueBarX);
 		for (var child : children()) if (child instanceof AbstractWidget widget) widget.render(gui, mouseX, mouseY, delta);
 	}
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		assert minecraft != null;
+		var window = minecraft.getWindow().getWindow();
+		var up = InputConstants.isKeyDown(window, InputConstants.KEY_UP);
+		var down = InputConstants.isKeyDown(window, InputConstants.KEY_DOWN);
+		var left = InputConstants.isKeyDown(window, InputConstants.KEY_LEFT);
+		var right = InputConstants.isKeyDown(window, InputConstants.KEY_RIGHT);
+		var pageUp = InputConstants.isKeyDown(window, InputConstants.KEY_PAGEUP);
+		var pageDown = InputConstants.isKeyDown(window, InputConstants.KEY_PAGEDOWN);
+		var home = hasAlpha && InputConstants.isKeyDown(window, InputConstants.KEY_HOME);
+		var end = hasAlpha && InputConstants.isKeyDown(window, InputConstants.KEY_END);
+		var handled = up || down || left || right || pageUp || pageDown || home || end;
+		if (hexInput != null && hexInput.isFocused() && handled) return super.keyPressed(keyCode, scanCode, modifiers);
+		if (!handled) return super.keyPressed(keyCode, scanCode, modifiers);
+		var step = hasShiftDown() ? 0.05f : 0.01f;
+		var intStep = hasShiftDown() ? 16 : 1;
+		if (up) brightness = Mth.clamp(brightness + step, 0f, 1f);
+		if (down) brightness = Mth.clamp(brightness - step, 0f, 1f);
+		if (left) saturation = Mth.clamp(saturation - step, 0f, 1f);
+		if (right) saturation = Mth.clamp(saturation + step, 0f, 1f);
+		if (pageUp) {
+			hue = Mth.clamp(hue - step, 0f, 1f);
+			sbPixels = null;
+		}
+		if (pageDown) {
+			hue = Mth.clamp(hue + step, 0f, 1f);
+			sbPixels = null;
+		}
+		if (home) alpha = Mth.clamp(alpha + intStep, 0, 255);
+		if (end) alpha = Mth.clamp(alpha - intStep, 0, 255);
+		updateHexInput();
+		return true;
+	}
+	@Override
+	public void onClose() {
+		removed();
+		mc.screen = parent;
+	}
+	@Override
+	protected void init() {
+		layoutPicker();
+		var buttonY = svPos.y + PICKER_SIZE + PADDING;
+		var okButton = new OreButton(
+			BUTTON_WIDTH, Component.translatable("gui.ok"), Style.PRIMARY, button -> {
+			onColorSelected.accept(colorFromHSB());
+			mc.setScreen(parent);
+		}
+		);
+		okButton.setPosition(svPos.x, buttonY);
+		addRenderableWidget(okButton);
+		var cancelButton = new OreButton(BUTTON_WIDTH, Translation.BACK_LABEL, Style.SECONDARY, button -> mc.setScreen(parent));
+		cancelButton.setPosition(svPos.x + BUTTON_WIDTH + 2, buttonY);
+		addRenderableWidget(cancelButton);
+		hexInput = createHexInput(buttonY);
+		addRenderableWidget(hexInput);
+		addRenderableWidget(new OreColorPickerButton(
+			hexInput.getX() + hexInput.getWidth() + 4,
+			buttonY,
+			SIZE,
+			SIZE,
+			hasAlpha,
+			this::colorFromHSB,
+			null
+		));
+	}
+	@Override
+	public void resize(@NotNull Minecraft minecraft, int width, int height) {
+		parent.resize(minecraft, width, height);
+		super.resize(minecraft, width, height);
+	}
 	private void rebuildSBCache() {
 		if (sbPixels == null) sbPixels = new int[PICKER_SIZE * PICKER_SIZE];
 		for (var y = 0; y < PICKER_SIZE; y++) {
@@ -125,40 +196,6 @@ public final class ColorPickerScreen extends Screen {
 		gui.fill(x + BAR_WIDTH, y - 1, x + BAR_WIDTH + 3, y + 2, 0xFFFFFFFF);
 		gui.fill(x + BAR_WIDTH, y, x + BAR_WIDTH + 2, y + 1, 0xFF000000);
 	}
-	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		assert minecraft != null;
-		var window = minecraft.getWindow().getWindow();
-		var up = InputConstants.isKeyDown(window, InputConstants.KEY_UP);
-		var down = InputConstants.isKeyDown(window, InputConstants.KEY_DOWN);
-		var left = InputConstants.isKeyDown(window, InputConstants.KEY_LEFT);
-		var right = InputConstants.isKeyDown(window, InputConstants.KEY_RIGHT);
-		var pageUp = InputConstants.isKeyDown(window, InputConstants.KEY_PAGEUP);
-		var pageDown = InputConstants.isKeyDown(window, InputConstants.KEY_PAGEDOWN);
-		var home = hasAlpha && InputConstants.isKeyDown(window, InputConstants.KEY_HOME);
-		var end = hasAlpha && InputConstants.isKeyDown(window, InputConstants.KEY_END);
-		var handled = up || down || left || right || pageUp || pageDown || home || end;
-		if (hexInput != null && hexInput.isFocused() && handled) return super.keyPressed(keyCode, scanCode, modifiers);
-		if (!handled) return super.keyPressed(keyCode, scanCode, modifiers);
-		var step = hasShiftDown() ? 0.05f : 0.01f;
-		var intStep = hasShiftDown() ? 16 : 1;
-		if (up) brightness = Mth.clamp(brightness + step, 0f, 1f);
-		if (down) brightness = Mth.clamp(brightness - step, 0f, 1f);
-		if (left) saturation = Mth.clamp(saturation - step, 0f, 1f);
-		if (right) saturation = Mth.clamp(saturation + step, 0f, 1f);
-		if (pageUp) {
-			hue = Mth.clamp(hue - step, 0f, 1f);
-			sbPixels = null;
-		}
-		if (pageDown) {
-			hue = Mth.clamp(hue + step, 0f, 1f);
-			sbPixels = null;
-		}
-		if (home) alpha = Mth.clamp(alpha + intStep, 0, 255);
-		if (end) alpha = Mth.clamp(alpha - intStep, 0, 255);
-		updateHexInput();
-		return true;
-	}
 	private void updateHexInput() {
 		if (hexInput == null || updatingFromInput) return;
 		updatingFromInput = true;
@@ -168,38 +205,6 @@ public final class ColorPickerScreen extends Screen {
 	private String formatHexColor() {
 		var color = colorFromHSB();
 		return hasAlpha ? String.format("%08X", color) : String.format("%06X", color & 0xFFFFFF);
-	}
-	@Override
-	public void onClose() {
-		removed();
-		mc.screen = parent;
-	}
-	@Override
-	protected void init() {
-		layoutPicker();
-		var buttonY = svPos.y + PICKER_SIZE + PADDING;
-		var okButton = new OreButton(
-			BUTTON_WIDTH, Component.translatable("gui.ok"), Style.PRIMARY, button -> {
-			onColorSelected.accept(colorFromHSB());
-			mc.setScreen(parent);
-		}
-		);
-		okButton.setPosition(svPos.x, buttonY);
-		addRenderableWidget(okButton);
-		var cancelButton = new OreButton(BUTTON_WIDTH, Translation.BACK_LABEL, Style.SECONDARY, button -> mc.setScreen(parent));
-		cancelButton.setPosition(svPos.x + BUTTON_WIDTH + 2, buttonY);
-		addRenderableWidget(cancelButton);
-		hexInput = createHexInput(buttonY);
-		addRenderableWidget(hexInput);
-		addRenderableWidget(new OreColorPickerButton(
-			hexInput.getX() + hexInput.getWidth() + 4,
-			buttonY,
-			SIZE,
-			SIZE,
-			hasAlpha,
-			this::colorFromHSB,
-			null
-		));
 	}
 	private void layoutPicker() {
 		var totalWidth = PICKER_SIZE + PADDING + BAR_WIDTH + (hasAlpha ? PADDING + BAR_WIDTH : 0);
@@ -227,11 +232,6 @@ public final class ColorPickerScreen extends Screen {
 		}
 	}
 	@Override
-	public void resize(@NotNull Minecraft minecraft, int width, int height) {
-		parent.resize(minecraft, width, height);
-		super.resize(minecraft, width, height);
-	}
-	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
 		if (new Rectangle(svPos.x, svPos.y, PICKER_SIZE, PICKER_SIZE).contains(mouseX, mouseY)) {
@@ -257,16 +257,6 @@ public final class ColorPickerScreen extends Screen {
 		var handled = super.mouseClicked(mouseX, mouseY, button);
 		if (!handled) setFocused(null);
 		return handled;
-	}
-	private void updateFromMouse(double mouseX, double mouseY) {
-		if (dragMode == DragMode.SV) {
-			saturation = Mth.clamp((float) (mouseX - svPos.x) / (PICKER_SIZE - 1), 0f, 1f);
-			brightness = Mth.clamp(1f - (float) (mouseY - svPos.y) / (PICKER_SIZE - 1), 0f, 1f);
-		} else if (dragMode == DragMode.HUE) {
-			hue = Mth.clamp((float) (mouseY - svPos.y) / (PICKER_SIZE - 1), 0f, 1f);
-			sbPixels = null;
-		} else if (dragMode == DragMode.ALPHA) alpha = 255 - Mth.clamp((int) ((mouseY - svPos.y) * 255 / (PICKER_SIZE - 1)), 0, 255);
-		updateHexInput();
 	}
 	@Override
 	public boolean mouseReleased(double mouseX, double mouseY, int button) {
@@ -297,6 +287,16 @@ public final class ColorPickerScreen extends Screen {
 			return true;
 		}
 		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+	}
+	private void updateFromMouse(double mouseX, double mouseY) {
+		if (dragMode == DragMode.SV) {
+			saturation = Mth.clamp((float) (mouseX - svPos.x) / (PICKER_SIZE - 1), 0f, 1f);
+			brightness = Mth.clamp(1f - (float) (mouseY - svPos.y) / (PICKER_SIZE - 1), 0f, 1f);
+		} else if (dragMode == DragMode.HUE) {
+			hue = Mth.clamp((float) (mouseY - svPos.y) / (PICKER_SIZE - 1), 0f, 1f);
+			sbPixels = null;
+		} else if (dragMode == DragMode.ALPHA) alpha = 255 - Mth.clamp((int) ((mouseY - svPos.y) * 255 / (PICKER_SIZE - 1)), 0, 255);
+		updateHexInput();
 	}
 	public enum DragMode {
 		NONE,

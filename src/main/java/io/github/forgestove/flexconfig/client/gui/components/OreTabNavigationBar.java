@@ -13,8 +13,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 /**
- * tab 栏，替代原版 {@code TabNavigationBar}。原版构造是包私有、按钮由它内部 new，没法只换按钮。
- * 切换逻辑仍走原版 {@link TabManager}，这里只做摆放、事件与键盘。
+ * 替代原版 {@code TabNavigationBar}：原版构造为包私有且按钮由它内部创建，无法单独替换按钮。切换逻辑仍走
+ * 原版 {@link TabManager}，这里只负责摆放、事件与键盘。
  */
 public class OreTabNavigationBar extends AbstractContainerEventHandler implements Renderable, NarratableEntry {
 	private static final int MAX_WIDTH = 400;
@@ -40,15 +40,6 @@ public class OreTabNavigationBar extends AbstractContainerEventHandler implement
 	public boolean keyPressed(int keyCode) {
 		return keyPressed(keyCode, 0, 0);
 	}
-	/** Ctrl+数字选第 n 个、Ctrl+Tab / Ctrl+Shift+Tab 前后循环。 */
-	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if (!Screen.hasControlDown()) return false;
-		var index = nextTabIndex(keyCode);
-		if (index == -1) return false;
-		selectTab(Mth.clamp(index, 0, tabs.size() - 1), true);
-		return true;
-	}
 	private int nextTabIndex(int keyCode) {
 		if (keyCode >= 49 && keyCode <= 57) return keyCode - 49;
 		if (keyCode != 258) return -1;
@@ -73,21 +64,6 @@ public class OreTabNavigationBar extends AbstractContainerEventHandler implement
 		return buttons;
 	}
 	@Override
-	public boolean isMouseOver(double mouseX, double mouseY) {
-		return getRectangle().containsPoint((int) mouseX, (int) mouseY);
-	}
-	@Override
-	public @NotNull ScreenRectangle getRectangle() {
-		var rect = layout.getRectangle();
-		return new ScreenRectangle(rect.left(), rect.top(), rect.width(), rect.height() + SEPARATOR_HEIGHT);
-	}
-	@Override
-	public void setFocused(boolean focused) {
-		super.setFocused(focused);
-		var current = getFocused();
-		if (!focused && current != null) current.setFocused(false);
-	}
-	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		var hit = getChildAt(mouseX, mouseY);
 		if (hit.isEmpty()) return false;
@@ -105,6 +81,36 @@ public class OreTabNavigationBar extends AbstractContainerEventHandler implement
 		if (target.isMouseOver(mouseX, mouseY)) tabManager.setCurrentTab(target.tab(), true);
 		return true;
 	}
+	/** Ctrl+数字选第 n 个、Ctrl+Tab / Ctrl+Shift+Tab 前后循环。 */
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (!Screen.hasControlDown()) return false;
+		var index = nextTabIndex(keyCode);
+		if (index == -1) return false;
+		selectTab(Mth.clamp(index, 0, tabs.size() - 1), true);
+		return true;
+	}
+	@Override
+	public void setFocused(boolean focused) {
+		super.setFocused(focused);
+		var current = getFocused();
+		if (!focused && current != null) current.setFocused(false);
+	}
+	@Override
+	public @Nullable ComponentPath nextFocusPath(@NotNull FocusNavigationEvent event) {
+		var current = currentTabButton();
+		if (!isFocused() && current != null) return ComponentPath.path(this, ComponentPath.leaf(current));
+		return event instanceof TabNavigation ? null : super.nextFocusPath(event);
+	}
+	@Override
+	public boolean isMouseOver(double mouseX, double mouseY) {
+		return getRectangle().containsPoint((int) mouseX, (int) mouseY);
+	}
+	@Override
+	public @NotNull ScreenRectangle getRectangle() {
+		var rect = layout.getRectangle();
+		return new ScreenRectangle(rect.left(), rect.top(), rect.width(), rect.height() + SEPARATOR_HEIGHT);
+	}
 	public void arrangeElements() {
 		var usable = Math.min(MAX_WIDTH, width) - 2 * MARGIN_X;
 		var each = Mth.roundToward(usable / tabs.size(), 2);   // 同原版：等分、向下取偶
@@ -112,13 +118,6 @@ public class OreTabNavigationBar extends AbstractContainerEventHandler implement
 		layout.arrangeElements();
 		layout.setX(Mth.roundToward((width - usable) / 2, 2));
 		layout.setY(0);
-	}
-	/** 焦点进入栏时落到当前 tab 按钮上。 */
-	@Override
-	public @Nullable ComponentPath nextFocusPath(@NotNull FocusNavigationEvent event) {
-		var current = currentTabButton();
-		if (!isFocused() && current != null) return ComponentPath.path(this, ComponentPath.leaf(current));
-		return event instanceof TabNavigation ? null : super.nextFocusPath(event);
 	}
 	private @Nullable OreTabButton currentTabButton() {
 		for (var button : buttons) if (button.isSelected()) return button;
@@ -130,7 +129,7 @@ public class OreTabNavigationBar extends AbstractContainerEventHandler implement
 		for (var button : buttons)
 			if (button.isFocused()) focused = button;
 			else button.render(gui, mouseX, mouseY, partialTick);
-		// 聚焦的那个最后画：环向左右各外扩 1px，先画会被右邻盒子压掉
+		// 聚焦的那个最后画：环向左右各外扩 1px，先画会被右邻盒子覆盖
 		if (focused != null) focused.render(gui, mouseX, mouseY, partialTick);
 	}
 	@Override

@@ -10,19 +10,17 @@ import org.slf4j.Logger;
 
 import java.io.StringReader;
 import java.util.*;
-/** 追踪服务端锁定的配置项，按 (模组 ID, 配置文件名) 记：备份锁定前的原值，解锁或断开时恢复。 */
+/** 追踪服务端锁定的配置项，按 (模组 ID, 配置文件名) 记录，并在解锁或断开时恢复锁定前的原值。 */
 public final class ClientLockManager {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/** 待发送的锁定操作，延迟到保存时才发给服务端。 */
 	private static final Map<LockKey, Boolean> pendingLocks = new LinkedHashMap<>();
 	/** 文件 → (配置路径 → 服务端确认的锁定值字符串)。 */
 	private static final Map<FileKey, Map<String, String>> lockedConfigs = new HashMap<>();
-	/** 锁定前的原值，解锁或断开时恢复。 */
 	private static final Map<LockKey, Object> originalValues = new HashMap<>();
 	/** 服务端下发的原始 TOML，供外部重载后重新叠加锁定时复用。 */
 	private static final Map<FileKey, CommentedConfig> syncedConfigs = new HashMap<>();
 	private static boolean receivedSync = false;
-	/** 服务端下发整份 TOML 时更新锁定。 */
 	public static void setLocks(String modId, String fileName, String tomlContent) {
 		// 忽略玩家已断开连接后的延迟包
 		if (ClientUtil.mc.getConnection() == null && !ClientUtil.mc.isSingleplayer()) return;
@@ -52,7 +50,7 @@ public final class ClientLockManager {
 			ConfigRegistry.applyLockedValue(key, node, original);
 			node.resetToActive(config);
 		}
-		// 备份加锁前的原值（只记第一次，之后重复同步不改基线）
+		// 备份加锁前的原值（仅记第一次，之后重复同步不改基线）
 		for (var path : newLocks.keySet()) {
 			var node = root.getValueNode(path);
 			if (node == null) continue;
@@ -62,7 +60,6 @@ public final class ClientLockManager {
 		syncedConfigs.put(key, tomlConfig);
 		reapply(key);
 	}
-	/** 配置文件被外部重载后，重新叠加服务端锁定的值。 */
 	public static void reapply(FileKey key) {
 		var lockedPaths = lockedConfigs.get(key);
 		var tomlConfig = syncedConfigs.get(key);
@@ -113,7 +110,6 @@ public final class ClientLockManager {
 	public static void clearPendingLocks() {
 		pendingLocks.clear();
 	}
-	/** 把所有待处理的锁定/解锁请求发送给服务端。 */
 	public static void flushPendingLocks() {
 		if (pendingLocks.isEmpty()) return;
 		if (ClientUtil.mc.player == null) {

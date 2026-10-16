@@ -16,15 +16,12 @@ public record RootConfigNode<C, V>(
 	String modId, String fileName, ImmutableList<CategoryConfigNode<C>> categories, ImmutableList<String> translationKeys
 ) implements ConfigNode<C> {
 	@SuppressWarnings("unchecked")
-	@Contract("_, _, _, _ -> new")
 	public static <C, V> @NotNull RootConfigNode<C, V> create(C defaultConfig, String modId, String fileName, ConfigType type) {
 		return (RootConfigNode<C, V>) new Builder<>(defaultConfig, modId, fileName, type).build();
 	}
-	@Contract(value = " -> new", pure = true)
 	public @NotNull Component getTitle() {
 		return Component.empty();
 	}
-	@Contract(pure = true)
 	@Override
 	public @Nullable Component getTooltip() {
 		return null;
@@ -124,7 +121,7 @@ public record RootConfigNode<C, V>(
 		private final String modId;
 		private final String fileName;
 		private final ConfigType type;
-		/** 构建过程中收集到的全部翻译键，供开发期检查缺失。 */
+		/** 构建期收集的翻译键，供开发期检查缺失。 */
 		private final ImmutableList.Builder<String> translationKeys = ImmutableList.builder();
 		private C defaultConfig;
 		private Builder(C defaultConfig, String modId, String fileName, ConfigType type) {
@@ -230,7 +227,7 @@ public record RootConfigNode<C, V>(
 				.sliderRange(FieldValidators.sliderRange(valueField))
 				.validator(FieldValidators.validatorFor(type, valueField)));
 		}
-		/** 读取 {@link RequiresRestart} 声明的重启级别并校验它适用于本配置类型；未标注返回 {@code null}。 */
+		/** 校验声明的重启级别适用于本配置类型，不适用则在构建配置树时抛异常。 */
 		private @Nullable RestartType restartTypeOf(Field field) {
 			var annotation = field.getAnnotation(RequiresRestart.class);
 			if (annotation == null) return null;

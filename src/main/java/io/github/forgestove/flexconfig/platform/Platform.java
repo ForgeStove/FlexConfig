@@ -9,15 +9,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.function.Supplier;
-/**
- * 加载器需要提供的少量能力。核心部分只依赖本接口与 Minecraft 自身；
- * 各加载器的实现放在 {@code platform/<loader>} 下，事件订阅留在各自的加载器适配类里。
- */
+/** 加载器需要提供的少量能力：核心只依赖本接口与 Minecraft 自身，实现放在 {@code platform/<loader>} 下，事件订阅留在各自的适配类里。 */
 public interface Platform {
 	static Platform get() {
 		return Holder.INSTANCE;
 	}
-	/** 全局配置目录（如 {@code config/}）。 */
 	Path configDir();
 	boolean isModLoaded(String modId);
 	boolean isClient();
@@ -41,7 +37,6 @@ public interface Platform {
 	interface PayloadHandler<P extends CustomPacketPayload> {
 		void handle(P payload, PayloadContext context);
 	}
-	/** 包注册入口，由具体加载器实现并传给核心。 */
 	interface Payloads {
 		<P extends CustomPacketPayload> void clientToServer(Type<P> type, StreamCodec<FriendlyByteBuf, P> codec,
 			PayloadHandler<P> handler);

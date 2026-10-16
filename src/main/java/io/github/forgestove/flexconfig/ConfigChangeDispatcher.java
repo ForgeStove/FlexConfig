@@ -6,13 +6,9 @@ import org.slf4j.Logger;
 
 import java.util.*;
 /**
- * 配置值变更副作用的派发器：收集一次提交内的变更 → 按 handler 类去重 → 提交遍历结束后统一执行。
- * <p>
- * 批次窗口由 {@code RootConfigNode#writeEditingToConfig} / {@code CategoryConfigNode#writeEditingToConfig}
- * 用 {@link #begin()}/{@link #end()} 界定；{@link #end()} 深度归零才派发，保证 handler 执行时配置对象
- * 已经是写完整的新值。不经树遍历的单节点写入（快捷键路径）深度为 0，{@link #record} 时立即派发。
- * <p>
- * 只在客户端保存路径上使用（单线程），未做线程安全。
+ * 批次窗口由 {@code RootConfigNode}/{@code CategoryConfigNode} 的写回遍历用 {@link #begin()}/{@link #end()} 界定，
+ * 深度归零才派发，使 handler 执行时配置对象已是完整新值；不经树遍历的单节点写入（快捷键路径）深度为 0，
+ * {@link #record} 时即派发。目前在客户端保存路径上使用（单线程），未做线程安全。
  */
 public final class ConfigChangeDispatcher {
 	private static final Logger LOGGER = LogUtils.getLogger();
@@ -50,7 +46,7 @@ public final class ConfigChangeDispatcher {
 			}
 		}
 	}
-	/** 无参构造并缓存；构造失败也缓存 null，避免每次保存都重试 */
+	/** 无参构造并缓存；构造失败也缓存 {@code null}，避免每次保存都重试。 */
 	@Nullable
 	private static ConfigChangeHandler instance(Class<? extends ConfigChangeHandler> type) {
 		if (INSTANCES.containsKey(type)) return INSTANCES.get(type);
@@ -63,7 +59,7 @@ public final class ConfigChangeDispatcher {
 		INSTANCES.put(type, handler);
 		return handler;
 	}
-	/** 记录一次变更；同一个 handler 类只保留首次（去重）。深度为 0（不经树遍历）时立即派发。 */
+	/** 同一 handler 类仅保留首次记录，派发时按类执行一次。 */
 	public static void record(Class<? extends ConfigChangeHandler> type, String path, Object oldValue, Object newValue) {
 		PENDING.putIfAbsent(type, new Pending(path, oldValue, newValue));
 		if (depth == 0) flush();

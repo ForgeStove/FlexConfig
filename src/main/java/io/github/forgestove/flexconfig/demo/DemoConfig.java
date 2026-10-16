@@ -6,13 +6,7 @@ import io.github.forgestove.flexconfig.api.*;
 
 import java.awt.Point;
 import java.util.*;
-/**
- * 开发期 UI 演示配置：覆盖所有 entry 类型，供 {@code runClient} 直接查看界面效果。
- * <p>
- * 整个 {@code demo} 包已在构建脚本里排除，不会进入发布产物；移植到别处时删掉这个包即可。
- * <p>
- * 字段数量刻意偏多：每个分类都要超出一屏，滚动条才有得测。
- */
+/** 开发期 UI 演示配置：整个 {@code demo} 包已在构建脚本里排除，不会进入发布产物，移植到别处时删掉这个包即可。 */
 @Config(FlexConfig.ID)
 @SuppressWarnings("unused") // 配置字段全部由反射读取
 public final class DemoConfig {

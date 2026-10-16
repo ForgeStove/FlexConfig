@@ -3,12 +3,7 @@ import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.api.*;
 
 import java.util.*;
-/**
- * 开发期演示配置的服务端一份：验证「同一模组多份配置」与 {@link ConfigType#SERVER} 的加载时机
- * （进世界才知道存档目录，连接时下发给客户端、客户端只读）。
- * <p>
- * 与 {@link DemoConfig} 用同一个模组 ID，因此模组列表的入口会先进入配置文件选择界面（{@code ConfigFileScreen}）。
- */
+/** 开发期演示配置的服务端一份：进世界才知道存档目录，故 {@link ConfigType#SERVER} 在连接时下发给客户端且客户端只读；与 {@link DemoConfig} 共用模组 ID，因此模组列表的入口会先进配置文件选择界面。 */
 @Config(value = FlexConfig.ID, type = ConfigType.SERVER)
 @SuppressWarnings("unused") // 配置字段全部由反射读取
 public final class DemoServerConfig {

@@ -15,13 +15,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
-	/**
-	 * 值区拆两半时每半的宽度。
-	 * <p>
-	 * 值区总宽固定是 {@link #WIDTH}（<b>所有类型都要对齐</b>，否则整排左缘会参差），
-	 * 半宽 = {@code (WIDTH - GAP) / 2} 已经扣掉中间那一个 {@link #GAP}。直接写 {@code WIDTH / 2} 会让这一行
-	 * 比别的类型多出一个 GAP。
-	 */
+	/** 值区总宽固定为 {@link #WIDTH} 才能保证整排右缘对齐，故半宽须先扣掉中间那一个 {@link #GAP}；直接写 {@code WIDTH / 2} 会比其它类型多出一个 GAP。 */
 	public static final int HALF_VALUE_WIDTH = (WIDTH - GAP) / 2;
 	public final OreIconButton resetButton;
 	public final OreIconButton undoButton;
@@ -99,10 +93,6 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		return hasError() ? tooltipWithError : tooltip;
 	}
 	@Override
-	public boolean hasError() {
-		return validationError != null;
-	}
-	@Override
 	public void refresh() {
 		var locked = isLocked();
 		var readOnly = isReadOnly();
@@ -122,10 +112,11 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 			lockButton.setTooltip(Tooltip.create(Translation.UNLOCK_TOOLTIP));
 		}
 	}
-	/**
-	 * 检查此条目的有效锁定状态。
-	 * 首先考虑待处理的锁定操作，然后回退到服务器确认的锁定。
-	 */
+	@Override
+	public boolean hasError() {
+		return validationError != null;
+	}
+	/** 待处理的锁定优先，未处理时回退到服务器确认的锁定。 */
 	public boolean isLocked() {
 		var path = node.getPath();
 		var pending = ClientLockManager.getPendingLock(fileKey(), path);
@@ -136,7 +127,6 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 	public boolean isReadOnly() {
 		return isLocked() || !tab.screen.isEditable();
 	}
-	/** 本条目所属的配置文件。 */
 	private FileKey fileKey() {
 		return new FileKey(tab.screen.root.modId(), tab.screen.root.fileName());
 	}

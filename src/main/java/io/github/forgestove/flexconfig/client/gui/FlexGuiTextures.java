@@ -1,29 +1,22 @@
 package io.github.forgestove.flexconfig.client.gui;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.*;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
-/**
- * 全模组 GUI 纹理的登记表：只登记精灵名，贴图与切法都在资源文件里。
- * <p>
- * 贴图放 {@code textures/gui/sprites/**}，由 {@code minecraft:atlases/gui} 的 directory 源收录。
- * 盒子类精灵配同名 {@code .png.mcmeta} 写九宫格，给多少尺寸画多大；开关与图标按原尺寸画。
- */
 public enum FlexGuiTextures {
-	// 滑钮：开关与滑块共用的方形滑块，四态
+	// 滑钮
 	THUMB("thumb/normal"),
 	THUMB_HOVER("thumb/hover"),
 	THUMB_PRESSED("thumb/pressed"),
 	THUMB_DISABLED("thumb/disabled"),
-	// 开关：轨道常驻两段式，滑钮挡住哪半就显示另半
+	// 开关
 	TOGGLE_TRACK("toggle/track"),
 	TOGGLE_TRACK_DISABLED("toggle/track_disabled"),
-	// 标签页：选中 / 未选中 / 未选中悬停（选中与按下同一套盒子）
+	// 标签页
 	TAB_ON("tab/on"),
 	TAB_OFF("tab/off"),
 	TAB_OFF_HOVER("tab/off_hover"),
-	// 按钮：3 类型 ×{常态, 悬停, 按下} + 三种类型共用的禁用态
+	// 按钮
 	BUTTON_PRIMARY("button/primary"),
 	BUTTON_PRIMARY_HOVER("button/primary_hover"),
 	BUTTON_PRIMARY_PRESSED("button/primary_pressed"),
@@ -34,51 +27,47 @@ public enum FlexGuiTextures {
 	BUTTON_SECONDARY_HOVER("button/secondary_hover"),
 	BUTTON_SECONDARY_PRESSED("button/secondary_pressed"),
 	BUTTON_DISABLED("button/disabled"),
-	// 输入框：常态 / 禁用
+	// 输入框
 	FIELD_NORMAL("field/normal"),
 	FIELD_DISABLED("field/disabled"),
-	// 滚动条滑块（纵向拉伸）：常态 / 悬停；轨道是纯色细线，运行时直接 fill
+	// 滚动条滑块
 	SCROLLBAR("scrollbar/thumb"),
 	SCROLLBAR_HOVER("scrollbar/thumb_hover"),
-	// 滑块：轨道（未填充 / 已填充），滑钮用上面共用的；聚焦环与分段暗线由控件画
+	// 滑块
 	SLIDER_TRACK("slider/track"),
 	SLIDER_TRACK_FILLED("slider/track_filled"),
-	// 行内动作图标：重置 / 撤销 / 锁定 / 解锁
+	// 图标
 	ICON_RESET("icon/reset"),
 	ICON_UNDO("icon/undo"),
 	ICON_LOCK("icon/lock"),
 	ICON_UNLOCK("icon/unlock"),
-	// 列表选中标记：选中 / 未选中 × 常态 / 悬停 / 按下
+	// 列表选中标记
 	CHECKBOX_ON("icon/checkbox_on"),
 	CHECKBOX_ON_HOVER("icon/checkbox_on_hover"),
 	CHECKBOX_ON_PRESSED("icon/checkbox_on_pressed"),
 	CHECKBOX_OFF("icon/checkbox_off"),
 	CHECKBOX_OFF_HOVER("icon/checkbox_off_hover"),
 	CHECKBOX_OFF_PRESSED("icon/checkbox_off_pressed");
-	private final ResourceLocation sprite;
+	private final ResourceLocation id;
 	FlexGuiTextures(String path) {
-		sprite = ResourceLocation.fromNamespaceAndPath("flexconfig", path);
+		id = ResourceLocation.fromNamespaceAndPath("flexconfig", path);
 	}
-	/** 按精灵自身尺寸绘制到 (x, y)。 */
-	public void render(@NotNull GuiGraphics gui, int x, int y) {
-		gui.blitSprite(sprite, x, y, width(), height());
+	private TextureAtlasSprite getSprite() {
+		return ClientUtil.mc.getGuiSprites().getSprite(id);
 	}
-	/** 给多少尺寸画多大；九宫格精灵由引擎按元数据裁切，中段是纯色，平铺接缝看不出来。 */
-	public void render(@NotNull GuiGraphics gui, int x, int y, int width, int height) {
-		if (width <= 0 || height <= 0) return;
-		gui.blitSprite(sprite, x, y, width, height);
+	private SpriteContents getContents() {
+		return getSprite().contents();
 	}
-	/** 由资源文件决定，随资源包变。 */
-	@SuppressWarnings("resource")
 	public int width() {
-		return sprite().contents().width();
+		return getContents().width();
 	}
-	/** 由资源文件决定，随资源包变。 */
-	@SuppressWarnings("resource")
 	public int height() {
-		return sprite().contents().height();
+		return getContents().height();
 	}
-	private @NotNull TextureAtlasSprite sprite() {
-		return ClientUtil.mc.getGuiSprites().getSprite(sprite);
+	public void render(GuiGraphics gui, int x, int y) {
+		gui.blitSprite(id, x, y, width(), height());
+	}
+	public void render(GuiGraphics gui, int x, int y, int width, int height) {
+		gui.blitSprite(id, x, y, width, height);
 	}
 }

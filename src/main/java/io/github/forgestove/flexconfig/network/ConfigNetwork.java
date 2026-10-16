@@ -16,7 +16,6 @@ public final class ConfigNetwork {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/** 每个 (模组, 配置文件) 一份锁定存储。 */
 	private static final Map<FileKey, ServerConfigLockStore> lockStores = new HashMap<>();
-	/** 由加载器在注册包时调用（NeoForge 见 {@code NeoForgePlatform.registerPayloads}）。 */
 	public static void register(Payloads payloads) {
 		payloads.clientToServer(ConfigLockPayload.TYPE, ConfigLockPayload.STREAM_CODEC, ConfigNetwork::handleConfigLockServer);
 		payloads.serverToClient(ConfigSyncPayload.TYPE, ConfigSyncPayload.STREAM_CODEC, ConfigNetwork::handleConfigSyncClient);
@@ -57,7 +56,7 @@ public final class ConfigNetwork {
 	public static void setLockStore(FileKey key, ServerConfigLockStore store) {
 		lockStores.put(key, store);
 	}
-	/** 获取某份配置的锁定存储；未注册或非服务端时为 {@code null}。 */
+	/** 取某份配置的锁定存储，未注册时返回 {@code null}。 */
 	public static @Nullable ServerConfigLockStore getLockStore(FileKey key) {
 		return lockStores.get(key);
 	}
@@ -71,7 +70,7 @@ public final class ConfigNetwork {
 		lockStores.forEach((key, value) -> Platform.get()
 			.sendToPlayer(player, new ConfigSyncPayload(key.modId(), key.fileName(), value.toTomlString())));
 	}
-	/** 把全部 SERVER 型配置的当前内容（文件值，不含锁）下发给该玩家。 */
+	/** 下发的是文件值而非活动值，锁值由 {@link ConfigSyncPayload} 单独同步。 */
 	public static void sendServerConfigsToPlayer(ServerPlayer player) {
 		ConfigRegistry.getRegisteredFileKeys().forEach(key -> {
 			var handler = ConfigRegistry.getHandler(key);

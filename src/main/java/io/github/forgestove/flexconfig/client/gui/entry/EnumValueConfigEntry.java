@@ -50,10 +50,6 @@ public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C,
 			ClientUtil.mc.player.displayClientMessage(title.append(": ").append(valText), true);
 		});
 	}
-	private void selectValue(Enum<?> value) {
-		setValue(value);
-		dropdownButton.setMessage(getDisplayComponent(value));
-	}
 	@Override
 	protected AbstractWidget getValueWidget() {
 		return dropdownButton;
@@ -62,5 +58,9 @@ public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C,
 	public void refresh() {
 		super.refresh();
 		dropdownButton.setMessage(getDisplayComponent(getValue()));
+	}
+	private void selectValue(Enum<?> value) {
+		setValue(value);
+		dropdownButton.setMessage(getDisplayComponent(value));
 	}
 }

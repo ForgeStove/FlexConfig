@@ -42,7 +42,9 @@ public abstract class GenericValueConfigEntry<C, V> extends ValueConfigEntry<C, 
 		inputField.setResponder(this::onInputChange);
 		children.add(inputField);
 	}
-	/** 值 → 文本（列表等复合类型可覆写格式）。 */
+	public static boolean isZero(@NotNull String string) {
+		return string.isEmpty() || string.equals("-");
+	}
 	private String text(@Nullable V value) {
 		return value == null ? "" : formatter.apply(value);
 	}
@@ -102,9 +104,6 @@ public abstract class GenericValueConfigEntry<C, V> extends ValueConfigEntry<C, 
 		if (!hasParseError) return;
 		resetButton.active = true;
 		undoButton.active = true;
-	}
-	public static boolean isZero(@NotNull String string) {
-		return string.isEmpty() || string.equals("-");
 	}
 	@Override
 	public boolean hasError() {

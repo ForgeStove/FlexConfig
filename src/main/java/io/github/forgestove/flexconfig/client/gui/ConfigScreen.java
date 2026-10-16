@@ -53,9 +53,6 @@ public final class ConfigScreen<C, V> extends Screen {
 		if (keyCode == GLFW.GLFW_KEY_BACKSPACE) onClose();
 		return false;
 	}
-	private void cacheTabIndex() {
-		if (tabManager.getCurrentTab() instanceof ConfigCategoryTab<?, ?> tab) lastSelectedCategory = tab.node;
-	}
 	@Override
 	public void onClose() {
 		var mc = ClientUtil.mc;
@@ -75,11 +72,6 @@ public final class ConfigScreen<C, V> extends Screen {
 			OreButton.Style.DESTRUCTIVE,
 			Translation.CANCEL_LABEL
 		));
-	}
-	private boolean isActiveValue() {
-		if (ClientLockManager.hasPendingLocks()) return false;
-		if (!root.isActiveValue(config) || keybindCategory != null && !keybindCategory.isActiveValue(config)) return false;
-		return savedTriggerKeybinds.equals(handler.getAllTriggerKeybinds());
 	}
 	@Override
 	protected void init() {
@@ -110,6 +102,19 @@ public final class ConfigScreen<C, V> extends Screen {
 			addRenderableWidget(w);
 		});
 		repositionElements();
+	}
+	@Override
+	protected void repositionElements() {
+		refresh();
+		repositionTabLayout();
+	}
+	private void cacheTabIndex() {
+		if (tabManager.getCurrentTab() instanceof ConfigCategoryTab<?, ?> tab) lastSelectedCategory = tab.node;
+	}
+	private boolean isActiveValue() {
+		if (ClientLockManager.hasPendingLocks()) return false;
+		if (!root.isActiveValue(config) || keybindCategory != null && !keybindCategory.isActiveValue(config)) return false;
+		return savedTriggerKeybinds.equals(handler.getAllTriggerKeybinds());
 	}
 	private @Nullable CategoryConfigNode<C> buildKeybindCategory() {
 		var allMappings = ClientUtil.mc.options.keyMappings;
@@ -154,11 +159,6 @@ public final class ConfigScreen<C, V> extends Screen {
 		ClientLockManager.flushPendingLocks();
 		savedTriggerKeybinds = new LinkedHashMap<>(handler.getAllTriggerKeybinds());
 		mc.setScreen(restartScreen(restartType));
-	}
-	@Override
-	protected void repositionElements() {
-		refresh();
-		repositionTabLayout();
 	}
 	private void initTabs(@NotNull OreTabNavigationBar bar) {
 		var i = 0;
@@ -223,7 +223,6 @@ public final class ConfigScreen<C, V> extends Screen {
 		layout.setHeaderHeight(i);
 		layout.arrangeElements();
 	}
-	/** 保存键不可保存的原因；可保存时返回 {@code null}。 */
 	private @Nullable Component saveBlockedReason(boolean hasEntryError) {
 		if (!isEditable()) return Translation.tooltip(Translation.SAVE_UNAVAILABLE, Translation.SAVE_UNAVAILABLE_READ_ONLY);
 		if (validate() != null || hasEntryError)
@@ -237,7 +236,7 @@ public final class ConfigScreen<C, V> extends Screen {
 		if (keybindCategory != null) return keybindCategory.validate(config);
 		return null;
 	}
-	/** 由全局快捷键触发调用：将已由 entry 写入配置的值持久化到磁盘。 */
+	/** 由全局快捷键触发：entry 已把值写进配置，这里只落盘。 */
 	public void saveByKeybind() {
 		if (!isEditable()) return;
 		handler.save(config);
@@ -249,7 +248,6 @@ public final class ConfigScreen<C, V> extends Screen {
 	public Set<FileKey> editedFiles() {
 		return Set.of(new FileKey(root.modId(), root.fileName()));
 	}
-	/** 本界面所显示的配置是否支持服务端锁定（规则见 {@link ConfigRegistry#isLockable}）。 */
 	public boolean isLockable() {
 		return ConfigRegistry.isLockable(new FileKey(root.modId(), root.fileName()));
 	}

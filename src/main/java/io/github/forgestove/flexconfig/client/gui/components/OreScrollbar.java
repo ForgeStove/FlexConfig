@@ -6,25 +6,23 @@ import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 /**
- * 竖直滚动条组件：滚动量、平滑、滑块位置、命中、拖动、翻页、滚轮都在这里。
- * <p>
- * 持有者：{@link #area} 设几何 → 每帧 {@link #dragTo} + {@link #update} + {@link #render}，
- * 输入转 {@link #mousePressed} / {@link #release} / {@link #wheel}。
- * 若滚动量另有持有者（如原版列表的 {@code scrollAmount}），由它负责 {@link #seek} 同步进来、再推回去。
+ * 竖直滚动条：调用次序为 {@link #area} 设几何，每帧 {@link #dragTo}、{@link #update}、{@link #render}，
+ * 输入走 {@link #mousePressed} / {@link #release} / {@link #wheel}。滚动量若另有持有者（如原版列表的
+ * {@code scrollAmount}），由它 {@link #seek} 同步进来、再推回去。
  */
 public class OreScrollbar implements Renderable {
 	public static final int TRACK_COLOR = 0xFF58585A;
 	/** 每 tick 走掉剩余差距的比例，越小越慢。 */
 	private static final double DECAY_PER_TICK = 0.25;
-	/** 残差小于此值就落位（px），免得永远差一点点。 */
+	/** 残差小于此值即落位（px），避免始终存在微小偏差。 */
 	private static final double SNAP_PX = 0.5;
 	private static final int MIN_KNOB_H = 12;
-	/** 滑块下方的投影：高度（px）与颜色（半透明黑，罩在轨道上把它压暗）。 */
+	/** 滑块下方的投影：高度（px）与颜色（半透明黑，覆盖轨道使其变暗）。 */
 	private static final int SHADOW_H = 2, SHADOW_COLOR = 0x33000000;
 	private double scroll, target, grab, step = 12;
 	private boolean dragging;
 	private long lastUpdate;
-	/** 轨道几何：左缘、顶端、可视区高、内容总高。 */
+	/** 轨道几何：x 为左缘，{@code content} 为内容总高。 */
 	private int x, y, height, content;
 	public void area(int x, int y, int height, int content) {
 		this.x = x;
@@ -35,11 +33,10 @@ public class OreScrollbar implements Renderable {
 	public void step(double step) {
 		this.step = step;
 	}
-	/** 当前滚动量，渲染内容时按它平移。 */
 	public double scroll() {
 		return scroll;
 	}
-	/** 直接落位（恢复位置、跟随外部持有者）；超出部分由 {@link #update} 钳回。 */
+	/** 直接落位（恢复位置、跟随外部持有者），越界部分留给 {@link #update} 钳回。 */
 	public void seek(double scroll) {
 		this.scroll = target = scroll;
 	}
@@ -50,7 +47,6 @@ public class OreScrollbar implements Renderable {
 	public void wheel(double amount) {
 		target -= amount * step;
 	}
-	/** 按本帧经过的时间把位置推向目标，并钳到合法范围。 */
 	public void update() {
 		var now = Util.getMillis();
 		var seconds = lastUpdate == 0 ? 0.0 : (now - lastUpdate) / 1000.0;
@@ -93,19 +89,15 @@ public class OreScrollbar implements Renderable {
 		return (int) knobYExact(knobH);
 	}
 	/**
-	 * 未取整的滑块顶端位置。
-	 * <p>
-	 * 拖动时 {@code grab} 必须用它来算（不能用取整后的 {@link #knobY}）：{@link #dragTo} 的反函数是精确的，
-	 * 而取整会丢掉小数，于是每按一下滚动量就回落一点，表现成原地连点滑块会一直往上爬。
+	 * 未取整的滑块顶端位置。拖动时 {@code grab} 须用它而非取整后的 {@link #knobY}：{@link #dragTo} 的反函数精确到
+	 * 小数，取整会丢掉小数，于是每按一下滚动量就回落一点，表现为原地连点滑块时持续上爬。
 	 */
 	private double knobYExact(int knobH) {
 		var max = maxScroll();
 		return max > 0 ? y + (height - knobH) * (scroll / (double) max) : y;
 	}
-	/** 点在滑块上为抓取拖动，点在轨道空白处为翻页。 */
 	public boolean mousePressed(double mouseX, double mouseY) {
-		if (!shown() || mouseX < x || mouseX >= x + FlexGuiTextures.SCROLLBAR.width() || mouseY < y || mouseY >= y + height)
-			return false;
+		if (!shown() || mouseX < x || mouseX >= x + FlexGuiTextures.SCROLLBAR.width() || mouseY < y || mouseY >= y + height) return false;
 		var knobH = knobHeight();
 		var knobY = knobY(knobH);
 		if (mouseY >= knobY && mouseY < knobY + knobH) {
@@ -115,10 +107,8 @@ public class OreScrollbar implements Renderable {
 		return true;
 	}
 	/**
-	 * 拖动落位，按抓取时的偏移还原位置。
-	 * <p>
-	 * 每帧在渲染里喂当前鼠标坐标即可（不要接 {@code mouseDragged}）；拖动直接落位、不走平滑插值，
-	 * 否则鼠标移开后滑块仍会追赶、表现为不跟手。
+	 * 每帧在渲染中喂当前鼠标坐标即可，不要接 {@code mouseDragged}；拖动直接落位、不走平滑插值，
+	 * 否则鼠标移开后滑块仍会追赶，表现为响应迟滞。
 	 */
 	public void dragTo(double mouseY) {
 		if (!dragging || !shown()) return;

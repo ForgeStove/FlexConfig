@@ -9,11 +9,7 @@ import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-/**
- * 确认弹窗：标题栏 + 自动换行的正文 + 两个 {@link OreButton}，居中模态。
- * <p>
- * 按钮只转调 {@code callback}，自己不关窗。回调负责切换界面（与调用方约定一致）。
- */
+/** 按钮只转调 {@code callback} 而不自行关窗：切换界面交由回调负责，是调用方需遵守的约定。 */
 public class OreConfirmPopupScreen extends OrePopupScreen {
 	private static final int WIDTH = 200, BUTTON_MARGIN = 4, BUTTON_GAP = 4, MESSAGE_GAP = 12, LINE_GAP = 1;
 	private static final int TEXT_COLOR = 0xFFE0E0E0;
@@ -40,6 +36,21 @@ public class OreConfirmPopupScreen extends OrePopupScreen {
 		useCenter();
 	}
 	@Override
+	protected void renderContent(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+		var lineH = font.lineHeight + LINE_GAP;
+		// 文本块（不含末行之后的那点余量）在内容区里垂直居中
+		var y = contentY(lines.size() * lineH - LINE_GAP);
+		for (var line : lines) {
+			gui.drawString(font, line, contentX() + (contentW() - font.width(line)) / 2, y, TEXT_COLOR, true);
+			y += lineH;
+		}
+	}
+	/** 按钮放进底栏（实色带），不占正文高度。 */
+	@Override
+	protected boolean hasFooter() {
+		return true;
+	}
+	@Override
 	protected void buildWidgets() {
 		yesButton = addRenderableWidget(new OreButton(0, yesLabel, yesStyle, b -> callback.accept(true)));
 		noButton = addRenderableWidget(new OreButton(0, noLabel, Style.SECONDARY, b -> callback.accept(false)));
@@ -48,17 +59,12 @@ public class OreConfirmPopupScreen extends OrePopupScreen {
 	protected int contentWidth() {
 		return WIDTH;
 	}
-	/** 按钮放进底栏（实色带），不占正文高度。 */
-	@Override
-	protected boolean hasFooter() {
-		return true;
-	}
 	@Override
 	protected int contentHeight() {
 		lines = font.split(message, WIDTH);
 		return lines.size() * (font.lineHeight + LINE_GAP) + MESSAGE_GAP;
 	}
-	/** 两个按钮**竖排、占满整行宽**：肯定在上（Primary/Destructive）、否定在下（Secondary）。 */
+	/** 两个按钮竖排并占满整行宽：肯定在上（Primary 或 Destructive），否定在下（Secondary）。 */
 	@Override
 	protected void layoutContent() {
 		if (yesButton == null) return;   // 首次 relayout 发生在 buildWidgets 之前
@@ -73,15 +79,5 @@ public class OreConfirmPopupScreen extends OrePopupScreen {
 	@Override
 	protected void renderBackdrop(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(gui);
-	}
-	@Override
-	protected void renderContent(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-		var lineH = font.lineHeight + LINE_GAP;
-		// 文本块（不含末行之后的那点余量）在内容区里垂直居中
-		var y = contentY(lines.size() * lineH - LINE_GAP);
-		for (var line : lines) {
-			gui.drawString(font, line, contentX() + (contentW() - font.width(line)) / 2, y, TEXT_COLOR, true);
-			y += lineH;
-		}
 	}
 }
