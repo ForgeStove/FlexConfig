@@ -9,6 +9,7 @@
 	"flexconfig.quit.unsaved": "Odrzuć zmiany",
 	"flexconfig.restart.game.text": "Aby zmiany odniosły efekt, wymagany jest restart gry.",
 	"flexconfig.restart.return": "Ignoruj i kontynuuj",
+	"flexconfig.restart.server.text": "A world reload is required for the changes to take effect.",
 	"flexconfig.restart.title": "Wymagane ponowne uruchomienie",
 	"flexconfig.undo.tooltip": "Cofnij",
 	"flexconfig.unlock.tooltip": "Zablokuj tę wartość konfiguracji na serwerze",

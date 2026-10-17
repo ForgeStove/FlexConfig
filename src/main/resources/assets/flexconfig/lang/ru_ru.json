@@ -9,6 +9,7 @@
 	"flexconfig.quit.unsaved": "Отменить изменения",
 	"flexconfig.restart.game.text": "Для применения изменений необходим перезапуск игры.",
 	"flexconfig.restart.return": "Пропустить и продолжить",
+	"flexconfig.restart.server.text": "A world reload is required for the changes to take effect.",
 	"flexconfig.restart.title": "Необходим перезапуск",
 	"flexconfig.undo.tooltip": "Отменить",
 	"flexconfig.unlock.tooltip": "Заблокировать это значение конфигурации на сервере",

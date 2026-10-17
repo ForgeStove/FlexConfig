@@ -9,6 +9,7 @@
 	"flexconfig.quit.unsaved": "Descartar alterações",
 	"flexconfig.restart.game.text": "É necessário reiniciar o jogo para que as alterações tenham efeito.",
 	"flexconfig.restart.return": "Ignorar e continuar",
+	"flexconfig.restart.server.text": "A world reload is required for the changes to take effect.",
 	"flexconfig.restart.title": "Reinicialização Necessária",
 	"flexconfig.undo.tooltip": "Desfazer",
 	"flexconfig.unlock.tooltip": "Bloquear este valor de configuração no servidor",

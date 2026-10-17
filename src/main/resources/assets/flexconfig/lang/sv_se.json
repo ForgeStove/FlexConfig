@@ -1,1 +1,21 @@
-{}
+{
+	"flexconfig.cannot_save": "Error!",
+	"flexconfig.color_picker.tooltip": "Color Picker",
+	"flexconfig.keybinds": "Keybinds",
+	"flexconfig.locked.tooltip": "This config value is locked by the server",
+	"flexconfig.quit.confirm": "Confirm",
+	"flexconfig.quit.confirm.title": "Discard Changes?",
+	"flexconfig.quit.confirm.warning": "You have unsaved changes. Are you sure you want to discard them?",
+	"flexconfig.quit.unsaved": "Discard Changes",
+	"flexconfig.restart.game.text": "A game restart is required for the changes to take effect.",
+	"flexconfig.restart.return": "Ignore and Continue",
+	"flexconfig.restart.server.text": "A world reload is required for the changes to take effect.",
+	"flexconfig.restart.title": "Restart Required",
+	"flexconfig.undo.tooltip": "Undo",
+	"flexconfig.unlock.tooltip": "Lock this config value on the server",
+	"flexconfig.unsupported_type": "Unsupported config type: ",
+	"flexconfig.validator.max": "Value cannot be greater than: ",
+	"flexconfig.validator.min": "Value cannot be less than: ",
+	"flexconfig.validator.multiple_errors": "Multiple errors exist",
+	"flexconfig.warn.cheat.tooltip": "Warning: May be considered cheating on server"
+}
