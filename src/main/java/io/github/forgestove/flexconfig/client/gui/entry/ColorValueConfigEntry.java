@@ -13,15 +13,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Pattern;
 public final class ColorValueConfigEntry<C> extends ValueConfigEntry<C, Integer> {
 	public static final Pattern HEX_PATTERN = Pattern.compile("[0-9A-Fa-f]*");
-	public final OreEditBox inputField;
-	public final OreColorPickerButton previewWidget;
+	public final FlexEditBox inputField;
+	public final FlexColorPickerButton previewWidget;
 	public final boolean hasAlpha;
 	public ColorValueConfigEntry(ConfigCategoryTab<C, Integer> tab, ValueConfigNode<C, Integer> node) {
 		super(tab, node);
 		hasAlpha = node.colorHasAlpha();
-		previewWidget = new OreColorPickerButton(0, 0, SIZE, SIZE, hasAlpha, this::getValue, this::openColorPicker);
+		previewWidget = new FlexColorPickerButton(0, 0, SIZE, SIZE, hasAlpha, this::getValue, this::openColorPicker);
 		previewWidget.setTooltip(Tooltip.create(Translation.COLOR_PICKER_TOOLTIP));
-		inputField = new OreEditBox(ClientUtil.mc.font, 0, 0, WIDTH - SIZE - GAP, HEIGHT, this.node.getTitle());
+		inputField = new FlexEditBox(ClientUtil.mc.font, 0, 0, WIDTH - SIZE - GAP, HEIGHT, this.node.getTitle());
 		inputField.setMaxLength(getMaxLength());
 		inputField.setValue(formatColor(getValue()));
 		inputField.setFilter(s -> HEX_PATTERN.matcher(s).matches());

@@ -1,8 +1,8 @@
 package io.github.forgestove.flexconfig.client.gui;
 import io.github.forgestove.flexconfig.ConfigHandler;
 import io.github.forgestove.flexconfig.client.*;
-import io.github.forgestove.flexconfig.client.gui.components.OreButton;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.*;
 import net.minecraft.client.gui.screens.Screen;
@@ -25,9 +25,9 @@ public final class ConfigFileScreen extends Screen {
 		this.handlers = handlers;
 		parent = ClientUtil.mc.screen;
 	}
-	private OreButton fileButton(ConfigHandler<?, ?> handler) {
+	private Button fileButton(ConfigHandler<?, ?> handler) {
 		var available = FlexConfigScreenFactory.available(handler);
-		var button = OreButton.of(label(handler), b -> open(handler)).width(OreButton.DEFAULT_WIDTH).build();
+		var button = Button.builder(label(handler), b -> open(handler)).width(Button.DEFAULT_WIDTH).build();
 		button.active = available;
 		button.setTooltip(available
 			? Tooltip.create(Component.literal(handler.getFileName()))
@@ -63,7 +63,7 @@ public final class ConfigFileScreen extends Screen {
 		handlers.forEach(handler -> files.addChild(fileButton(handler)));
 		centerFrame.addChild(files);
 		layout.addToContents(centerFrame);
-		layout.addToFooter(OreButton.of(Translation.BACK_LABEL, b -> onClose()).width(OreButton.DEFAULT_WIDTH).build());
+		layout.addToFooter(Button.builder(Translation.BACK_LABEL, b -> onClose()).width(Button.DEFAULT_WIDTH).build());
 		layout.visitWidgets(this::addRenderableWidget);
 		repositionElements();
 	}

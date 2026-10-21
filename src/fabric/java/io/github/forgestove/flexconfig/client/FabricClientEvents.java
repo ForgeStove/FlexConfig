@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.client;
-import io.github.forgestove.flexconfig.client.gui.components.OreCursor;
 import io.github.forgestove.flexconfig.platform.FabricPayloads;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -17,12 +16,8 @@ public final class FabricClientEvents implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> ClientLifecycleHandler.tick());
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientLifecycleHandler.onLoggingOut());
 		// Fabric 的鼠标事件是「每个 Screen 各注册一次」，对应 NeoForge 的全局 ScreenEvent.MouseButtonPressed.Pre
-		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
+		ScreenEvents.AFTER_INIT.register((client, screen, width, height) ->
 			ScreenMouseEvents.beforeMouseClick(screen)
-				.register((s, mouseX, mouseY, button) -> ClientLifecycleHandler.onScreenMousePressed(mouseX, mouseY));
-			// 光标：帧首清请求、帧尾统一下发（同 NeoForge 的 ScreenEvent.Render.Pre/Post）
-			ScreenEvents.beforeRender(screen).register((s, gui, mouseX, mouseY, delta) -> OreCursor.reset());
-			ScreenEvents.afterRender(screen).register((s, gui, mouseX, mouseY, delta) -> OreCursor.apply());
-		});
+				.register((s, mouseX, mouseY, button) -> ClientLifecycleHandler.onScreenMousePressed(mouseX, mouseY)));
 	}
 }

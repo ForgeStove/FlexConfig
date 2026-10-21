@@ -2,11 +2,11 @@ package io.github.forgestove.flexconfig.client.gui;
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.forgestove.flexconfig.client.Translation;
 import io.github.forgestove.flexconfig.client.gui.components.*;
-import io.github.forgestove.flexconfig.client.gui.components.OreButton.Style;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor.ARGB32;
@@ -30,7 +30,7 @@ public final class ColorPickerScreen extends Screen {
 	private int alpha = 255;
 	private int[] sbPixels;
 	private DragMode dragMode = DragMode.NONE;
-	private OreEditBox hexInput;
+	private FlexEditBox hexInput;
 	private boolean updatingFromInput;
 	public ColorPickerScreen(Screen parent, int initialColor, boolean hasAlpha, IntConsumer onColorSelected) {
 		super(Translation.COLOR_PICKER_TOOLTIP);
@@ -108,20 +108,20 @@ public final class ColorPickerScreen extends Screen {
 	protected void init() {
 		layoutPicker();
 		var buttonY = svPos.y + PICKER_SIZE + PADDING;
-		var okButton = new OreButton(
-			BUTTON_WIDTH, Component.translatable("gui.ok"), Style.PRIMARY, button -> {
-			onColorSelected.accept(colorFromHSB());
-			mc.setScreen(parent);
-		}
-		);
+		var okButton = Button.builder(
+			Component.translatable("gui.ok"), button -> {
+				onColorSelected.accept(colorFromHSB());
+				mc.setScreen(parent);
+			}
+		).size(BUTTON_WIDTH, SIZE).build();
 		okButton.setPosition(svPos.x, buttonY);
 		addRenderableWidget(okButton);
-		var cancelButton = new OreButton(BUTTON_WIDTH, Translation.BACK_LABEL, Style.SECONDARY, button -> mc.setScreen(parent));
+		var cancelButton = Button.builder(Translation.BACK_LABEL, button -> mc.setScreen(parent)).size(BUTTON_WIDTH, SIZE).build();
 		cancelButton.setPosition(svPos.x + BUTTON_WIDTH + 2, buttonY);
 		addRenderableWidget(cancelButton);
 		hexInput = createHexInput(buttonY);
 		addRenderableWidget(hexInput);
-		addRenderableWidget(new OreColorPickerButton(
+		addRenderableWidget(new FlexColorPickerButton(
 			hexInput.getX() + hexInput.getWidth() + 4,
 			buttonY,
 			SIZE,
@@ -212,10 +212,10 @@ public final class ColorPickerScreen extends Screen {
 		pickerPos.move((width - totalWidth) / 2 - PADDING, (height - totalHeight) / 2 - PADDING - 10);
 		svPos.move(pickerPos.x + PADDING, pickerPos.y + PADDING + 16);
 	}
-	private OreEditBox createHexInput(int buttonY) {
+	private FlexEditBox createHexInput(int buttonY) {
 		var hexInputX = svPos.x + BUTTON_WIDTH * 2 + 6;
 		var hexInputWidth = hasAlpha ? 70 : 55;
-		var input = new OreEditBox(font, hexInputX, buttonY, hexInputWidth, SIZE, Component.literal("Hex"));
+		var input = new FlexEditBox(font, hexInputX, buttonY, hexInputWidth, SIZE, Component.literal("Hex"));
 		input.setMaxLength(hasAlpha ? 8 : 6);
 		input.setValue(formatHexColor());
 		input.setFilter(s -> HEX_PATTERN.matcher(s).matches());

@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig;
 import io.github.forgestove.flexconfig.client.ClientLifecycleHandler;
-import io.github.forgestove.flexconfig.client.gui.components.OreCursor;
 import io.github.forgestove.flexconfig.network.ConfigNetwork;
 import io.github.forgestove.flexconfig.platform.NeoForgePlatform;
 import io.github.forgestove.flexconfig.server.ServerLifecycleHandler;
@@ -11,7 +10,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut;
 import net.neoforged.neoforge.client.event.ClientTickEvent.Post;
 import net.neoforged.neoforge.client.event.ScreenEvent.MouseButtonPressed.Pre;
-import net.neoforged.neoforge.client.event.ScreenEvent.Render;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.neoforged.neoforge.event.server.*;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -53,14 +51,6 @@ public final class ConfigEvents {
 		@SubscribeEvent
 		public static void onLoggingOut(LoggingOut event) {
 			ClientLifecycleHandler.onLoggingOut();
-		}
-		@SubscribeEvent
-		public static void onScreenRenderPre(Render.Pre event) {
-			OreCursor.reset();
-		}
-		@SubscribeEvent
-		public static void onScreenRenderPost(Render.Post event) {
-			OreCursor.apply();
 		}
 	}
 	/**

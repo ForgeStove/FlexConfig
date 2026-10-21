@@ -1,7 +1,7 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
-import io.github.forgestove.flexconfig.client.gui.components.OreEditBox;
+import io.github.forgestove.flexconfig.client.gui.components.FlexEditBox;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -14,21 +14,21 @@ import java.awt.Point;
 import java.util.regex.Pattern;
 public final class PointValueConfigEntry<C> extends ValueConfigEntry<C, Point> {
 	public static final Pattern INTEGER_PATTERN = Pattern.compile("-?\\d*");
-	public final OreEditBox xField;
-	public final OreEditBox yField;
+	public final FlexEditBox xField;
+	public final FlexEditBox yField;
 	private boolean updatingFromCode = false;
 	public PointValueConfigEntry(ConfigCategoryTab<C, Point> tab, ValueConfigNode<C, Point> node) {
 		super(tab, node);
 		var width = HALF_VALUE_WIDTH;
 		var font = ClientUtil.mc.font;
 		var x = Component.literal("X");
-		xField = new OreEditBox(font, 0, 0, width, HEIGHT, x);
+		xField = new FlexEditBox(font, 0, 0, width, HEIGHT, x);
 		xField.setValue(String.valueOf(getValue().x));
 		xField.setFilter(s -> INTEGER_PATTERN.matcher(s).matches());
 		xField.setResponder(this::onXChange);
 		xField.setTooltip(Tooltip.create(x));
 		var y = Component.literal("Y");
-		yField = new OreEditBox(font, 0, 0, width, HEIGHT, y);
+		yField = new FlexEditBox(font, 0, 0, width, HEIGHT, y);
 		yField.setValue(String.valueOf(getValue().y));
 		yField.setFilter(s -> INTEGER_PATTERN.matcher(s).matches());
 		yField.setResponder(this::onYChange);

@@ -1,10 +1,10 @@
 package io.github.forgestove.flexconfig.client.gui;
 import io.github.forgestove.flexconfig.client.gui.api.TabLifecycle;
-import io.github.forgestove.flexconfig.client.gui.components.OreTabButton;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.TabButton;
 import net.minecraft.client.gui.components.tabs.Tab;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.network.chat.Component;
@@ -20,7 +20,7 @@ public final class ConfigCategoryTab<C, V> implements Tab {
 	public final CategoryConfigNode<C> node;
 	public final ConfigEntryList list;
 	private final Component title;
-	private OreTabButton tabButton;
+	private TabButton tabButton;
 	public ConfigCategoryTab(ConfigScreen<C, V> screen, @NotNull CategoryConfigNode<C> node, C config) {
 		this.screen = screen;
 		this.node = node;
@@ -86,7 +86,7 @@ public final class ConfigCategoryTab<C, V> implements Tab {
 	public boolean hasEntryError() {
 		return list.hasEntryError();
 	}
-	public void setTabButton(OreTabButton tabButton) {
+	public void setTabButton(TabButton tabButton) {
 		this.tabButton = tabButton;
 	}
 }

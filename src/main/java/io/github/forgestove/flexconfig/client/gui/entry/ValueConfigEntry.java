@@ -2,7 +2,7 @@ package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.FileKey;
 import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.*;
-import io.github.forgestove.flexconfig.client.gui.components.OreIconButton;
+import io.github.forgestove.flexconfig.client.gui.components.FlexIconButton;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -17,9 +17,9 @@ import java.util.*;
 public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 	/** 值区总宽固定为 {@link #WIDTH} 才能保证整排右缘对齐，故半宽须先扣掉中间那一个 {@link #GAP}；直接写 {@code WIDTH / 2} 会比其它类型多出一个 GAP。 */
 	public static final int HALF_VALUE_WIDTH = (WIDTH - GAP) / 2;
-	public final OreIconButton resetButton;
-	public final OreIconButton undoButton;
-	public final OreIconButton lockButton;
+	public final FlexIconButton resetButton;
+	public final FlexIconButton undoButton;
+	public final FlexIconButton lockButton;
 	public final ConfigCategoryTab<C, V> tab;
 	public final List<AbstractWidget> children = new ArrayList<>();
 	public final ValueConfigNode<C, V> node;
@@ -35,13 +35,13 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		var font = ClientUtil.mc.font;
 		tooltip = this.node.getTooltip() == null ? null : font.split(this.node.getTooltip(), 350);
 		tooltipWithError = getTooltipWithError();
-		resetButton = new OreIconButton(SIZE, FlexGuiTextures.ICON_RESET, b -> resetToDefault());
+		resetButton = new FlexIconButton(SIZE, SIZE, FlexGuiTextures.ICON_RESET, b -> resetToDefault());
 		resetButton.setTooltip(Tooltip.create(Translation.RESET_TOOLTIP));
 		resetButton.active = !this.node.isDefaultValue(this.tab.config);
-		undoButton = new OreIconButton(SIZE, FlexGuiTextures.ICON_UNDO, b -> resetToActive());
+		undoButton = new FlexIconButton(SIZE, SIZE, FlexGuiTextures.ICON_UNDO, b -> resetToActive());
 		undoButton.setTooltip(Tooltip.create(Translation.UNDO_TOOLTIP));
 		undoButton.active = !this.node.isActiveValue(this.tab.config);
-		lockButton = new OreIconButton(SIZE, FlexGuiTextures.ICON_UNLOCK, b -> onLockToggle());
+		lockButton = new FlexIconButton(SIZE, SIZE, FlexGuiTextures.ICON_UNLOCK, b -> onLockToggle());
 		lockButton.setTooltip(Tooltip.create(Translation.UNLOCK_TOOLTIP));
 		lockButton.active = canLock();
 		lockButton.visible = shouldShowLockButton();

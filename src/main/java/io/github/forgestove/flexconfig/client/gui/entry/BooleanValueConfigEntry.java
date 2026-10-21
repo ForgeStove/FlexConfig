@@ -1,23 +1,21 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
-import io.github.forgestove.flexconfig.client.gui.components.OreSwitchButton;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
 public final class BooleanValueConfigEntry<C> extends CapturableValueConfigEntry<C, Boolean> {
-	private final OreSwitchButton valueSwitch;
+	private final Button valueSwitch;
 	public BooleanValueConfigEntry(ConfigCategoryTab<C, Boolean> tab, ValueConfigNode<C, Boolean> node) {
 		super(tab, node);
-		valueSwitch = new OreSwitchButton(
-			OreSwitchButton.preferredWidth(),
-			HEIGHT,
-			node.getTitle(),
-			Boolean.TRUE.equals(getValue()),
-			this::setValue
-		);
+		valueSwitch = Button.builder(label(getValue()), b -> setValue(!getValue())).size(HALF_VALUE_WIDTH, HEIGHT).build();
 		children.add(valueSwitch);
 		registerKeybindTask();
+	}
+	private static Component label(boolean value) {
+		return value ? Translation.ON_LABEL : Translation.OFF_LABEL;
 	}
 	@Override
 	protected void registerKeybindTask() {
@@ -39,6 +37,6 @@ public final class BooleanValueConfigEntry<C> extends CapturableValueConfigEntry
 	@Override
 	public void refresh() {
 		super.refresh();
-		valueSwitch.setValue(Boolean.TRUE.equals(getValue()));
+		valueSwitch.setMessage(label(getValue()));
 	}
 }

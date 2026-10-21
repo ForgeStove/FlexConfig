@@ -4,7 +4,6 @@ import com.mojang.blaze3d.platform.InputConstants.*;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
 import io.github.forgestove.flexconfig.client.gui.api.*;
-import io.github.forgestove.flexconfig.client.gui.components.OreButton;
 import io.github.forgestove.flexconfig.client.gui.factory.*;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.client.gui.GuiGraphics;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 public abstract class CapturableValueConfigEntry<C, V> extends ValueConfigEntry<C, V>
 	implements CaptureHandler, TabLifecycle, CrossRefreshable {
-	protected final OreButton keybindButton;
+	protected final Button keybindButton;
 	/** 条目构造时的绑定快照，供「撤销」回退到进入界面时的状态。 */
 	@Nullable private final String initialKeybindSerialized;
 	protected boolean capturing;
@@ -26,7 +25,7 @@ public abstract class CapturableValueConfigEntry<C, V> extends ValueConfigEntry<
 		super(tab, node);
 		initialKeybindSerialized = tab.screen.getHandler().getTriggerKeybind(node.getPath());
 		var keybind = initialKeybindSerialized != null ? EntryKeybind.deserialize(initialKeybindSerialized) : EntryKeybind.UNBOUND;
-		keybindButton = OreButton.of(
+		keybindButton = Button.builder(
 			keybind.getDisplayName(), b -> {
 				capturing = true;
 				captureCallback.onCaptureStateChanged(this, true);

@@ -2,49 +2,33 @@ package io.github.forgestove.flexconfig.client.gui.entry;
 import io.github.forgestove.flexconfig.ConfigTranslation;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
-import io.github.forgestove.flexconfig.client.gui.components.OreButton;
-import io.github.forgestove.flexconfig.client.gui.popup.OreListPopupScreen;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
-
-import java.util.List;
 @SuppressWarnings("rawtypes")
 public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C, Enum> {
-	private final OreButton dropdownButton;
+	private final Button dropdownButton;
 	private final String enumClassName;
 	public EnumValueConfigEntry(ConfigCategoryTab<C, Enum> tab, ValueConfigNode<C, Enum> node) {
 		super(tab, node);
 		enumClassName = node.getValueType().getSimpleName();
-		dropdownButton = OreButton.of(getDisplayComponent(getValue()), this::openDropdown).size(HALF_VALUE_WIDTH, HEIGHT).build();
+		dropdownButton = Button.builder(getDisplayComponent(getValue()), b -> selectValue(nextValue())).size(HALF_VALUE_WIDTH, HEIGHT).build();
 		children.add(dropdownButton);
 		registerKeybindTask();
 	}
 	private Component getDisplayComponent(Enum<?> value) {
 		return ConfigTranslation.translatable("%s.config.enum.%s.%s".formatted(tab.screen.root.modId(), enumClassName, value.name()));
 	}
-	private void openDropdown(OreButton button) {
-		var mc = ClientUtil.mc;
-		var screen = mc.screen;
-		if (screen == null || screen instanceof OreListPopupScreen<?>) return;
-		var popup = new OreListPopupScreen<>(
-			screen,
-			List.of(node.getValueType().getEnumConstants()),
-			this::getDisplayComponent,
-			this::getValue,
-			this::selectValue
-		);
-		popup.anchorTo(dropdownButton.getX(), dropdownButton.getY(), dropdownButton.getWidth(), dropdownButton.getHeight());
-		popup.rowHeight(HEIGHT);
-		mc.setScreen(popup);
+	private Enum<?> nextValue() {
+		var values = node.getValueType().getEnumConstants();
+		return (Enum<?>) values[(getValue().ordinal() + 1) % values.length];
 	}
 	@Override
 	protected void registerKeybindTask() {
 		registerTriggerAction(() -> {
-			var values = node.getValueType().getEnumConstants();
-			var nextIndex = (getValue().ordinal() + 1) % values.length;
-			setValue(values[nextIndex]);
+			setValue(nextValue());
 			var title = node.getTitle().copy().withStyle(ChatFormatting.WHITE);
 			var valText = getDisplayComponent(getValue()).copy().withStyle(ChatFormatting.UNDERLINE, ChatFormatting.BOLD);
 			if (ClientUtil.mc.player == null) return;

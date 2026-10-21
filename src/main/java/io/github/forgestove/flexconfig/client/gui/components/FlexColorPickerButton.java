@@ -1,16 +1,16 @@
 package io.github.forgestove.flexconfig.client.gui.components;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 
 import java.util.function.IntSupplier;
-public final class OreColorPickerButton extends OreAbstractButton {
+public final class FlexColorPickerButton extends Button {
 	private static final int BORDER = 0xFF1E1E1F, BORDER_HOVER = 0xFFFFFFFF;
 	private static final int CHECKER_LIGHT = 0xFFD0D1D4, CHECKER_DARK = 0xFF8C8D90, CHECKER_SIZE = 4;
 	private final IntSupplier colorSupplier;
 	private final boolean hasAlpha;
-	@Nullable private final Runnable action;
-	public OreColorPickerButton(
+	public FlexColorPickerButton(
 		int x,
 		int y,
 		int width,
@@ -19,15 +19,14 @@ public final class OreColorPickerButton extends OreAbstractButton {
 		IntSupplier colorSupplier,
 		@Nullable Runnable action
 	) {
-		super(x, y, width, height, Component.empty());
+		super(
+			x, y, width, height, Component.empty(), b -> {
+				if (action != null) action.run();
+			}, DEFAULT_NARRATION
+		);
 		this.colorSupplier = colorSupplier;
 		this.hasAlpha = hasAlpha;
-		this.action = action;
 		active = action != null;
-	}
-	@Override
-	public void onPress() {
-		if (action != null) action.run();
 	}
 	@Override
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
@@ -36,7 +35,6 @@ public final class OreColorPickerButton extends OreAbstractButton {
 		if (hasAlpha) renderCheckerboard(gui);
 		gui.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), color);
 		gui.renderOutline(getX(), getY(), getWidth(), getHeight(), isHovered() ? BORDER_HOVER : BORDER);
-		renderCursor();
 	}
 	private void renderCheckerboard(@NotNull GuiGraphics gui) {
 		for (var y = 0; y < getHeight(); y += CHECKER_SIZE)
