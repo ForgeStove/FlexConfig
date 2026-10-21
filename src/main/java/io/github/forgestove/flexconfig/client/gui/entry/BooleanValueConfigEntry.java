@@ -3,8 +3,7 @@ import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.network.chat.Component;
 public final class BooleanValueConfigEntry<C> extends CapturableValueConfigEntry<C, Boolean> {
 	private final Button valueSwitch;
@@ -15,7 +14,9 @@ public final class BooleanValueConfigEntry<C> extends CapturableValueConfigEntry
 		registerKeybindTask();
 	}
 	private static Component label(boolean value) {
-		return value ? Translation.ON_LABEL : Translation.OFF_LABEL;
+		return value
+			? Translation.ON_LABEL.copy().withStyle(ChatFormatting.GREEN)
+			: Translation.OFF_LABEL.copy().withStyle(ChatFormatting.RED);
 	}
 	@Override
 	protected void registerKeybindTask() {
@@ -23,11 +24,8 @@ public final class BooleanValueConfigEntry<C> extends CapturableValueConfigEntry
 			var newVal = !getValue();
 			setValue(newVal);
 			var title = node.getTitle().copy().withStyle(ChatFormatting.WHITE);
-			var valText = newVal
-				? Translation.ON_LABEL.copy().withStyle(ChatFormatting.GREEN)
-				: Translation.OFF_LABEL.copy().withStyle(ChatFormatting.RED);
 			if (ClientUtil.mc.player == null) return;
-			ClientUtil.mc.player.displayClientMessage(title.append(": ").append(valText), true);
+			ClientUtil.mc.player.displayClientMessage(title.append(": ").append(label(newVal)), true);
 		});
 	}
 	@Override

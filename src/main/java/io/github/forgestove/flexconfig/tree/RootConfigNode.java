@@ -210,7 +210,7 @@ public record RootConfigNode<C, V>(
 			var tooltip = ConfigTranslation.translatable(titleKey + ".tooltip");
 			if (valueField.isAnnotationPresent(WarnCheat.class)) tooltip = tooltip.copy()
 				.append(Component.literal("\n"))
-				.append(Component.translatable("flexconfig.warn.cheat.tooltip").withStyle(ChatFormatting.RED));
+				.append(ConfigTranslation.translatable("flexconfig.warn.cheat.tooltip").withStyle(ChatFormatting.RED));
 			final var finalTooltip = tooltip;
 			categoryBuilder.value(valueBuilder -> valueBuilder.valueType(type)
 				.name(valueName)
