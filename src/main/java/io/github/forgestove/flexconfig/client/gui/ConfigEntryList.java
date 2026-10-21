@@ -1,19 +1,19 @@
 package io.github.forgestove.flexconfig.client.gui;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.api.CrossRefreshable;
-import io.github.forgestove.flexconfig.client.gui.components.FlexScrollBar;
+import io.github.forgestove.flexconfig.client.gui.components.*;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
-import io.github.forgestove.flexconfig.client.gui.factory.Highlight;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> {
+import java.util.function.Consumer;
+public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> implements ScrollTarget {
 	private final Screen screen;
-	private final Highlight highlight = new Highlight(() -> children().indexOf(getHovered()), this::getRowTop);
-	private final FlexScrollBar scrollbar = new FlexScrollBar();
+	private final FlexHighlight highlight;
+	private final FlexScrollBar scrollbar;
 	public ConfigEntryList(@NotNull ConfigScreen<?, ?> screen, @NotNull Iterable<ConfigEntry> entries) {
 		super(
 			ClientUtil.mc,
@@ -24,6 +24,8 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		);
 		this.screen = screen;
 		headerHeight = -3;
+		highlight = new FlexHighlight(itemHeight, this::hoveredIndex, this::getRowTop);
+		scrollbar = new FlexScrollBar(this, getScrollbarPosition(), getY(), 6, height);
 		scrollbar.step(itemHeight);
 		entries.forEach(this::addEntry);
 	}
@@ -42,16 +44,11 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 	}
 	@Override
 	public int getRowWidth() {
-		return width * 3 / 5;
+		return width * 2 / 3;
 	}
 	@Override
 	public void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
-		scrollbar.area(getScrollbarPosition(), getY(), height, getMaxScroll() + height);
-		scrollbar.update();
-		setScrollAmount(scrollbar.scroll());
-		highlight.tick(gui, getX(), getY(), width, height, itemHeight, delta);
 		super.renderWidget(gui, mouseX, mouseY, delta);
-		scrollbar.render(gui, mouseX, mouseY, delta);
 		var entry = getHovered();
 		if (entry == null) return;
 		var widgetTooltip = entry.getHoveredWidgetTooltip(mouseX, mouseY);
@@ -62,33 +59,17 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		var tooltip = entry.getTooltip();
 		if (tooltip != null) screen.setTooltipForNextRenderPass(tooltip);
 	}
-	/** 列表背景透明：不铺任何底色，露出屏后的世界（原版模糊背景）。 */
-	@Override
-	protected void renderListBackground(@NotNull GuiGraphics gui) {
-	}
 	/** 关掉原版滚动条，改由 {@link FlexScrollBar} 画。 */
 	@Override
 	protected boolean scrollbarVisible() {
 		return false;
 	}
+	/** 列表背景透明：不铺任何底色，露出屏后的世界（原版模糊背景）。 */
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (scrollbar.mouseClicked(mouseX, mouseY, button)) return true;
-		return super.mouseClicked(mouseX, mouseY, button);
-	}
-	@Override
-	public boolean mouseReleased(double mouseX, double mouseY, int button) {
-		scrollbar.mouseReleased(mouseX, mouseY, button);
-		return super.mouseReleased(mouseX, mouseY, button);
-	}
-	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-		if (scrollbar.mouseDragged(mouseX, mouseY, button, dragX, dragY)) return true;
-		return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
-	}
+	protected void renderListBackground(@NotNull GuiGraphics gui) {}
+	/** 列表自身不滚：有溢出时滚轮由滚动条接管，没溢出时也不该出现原版那几像素的余量滚动。 */
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
-		scrollbar.wheel(vertical);
 		return true;
 	}
 	@Override
@@ -101,5 +82,39 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 			var bottom = getRowBottom(i);
 			if (bottom >= getY() && top <= getBottom()) renderItem(gui, mouseX, mouseY, delta, i, left, top, width, itemHeight);
 		}
+	}
+	/** 列表的装饰控件（高亮、滚动条）与自身一起交给 tab 注册。 */
+	public void visitChildren(Consumer<AbstractWidget> consumer) {
+		consumer.accept(highlight);
+		consumer.accept(scrollbar);
+		consumer.accept(this);
+	}
+	/** 列表被摆放到最终位置时一并摆好装饰控件。 */
+	@Override
+	public void setRectangle(int width, int height, int x, int y) {
+		super.setRectangle(width, height, x, y);
+		scrollbar.setX(getScrollbarPosition());
+		scrollbar.setY(getY());
+		scrollbar.setWidth(6);
+		scrollbar.setHeight(height);
+		scrollbar.wheelArea(getRectangle());
+		highlight.setX(x);
+		highlight.setY(y);
+		highlight.setWidth(width);
+		highlight.setHeight(height);
+	}
+	@Override
+	public int contentHeight() {
+		return getMaxPosition();
+	}
+	@Override
+	public void applyScroll(double scroll) {
+		setScrollAmount(scroll);
+	}
+	/** 当前鼠标下的行号；{@link FlexHighlight} 每帧按它定位。鼠标离开列表矩形时返回 -1。 */
+	public int hoveredIndex(double mouseX, double mouseY) {
+		if (!isMouseOver(mouseX, mouseY)) return -1;
+		var entry = getEntryAtPosition(mouseX, mouseY);
+		return entry == null ? -1 : children().indexOf(entry);
 	}
 }

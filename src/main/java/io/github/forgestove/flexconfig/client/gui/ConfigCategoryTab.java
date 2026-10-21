@@ -43,7 +43,7 @@ public final class ConfigCategoryTab<C, V> implements Tab {
 	}
 	@Override
 	public void visitChildren(@NotNull Consumer<AbstractWidget> consumer) {
-		consumer.accept(list);
+		list.visitChildren(consumer);
 	}
 	@Override
 	public void doLayout(@NotNull ScreenRectangle screenRectangle) {
