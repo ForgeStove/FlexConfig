@@ -10,14 +10,16 @@ neoForge {
 		minecraftVersion.set(p("mcVersion"))
 	}
 	runs {
-		create("client").client()
+		create("client") {
+			client()
+			systemProperty("terminal.jline", "true")
+		}
 		create("server") {
 			server()
 			gameDirectory.set(file("run/server"))
 			programArgument("--nogui")
 		}
 		configureEach {
-			systemProperty("terminal.jline", "true")
 			jvmArgument("-XX:+IgnoreUnrecognizedVMOptions")
 			jvmArgument("-XX:+AllowEnhancedClassRedefinition")
 		}

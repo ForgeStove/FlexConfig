@@ -16,26 +16,26 @@ public final class EntryTypeRegistry {
 		register(
 			Integer.class, (tab, node) -> {
 				if (node.isColorValue()) return new ColorValueConfigEntry<>(tab, node);
-				if (node.getSliderRange() != null) return new SliderValueConfigEntry<>(tab, node, 1, d -> (int) Math.round(d));
+				if (node.getSliderRange() != null) return new SliderValueConfigEntry<>(tab, node, d -> (int) Math.round(d));
 				return new IntegerValueConfigEntry<>(tab, node);
 			}
 		);
 		register(
 			Long.class,
 			(tab, node) -> node.getSliderRange() != null
-				? new SliderValueConfigEntry<>(tab, node, 1, Math::round)
+				? new SliderValueConfigEntry<>(tab, node, Math::round)
 				: new LongValueConfigEntry<>(tab, node)
 		);
 		register(
 			Float.class,
 			(tab, node) -> node.getSliderRange() != null
-				? new SliderValueConfigEntry<>(tab, node, 0, d -> (float) d)
+				? new SliderValueConfigEntry<>(tab, node, d -> (float) d)
 				: new FloatValueConfigEntry<>(tab, node)
 		);
 		register(
 			Double.class,
 			(tab, node) -> node.getSliderRange() != null
-				? new SliderValueConfigEntry<>(tab, node, 0, d -> d)
+				? new SliderValueConfigEntry<>(tab, node, d -> d)
 				: new DoubleValueConfigEntry<>(tab, node)
 		);
 		register(Enum.class, EnumValueConfigEntry::new);

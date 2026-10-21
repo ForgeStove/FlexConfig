@@ -26,6 +26,10 @@ public enum FlexGuiTextures {
 	BUTTON_SECONDARY("button/secondary"),
 	BUTTON_SECONDARY_HOVER("button/secondary_hover"),
 	BUTTON_SECONDARY_PRESSED("button/secondary_pressed"),
+	BUTTON_BLACK("button/black"),
+	BUTTON_BLACK_HOVER("button/black_hover"),
+	BUTTON_BLACK_PRESSED("button/black_pressed"),
+	BUTTON_BLACK_DISABLED("button/black_disabled"),
 	BUTTON_DISABLED("button/disabled"),
 	// 输入框
 	FIELD_NORMAL("field/normal"),

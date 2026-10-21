@@ -11,10 +11,8 @@ import java.util.function.*;
  * （{@link #dragTo}），不走 {@code mouseDragged}。
  */
 public final class OreSlider extends OreAbstractButton {
-	private static final int RING = 0xFFFFFFFF, NOTCH = 0xFF1E1E1F;
-	/** 格宽小于此值即整段不画分段暗线，以免线条过密。 */
-	private static final int MIN_CELL = 3;
-	private final double min, max, step;
+	private static final int RING = 0xFFFFFFFF;
+	private final double min, max;
 	private final DoubleSupplier value;
 	private final DoubleConsumer onDrag;
 	private final Runnable onCommit;
@@ -25,7 +23,6 @@ public final class OreSlider extends OreAbstractButton {
 		int height,
 		double min,
 		double max,
-		double step,
 		DoubleSupplier value,
 		DoubleConsumer onDrag,
 		Runnable onCommit,
@@ -34,7 +31,6 @@ public final class OreSlider extends OreAbstractButton {
 		super(0, 0, width, height, Component.empty());
 		this.min = min;
 		this.max = max;
-		this.step = step;
 		this.value = value;
 		this.onDrag = onDrag;
 		this.onCommit = onCommit;
@@ -54,12 +50,6 @@ public final class OreSlider extends OreAbstractButton {
 		// 已填充段：同一张轨道图铺到滑块左缘；向右多铺 2px 延入滑块下方，避免绿段尾部留下一道描边
 		if (active && handleX > left)
 			FlexGuiTextures.SLIDER_TRACK_FILLED.render(gui, left, trackY, Math.min(handleX - left + 2, getWidth()), trackH);
-		// 暗线：一格 = 一个步长，把轨道按步数均分；步长为 0（连续值）时不画
-		var steps = step > 0 ? (int) Math.round((max - min) / step) : 0;
-		if (steps > 1 && getWidth() / steps >= MIN_CELL) for (var i = 1; i < steps; i++) {
-			var x = left + Math.round((float) i * getWidth() / steps);
-			gui.fill(x, trackY, x + 1, trackY + trackH, NOTCH);
-		}
 		var handleY = getY() + (getHeight() - handleSize) / 2;
 		var handle = active ? FlexGuiTextures.THUMB : FlexGuiTextures.THUMB_DISABLED;
 		handle.render(gui, handleX, handleY);

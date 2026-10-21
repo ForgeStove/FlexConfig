@@ -10,7 +10,7 @@ import java.util.function.DoubleFunction;
 /** 带范围的数值条目：注解里写了 {@code slider = true} 才走这里；拖动期间只写节点的编辑值，松手才 {@code refresh()}。 */
 public final class SliderValueConfigEntry<C, N extends Number> extends ValueConfigEntry<C, N> {
 	public final OreSlider slider;
-	public SliderValueConfigEntry(ConfigCategoryTab<C, N> tab, ValueConfigNode<C, N> node, double step, DoubleFunction<N> fromDouble) {
+	public SliderValueConfigEntry(ConfigCategoryTab<C, N> tab, ValueConfigNode<C, N> node, DoubleFunction<N> fromDouble) {
 		super(tab, node);
 		var range = Objects.requireNonNull(node.getSliderRange(), "slider entry needs a slider range");
 		slider = new OreSlider(
@@ -18,7 +18,6 @@ public final class SliderValueConfigEntry<C, N extends Number> extends ValueConf
 			HEIGHT,
 			range.min(),
 			range.max(),
-			step,
 			() -> getValue().doubleValue(),
 			value -> node.setEditingValue(fromDouble.apply(value)),
 			tab.screen::refresh,
