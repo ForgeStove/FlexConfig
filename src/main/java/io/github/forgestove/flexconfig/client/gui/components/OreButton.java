@@ -26,8 +26,7 @@ public class OreButton extends OreAbstractButton {
 		FlexGuiTextures.BUTTON_BLACK_DISABLED,
 	};
 	private static final int RING_INSET = 1, RING_COLOR = 0xFFFFFFFF;
-	private static final int TEXT_LIGHT = 0xFFFFFFFF, TEXT_DARK = 0xFF1E1E1F;
-	private static final int TEXT_DISABLED = 0xFF48494A, TEXT_BLACK_DISABLED = 0xFF8C8D90;
+	private static final int TEXT_LIGHT = 0xFFFFFFFF;
 	private static final int TEXT_MARGIN = 2;
 	/** 文字内容区相对盒顶的上下界。两态盒高不同（20 / 18），按固定内容区居中才不会因取整差 1px。 */
 	private static final int TEXT_TOP = 2, TEXT_BOTTOM = 16;
@@ -88,12 +87,8 @@ public class OreButton extends OreAbstractButton {
 			y + TEXT_TOP,
 			getX() + getWidth() - TEXT_MARGIN,
 			y + TEXT_BOTTOM,
-			textColor()
+			TEXT_LIGHT
 		);
-	}
-	protected int textColor() {
-		if (!active) return style == Style.BLACK ? TEXT_BLACK_DISABLED : TEXT_DISABLED;
-		return style == Style.SECONDARY ? TEXT_DARK : TEXT_LIGHT;
 	}
 	/**
 	 * 内容区（盒顶 +{@link #TEXT_TOP} 至盒顶 +{@link #TEXT_BOTTOM}）内垂直居中一个高 {@code height} 的内容。

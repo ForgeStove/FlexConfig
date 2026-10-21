@@ -149,7 +149,7 @@ public record RootConfigNode<C, V>(
 			var defaultCategory = FieldAccess.getFieldValue(categoryField, defaultConfig);
 			var categoryKey = modId + ".config.category." + categoryField.getName();
 			translationKeys.add(categoryKey);
-			var categoryBuilder = CategoryConfigNode.<C>builder().title(Component.translatable(categoryKey));
+			var categoryBuilder = CategoryConfigNode.<C>builder().title(ConfigTranslation.translatable(categoryKey));
 			for (var valueField : FieldAccess.collectOrderedFields(categoryField.getType()))
 				if (valueField.isAnnotationPresent(Category.class)) {
 					if (!ConfigCondition.evaluate(valueField)) continue;
@@ -168,7 +168,7 @@ public record RootConfigNode<C, V>(
 			var pathKey = buildPathKey(path);
 			var categoryKey = modId + ".config.category." + pathKey;
 			translationKeys.add(categoryKey);
-			var builder = CategoryConfigNode.<C>builder().title(Component.translatable(categoryKey)).defaultExpanded(annotation.value());
+			var builder = CategoryConfigNode.<C>builder().title(ConfigTranslation.translatable(categoryKey)).defaultExpanded(annotation.value());
 			for (var valueField : FieldAccess.collectOrderedFields(subCategoryField.getType()))
 				if (valueField.isAnnotationPresent(Category.class)) {
 					if (!ConfigCondition.evaluate(valueField)) continue;
@@ -207,7 +207,7 @@ public record RootConfigNode<C, V>(
 			if (type.isEnum()) for (var constant : type.getEnumConstants())
 				translationKeys.add("%s.config.enum.%s.%s".formatted(modId, type.getSimpleName(), ((Enum<?>) constant).name()));
 			var fullPath = (pathKey.isEmpty() ? "" : pathKey + ".") + valueName;
-			var tooltip = Component.translatable(titleKey + ".tooltip");
+			var tooltip = ConfigTranslation.translatable(titleKey + ".tooltip");
 			if (valueField.isAnnotationPresent(WarnCheat.class)) tooltip = tooltip.copy()
 				.append(Component.literal("\n"))
 				.append(Component.translatable("flexconfig.warn.cheat.tooltip").withStyle(ChatFormatting.RED));
@@ -215,7 +215,7 @@ public record RootConfigNode<C, V>(
 			categoryBuilder.value(valueBuilder -> valueBuilder.valueType(type)
 				.name(valueName)
 				.path(fullPath)
-				.title(Component.translatable(titleKey))
+				.title(ConfigTranslation.translatable(titleKey))
 				.tooltip(finalTooltip)
 				.defaultValue(defaultValue)
 				.colorValue(valueField.getAnnotation(ColorValue.class))

@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
+import io.github.forgestove.flexconfig.ConfigTranslation;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
 import io.github.forgestove.flexconfig.client.gui.components.OreButton;
@@ -21,7 +22,7 @@ public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C,
 		registerKeybindTask();
 	}
 	private Component getDisplayComponent(Enum<?> value) {
-		return Component.translatable("%s.config.enum.%s.%s".formatted(tab.screen.root.modId(), enumClassName, value.name()));
+		return ConfigTranslation.translatable("%s.config.enum.%s.%s".formatted(tab.screen.root.modId(), enumClassName, value.name()));
 	}
 	private void openDropdown(OreButton button) {
 		var mc = ClientUtil.mc;
