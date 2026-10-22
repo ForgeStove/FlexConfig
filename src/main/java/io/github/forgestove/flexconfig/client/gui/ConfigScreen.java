@@ -9,7 +9,6 @@ import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.TabButton;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.tabs.Tab;
 import net.minecraft.client.gui.components.tabs.TabManager;
 import net.minecraft.client.gui.components.tabs.TabNavigationBar;
@@ -53,7 +52,7 @@ public final class ConfigScreen<C, V> extends Screen {
 			cacheTabIndex();
 			return true;
 		}
-		if (super.keyPressed(keyCode, scanCode, modifiers)) return true;   // 聚焦的输入框先吃退格
+		if (super.keyPressed(keyCode, scanCode, modifiers)) return true;
 		if (keyCode == GLFW.GLFW_KEY_BACKSPACE) onClose();
 		return false;
 	}
@@ -204,7 +203,6 @@ public final class ConfigScreen<C, V> extends Screen {
 		var hasEntryError = tabs.stream().anyMatch(ConfigCategoryTab::hasEntryError);
 		var blocked = saveBlockedReason(hasEntryError);
 		saveButton.active = blocked == null;
-		saveButton.setTooltip(Tooltip.create(blocked != null ? blocked : Translation.SAVE_CHANGES_TOOLTIP));
 		cancelButton.setMessage(getCancelLabel());
 	}
 	private void repositionTabLayout() {

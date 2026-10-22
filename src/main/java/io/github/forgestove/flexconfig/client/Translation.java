@@ -14,7 +14,6 @@ public final class Translation {
 	public static final Component QUIT_UNSAVED_LABEL = Component.translatable("flexconfig.quit.unsaved");
 	/** 保存键文案恒定；能不能保存由按钮可用性与 tooltip 表达。 */
 	public static final Component SAVE_CHANGES_LABEL = Component.translatable("flexconfig.save_changes");
-	public static final Component SAVE_CHANGES_TOOLTIP = Component.translatable("flexconfig.save_changes.tooltip");
 	public static final Component SAVE_UNAVAILABLE = Component.translatable("flexconfig.save_unavailable");
 	public static final Component SAVE_UNAVAILABLE_NO_CHANGES = Component.translatable("flexconfig.save_unavailable.no_changes");
 	public static final Component SAVE_UNAVAILABLE_INVALID = Component.translatable("flexconfig.save_unavailable.invalid");
