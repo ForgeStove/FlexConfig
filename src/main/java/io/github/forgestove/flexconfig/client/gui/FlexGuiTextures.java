@@ -4,6 +4,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.*;
 import net.minecraft.resources.ResourceLocation;
 public enum FlexGuiTextures {
+	ICON_ON("icon/on"),
+	ICON_OFF("icon/off"),
 	ICON_RESET("icon/reset"),
 	ICON_UNDO("icon/undo"),
 	ICON_LOCK("icon/lock"),
