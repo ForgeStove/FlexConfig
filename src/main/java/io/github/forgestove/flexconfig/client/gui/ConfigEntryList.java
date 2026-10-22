@@ -67,6 +67,10 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 	/** 列表背景透明：不铺任何底色，露出屏后的世界（原版模糊背景）。 */
 	@Override
 	protected void renderListBackground(@NotNull GuiGraphics gui) {}
+	@Override
+	public int getMaxScroll() {
+		return Math.max(0, super.getMaxScroll() - ConfigEntry.GAP / 2);
+	}
 	/** 列表自身不滚：有溢出时滚轮由滚动条接管，没溢出时也不该出现原版那几像素的余量滚动。 */
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
@@ -106,6 +110,10 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 	@Override
 	public int contentHeight() {
 		return getMaxPosition();
+	}
+	@Override
+	public int maxScroll() {
+		return getMaxScroll();
 	}
 	@Override
 	public void applyScroll(double scroll) {

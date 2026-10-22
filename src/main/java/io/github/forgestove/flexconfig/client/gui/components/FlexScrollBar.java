@@ -37,7 +37,7 @@ public class FlexScrollBar extends AbstractWidget {
 	}
 	/** 每帧渲染内容之前调一次：平滑逼近目标，并把结果写给 {@link ScrollTarget}。 */
 	public void update() {
-		var max = Math.max(0, owner.contentHeight() - getHeight());
+		var max = Math.max(0, owner.maxScroll());
 		target = Math.clamp(target, 0, max);
 		scroll = Math.clamp(scroll, 0, max);
 		var seconds = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks() / 20.0;
@@ -103,7 +103,7 @@ public class FlexScrollBar extends AbstractWidget {
 	private double scrollFor(double mouseY) {
 		var travel = getHeight() - knobHeight();
 		if (travel <= 0) return scroll;
-		var max = Math.max(0, owner.contentHeight() - getHeight());
+		var max = Math.max(0, owner.maxScroll());
 		return Math.clamp((mouseY - grab - getY()) * (double) max / travel, 0, max);
 	}
 	/** 内容不超出一屏时整条不绘制也不响应事件。 */
@@ -118,7 +118,7 @@ public class FlexScrollBar extends AbstractWidget {
 		return (int) knobYExact(knobH);
 	}
 	private double knobYExact(int knobH) {
-		var max = Math.max(0, owner.contentHeight() - getHeight());
+		var max = Math.max(0, owner.maxScroll());
 		return max > 0 ? getY() + (getHeight() - knobH) * (scroll / (double) max) : getY();
 	}
 }
