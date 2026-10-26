@@ -3,7 +3,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
@@ -23,17 +22,12 @@ public class FlexScrollBar extends AbstractWidget {
 	/** 鼠标按下时相对滑块顶端的偏移，拖动时按它还原滑块位置。 */
 	private double grab;
 	private boolean dragging;
-	/** 滚轮命中区：整个内容视口，滚轮不需要精确落在 6px 的条上。 */
-	private ScreenRectangle wheelArea = ScreenRectangle.empty();
 	public FlexScrollBar(ScrollTarget owner, int x, int y, int width, int height) {
 		super(x, y, width, height, Component.empty());
 		this.owner = owner;
 	}
 	public void step(double step) {
 		this.step = step;
-	}
-	public void wheelArea(ScreenRectangle wheelArea) {
-		this.wheelArea = wheelArea;
 	}
 	/** 每帧渲染内容之前调一次：平滑逼近目标，并把结果写给 {@link ScrollTarget}。 */
 	public void update() {
@@ -48,12 +42,6 @@ public class FlexScrollBar extends AbstractWidget {
 	/** {@code amount} 为滚轮格数，正数向上；一格距离由 {@link #step} 决定。 */
 	public void wheel(double amount) {
 		target -= amount * step;
-	}
-	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
-		if (!shown() || !isMouseOver(mouseX, mouseY)) return false;
-		wheel(vertical);
-		return true;
 	}
 	@Override
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
@@ -89,10 +77,6 @@ public class FlexScrollBar extends AbstractWidget {
 		if (!dragging) return false;
 		dragTo(mouseY);
 		return true;
-	}
-	@Override
-	public boolean isMouseOver(double mouseX, double mouseY) {
-		return shown() && (super.isMouseOver(mouseX, mouseY) || wheelArea.containsPoint((int) mouseX, (int) mouseY));
 	}
 	@Override
 	protected void updateWidgetNarration(@NotNull NarrationElementOutput output) {}

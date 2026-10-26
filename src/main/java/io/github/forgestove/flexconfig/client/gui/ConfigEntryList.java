@@ -64,16 +64,17 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 	protected boolean scrollbarVisible() {
 		return false;
 	}
-	/** 列表背景透明：不铺任何底色，露出屏后的世界（原版模糊背景）。 */
-	@Override
-	protected void renderListBackground(@NotNull GuiGraphics gui) {}
 	@Override
 	public int getMaxScroll() {
 		return Math.max(0, super.getMaxScroll() - ConfigEntry.GAP / 2);
 	}
-	/** 列表自身不滚：有溢出时滚轮由滚动条接管，没溢出时也不该出现原版那几像素的余量滚动。 */
+	/** 原版的滚动条区域拖拽判定关掉：滚动条由 {@link FlexScrollBar} 自己处理。 */
+	@Override
+	protected void updateScrollingState(double mouseX, double mouseY, int button) {}
+	/** 滚轮转交给滚动条；没溢出时滚动条不响应，列表自身也不滚。 */
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+		scrollbar.wheel(vertical);
 		return true;
 	}
 	@Override
@@ -87,11 +88,11 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 			if (bottom >= getY() && top <= getBottom()) renderItem(gui, mouseX, mouseY, delta, i, left, top, width, itemHeight);
 		}
 	}
-	/** 列表的装饰控件（高亮、滚动条）与自身一起交给 tab 注册。 */
+	/** 列表的装饰控件（高亮、滚动条）与自身一起交给 tab 注册；滚动条排在最后，画在列表之上。 */
 	public void visitChildren(Consumer<AbstractWidget> consumer) {
 		consumer.accept(highlight);
-		consumer.accept(scrollbar);
 		consumer.accept(this);
+		consumer.accept(scrollbar);
 	}
 	/** 列表被摆放到最终位置时一并摆好装饰控件。 */
 	@Override
@@ -101,7 +102,6 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		scrollbar.setY(getY());
 		scrollbar.setWidth(6);
 		scrollbar.setHeight(height);
-		scrollbar.wheelArea(getRectangle());
 		highlight.setX(x);
 		highlight.setY(y);
 		highlight.setWidth(width);
