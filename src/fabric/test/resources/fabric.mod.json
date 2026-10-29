@@ -1,0 +1,18 @@
+{
+	"schemaVersion": 1,
+	"id": "flexconfig_demo",
+	"version": "1.0.0",
+	"name": "Flex Config Demo",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"demo.FabricDemoEntry"
+		]
+	},
+	"depends": {
+		"fabricloader": "*",
+		"fabric-api": "*",
+		"minecraft": "*",
+		"flexconfig": "*"
+	}
+}

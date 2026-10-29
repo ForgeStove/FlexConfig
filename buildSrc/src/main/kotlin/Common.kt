@@ -6,6 +6,7 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.BasePluginExtension
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.kotlin.dsl.extra
@@ -24,6 +25,9 @@ fun Project.configure(loader: String) {
 	tasks.named<Jar>("jar") {
 		from(rootProject.file("LICENSE"))
 	}
+	tasks.named<Test>("test") {
+		failOnNoDiscoveredTests.set(false)
+	}
 	val generateMetadata = tasks.register<ProcessResources>("generateMetadata") {
 		description = "Generate this project metadata from templates."
 		val values = project.extra.properties.mapValues { it.value.toString() }
@@ -32,9 +36,18 @@ fun Project.configure(loader: String) {
 		from(rootProject.file("src/$loader/templates"))
 		into(layout.buildDirectory.dir("generated/sources/modMetadata"))
 	}
-	extensions.getByType(SourceSetContainer::class.java).named("main") {
-		java.srcDir(rootProject.file("src/$loader/java"))
-		resources.srcDir(generateMetadata)
+	extensions.getByType(SourceSetContainer::class.java).apply {
+		val main = named("main")
+		main.configure {
+			java.srcDir(rootProject.file("src/$loader/java"))
+			resources.srcDir(generateMetadata)
+		}
+		named("test") {
+			java.srcDir(rootProject.file("src/$loader/test/java"))
+			resources.srcDir(rootProject.file("src/$loader/test/resources"))
+			compileClasspath += main.get().output + main.get().compileClasspath
+			runtimeClasspath += main.get().output + main.get().runtimeClasspath
+		}
 	}
 	repositories.apply {
 		mavenLocal()
