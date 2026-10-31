@@ -21,7 +21,7 @@ import java.util.function.*;
 public final class NeoForgePlatform implements Platform {
 	/** 由 {@link RegisterPayloadHandlersEvent} 的订阅者调用，把加载器的注册器交给核心。 */
 	public static void registerPayloads(RegisterPayloadHandlersEvent event, Consumer<Payloads> consumer) {
-		consumer.accept(new NeoForgePayloads(event.registrar(FlexConfig.ID).optional()));
+		consumer.accept(new NeoForgePayloads(event.registrar(FlexConfig.NETWORK_VERSION).optional()));
 	}
 	@Override
 	public Path configDir() {
