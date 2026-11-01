@@ -171,7 +171,7 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		}
 		@Override
 		@Nullable
-		public ComponentPath nextFocusPath(FocusNavigationEvent event) {
+		public ComponentPath nextFocusPath(@NotNull FocusNavigationEvent event) {
 			return list.nextFocusPath(event);
 		}
 		@Override

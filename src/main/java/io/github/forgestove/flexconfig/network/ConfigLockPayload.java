@@ -8,10 +8,6 @@ public record ConfigLockPayload(String modId, String fileName, String configId, 
 		return new ConfigLockPayload(buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readUtf());
 	}
 	@Override
-	public String channel() {
-		return CHANNEL;
-	}
-	@Override
 	public void encode(FriendlyByteBuf buf) {
 		buf.writeUtf(modId);
 		buf.writeUtf(fileName);

@@ -181,7 +181,7 @@ public final class ConfigScreen<C, V> extends Screen {
 			return new ConfirmScreen(
 				confirmed -> {
 					if (confirmed) {
-						mc.level.disconnect();
+						if (mc.level != null) mc.level.disconnect();
 						mc.clearLevel();
 					}
 					else mc.setScreen(parent);

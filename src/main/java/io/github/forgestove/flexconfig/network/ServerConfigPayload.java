@@ -8,10 +8,6 @@ public record ServerConfigPayload(String modId, String fileName, String tomlCont
 		return new ServerConfigPayload(buf.readUtf(), buf.readUtf(), buf.readUtf());
 	}
 	@Override
-	public String channel() {
-		return CHANNEL;
-	}
-	@Override
 	public void encode(FriendlyByteBuf buf) {
 		buf.writeUtf(modId);
 		buf.writeUtf(fileName);
