@@ -11,7 +11,7 @@ public final class FlexConfigScreenFactory {
 	 */
 	public static @NotNull Screen createConfigScreen(String modId) {
 		var handlers = ConfigRegistry.getHandlers(modId);
-		if (handlers.size() == 1 && available(handlers.getFirst())) return new ConfigScreen<>(handlers.get(0));
+		if (handlers.size() == 1 && available(handlers.get(0))) return new ConfigScreen<>(handlers.get(0));
 		return new ConfigFileScreen(modId, handlers);
 	}
 	/** SERVER 型按世界单独存储：不在世界里时既无处可读也无处可写，因此不可进入。 */

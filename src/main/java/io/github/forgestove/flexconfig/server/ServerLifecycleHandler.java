@@ -41,7 +41,7 @@ public final class ServerLifecycleHandler {
 	}
 	public static void onPlayerLogin(ServerPlayer player) {
 		// 仅向安装了此模组的客户端发送 — 否则NeoForge会抛出异常。
-		if (!Platform.get().canSendToPlayer(player, ConfigSyncPayload.TYPE)) return;
+		if (!Platform.get().canSendToPlayer(player, ConfigSyncPayload.CHANNEL)) return;
 		ConfigNetwork.sendLocksToPlayer(player);
 		ConfigNetwork.sendServerConfigsToPlayer(player);
 	}

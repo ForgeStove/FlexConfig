@@ -53,7 +53,11 @@ public final class ServerConfigLockStore {
 	public void save() {
 		try {
 			Files.createDirectories(lockFilePath.getParent());
+			//? if >=1.20.2 {
 			new TomlWriter().write(locks, lockFilePath, WritingMode.REPLACE_ATOMIC);
+			//?} else {
+			/*new TomlWriter().write(locks, lockFilePath, WritingMode.REPLACE);
+			*///?}
 		} catch (Exception e) {
 			LOGGER.error("Failed to save config locks to {}", lockFilePath, e);
 		}

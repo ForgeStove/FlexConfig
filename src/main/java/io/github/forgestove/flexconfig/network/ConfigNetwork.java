@@ -17,13 +17,17 @@ public final class ConfigNetwork {
 	/** 每个 (模组, 配置文件) 一份锁定存储。 */
 	private static final Map<FileKey, ServerConfigLockStore> lockStores = new HashMap<>();
 	public static void register(Payloads payloads) {
-		payloads.clientToServer(ConfigLockPayload.TYPE, ConfigLockPayload.STREAM_CODEC, ConfigNetwork::handleConfigLockServer);
-		payloads.serverToClient(ConfigSyncPayload.TYPE, ConfigSyncPayload.STREAM_CODEC, ConfigNetwork::handleConfigSyncClient);
-		payloads.serverToClient(ServerConfigPayload.TYPE, ServerConfigPayload.STREAM_CODEC, ConfigNetwork::handleServerConfigClient);
+		payloads.clientToServer(ConfigLockPayload.CHANNEL, ConfigLockPayload.class, ConfigLockPayload::decode,
+			ConfigNetwork::handleConfigLockServer);
+		payloads.serverToClient(ConfigSyncPayload.CHANNEL, ConfigSyncPayload.class, ConfigSyncPayload::decode,
+			ConfigNetwork::handleConfigSyncClient);
+		payloads.serverToClient(ServerConfigPayload.CHANNEL, ServerConfigPayload.class, ServerConfigPayload::decode,
+			ConfigNetwork::handleServerConfigClient);
 	}
 	// -- 数据包处理器 --
 	private static void handleConfigLockServer(ConfigLockPayload payload, PayloadContext context) {
-		if (!(context.player() instanceof ServerPlayer player)) return;
+		var player = context.player();
+		if (player == null) return;
 		if (!player.hasPermissions(2)) return;
 		var key = new FileKey(payload.modId(), payload.fileName());
 		var lockStore = lockStores.get(key);

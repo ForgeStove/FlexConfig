@@ -53,18 +53,16 @@ public final class ConfigSerializer<C> {
 	}
 	@Nullable
 	private static Object scalar(Field field, Object value) {
-		return switch (value) {
-			case Boolean bool -> bool;
-			case Integer intValue -> intValue;
-			case Long longValue -> longValue;
-			case Short shortValue -> shortValue;
-			case Byte byteValue -> byteValue;
-			case Double doubleValue -> finite(field, doubleValue);
-			case Float floatValue -> finite(field, floatValue);
-			case Enum<?> anEnum -> anEnum.name();
-			case String string -> string;
-			default -> warnNull(field, "unsupported type " + value.getClass().getName());
-		};
+		if (value instanceof Boolean bool) return bool;
+		if (value instanceof Integer intValue) return intValue;
+		if (value instanceof Long longValue) return longValue;
+		if (value instanceof Short shortValue) return shortValue;
+		if (value instanceof Byte byteValue) return byteValue;
+		if (value instanceof Double doubleValue) return finite(field, doubleValue);
+		if (value instanceof Float floatValue) return finite(field, floatValue);
+		if (value instanceof Enum<?> anEnum) return anEnum.name();
+		if (value instanceof String string) return string;
+		return warnNull(field, "unsupported type " + value.getClass().getName());
 	}
 	/** NaN 与 Infinity 不是合法的 TOML 浮点，跳过并告警。 */
 	@Nullable
@@ -127,25 +125,18 @@ public final class ConfigSerializer<C> {
 			if (!(element instanceof String name)) return warnNull(field, "list element is not an enum name");
 			return Enum.valueOf((Class) elementType, name);
 		}
-		switch (element) {
-			case Number num -> {
-				if (elementType == Integer.class) return num.intValue();
-				if (elementType == Long.class) return num.longValue();
-				if (elementType == Double.class) return num.doubleValue();
-				if (elementType == Float.class) return num.floatValue();
-				if (elementType == Short.class) return num.shortValue();
-				if (elementType == Byte.class) return num.byteValue();
-				if (elementType == String.class) return num.toString();
-				return warnNull(field, "unsupported list element type " + elementType.getSimpleName());
-			}
-			case Boolean bool when elementType == Boolean.class -> {
-				return bool;
-			}
-			case String string when elementType == String.class -> {
-				return string;
-			}
-			default -> {}
+		if (element instanceof Number num) {
+			if (elementType == Integer.class) return num.intValue();
+			if (elementType == Long.class) return num.longValue();
+			if (elementType == Double.class) return num.doubleValue();
+			if (elementType == Float.class) return num.floatValue();
+			if (elementType == Short.class) return num.shortValue();
+			if (elementType == Byte.class) return num.byteValue();
+			if (elementType == String.class) return num.toString();
+			return warnNull(field, "unsupported list element type " + elementType.getSimpleName());
 		}
+		if (element instanceof Boolean bool && elementType == Boolean.class) return bool;
+		if (element instanceof String string && elementType == String.class) return string;
 		return warnNull(field, "list element does not match " + elementType.getSimpleName());
 	}
 	/** 快捷键段：键是配置路径（含点号），必须按字面键写入，否则点号会被解析成层级。 */
@@ -191,7 +182,11 @@ public final class ConfigSerializer<C> {
 		try {
 			var toml = toConfig(config);
 			writeKeybinds(toml, keybinds);
+			//? if >=1.20.2 {
 			new TomlWriter().write(toml, targetPath(), WritingMode.REPLACE_ATOMIC);
+			//?} else {
+			/*new TomlWriter().write(toml, targetPath(), WritingMode.REPLACE);
+			*///?}
 		} catch (Exception e) {
 			throw new SerializationException(e);
 		}
@@ -219,10 +214,10 @@ public final class ConfigSerializer<C> {
 				categoryField.setAccessible(true);
 				writeCategory(toml, categoryField.get(config), categoryField.getName());
 			}
+			return toml;
 		} catch (Exception e) {
 			throw new SerializationException(e);
 		}
-		return toml;
 	}
 	/** 从已解析的 {@link CommentedConfig} 反序列化，不经文件读取。 */
 	public C deserializeFrom(CommentedConfig config) throws SerializationException {

@@ -25,7 +25,11 @@ public abstract class ConfigEntry extends Entry<ConfigEntry> {
 	@Nullable
 	public Tooltip getHoveredWidgetTooltip(int mouseX, int mouseY) {
 		for (var child : children())
+			//? if >=1.20.2 {
 			if (child instanceof AbstractWidget widget && widget.visible && widget.getRectangle().containsPoint(mouseX, mouseY)) {
+			//?} else {
+			/*if (child instanceof AbstractWidget widget && widget.visible && widget.isMouseOver(mouseX, mouseY)) {
+			*///?}
 				var tooltip = widget.getTooltip();
 				if (tooltip == null) continue;
 				return tooltip;

@@ -29,6 +29,7 @@ public final class CategoryCollapsibleConfigEntry extends ConfigEntry {
 	public List<? extends NarratableEntry> narratables() {
 		return List.of(clickWidget);
 	}
+	//? if >=1.20.2 {
 	@Override
 	public void render(
 		GuiGraphics gui,
@@ -49,6 +50,31 @@ public final class CategoryCollapsibleConfigEntry extends ConfigEntry {
 		gui.drawString(font, prefix, x + indent, y + 5, 0xAAAAAA, true);
 		gui.drawString(font, label.getVisualOrderText(), x + indent + font.width(prefix), y + 5, -1, true);
 	}
+	//?} else {
+	/*@Override
+	public void render(
+		GuiGraphics gui,
+		int index,
+		int y,
+		int x,
+		int entryWidth,
+		int entryHeight,
+		int mouseX,
+		int mouseY,
+		boolean hovered,
+		float delta
+	) {
+		var indent = getIndent();
+		clickWidget.setWidth(entryWidth);
+		clickWidget.setHeight(entryHeight);
+		clickWidget.setX(x);
+		clickWidget.setY(y);
+		var prefix = expanded ? EXPANDED_PREFIX : COLLAPSED_PREFIX;
+		var font = ClientUtil.mc.font;
+		gui.drawString(font, prefix, x + indent, y + 5, 0xAAAAAA);
+		gui.drawString(font, label.getVisualOrderText(), x + indent + font.width(prefix), y + 5, -1);
+	}
+	*///?}
 	@NotNull
 	@Override
 	public List<? extends GuiEventListener> children() {

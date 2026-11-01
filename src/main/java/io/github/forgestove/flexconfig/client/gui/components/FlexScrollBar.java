@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.client.gui.components;
+import io.github.forgestove.flexconfig.client.ClientUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -12,8 +13,8 @@ public class FlexScrollBar extends AbstractWidget {
 	private static final int MIN_KNOB_H = 12, DEFAULT_STEP = 36;
 	/** 每秒按剩余距离衰减的系数；速度随距离缩小，没有固定速率。{@code 20·ln4} 等价于每 tick 吃掉 75% 的差距。 */
 	private static final double DECAY = 27.7;
-	private static final ResourceLocation TRACK = ResourceLocation.withDefaultNamespace("widget/scroller_background");
-	private static final ResourceLocation KNOB = ResourceLocation.withDefaultNamespace("widget/scroller");
+	private static final ResourceLocation TRACK = ClientUtil.getRes("widget/scroller_background");
+	private static final ResourceLocation KNOB = ClientUtil.getRes("widget/scroller");
 	private final ScrollTarget owner;
 	/** 当前与目标滚动量：渲染用前者，拖动与翻页写后者，由 {@link #update} 逼近。 */
 	private double scroll, target;
@@ -32,9 +33,13 @@ public class FlexScrollBar extends AbstractWidget {
 	/** 每帧渲染内容之前调一次：平滑逼近目标，并把结果写给 {@link ScrollTarget}。 */
 	public void update() {
 		var max = Math.max(0, owner.maxScroll());
-		target = Math.clamp(target, 0, max);
-		scroll = Math.clamp(scroll, 0, max);
+		target = Math.min(Math.max(target, 0), max);
+		scroll = Math.min(Math.max(scroll, 0), max);
+		//? if >=1.20.2 {
 		var seconds = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks() / 20.0;
+		//?} else {
+		/*var seconds = Minecraft.getInstance().getFrameTime() / 20.0;
+		*///?}
 		scroll = target + (scroll - target) * Math.exp(-DECAY * seconds);
 		if (Math.abs(target - scroll) < 0.5) scroll = target;
 		owner.applyScroll(scroll);
@@ -47,9 +52,15 @@ public class FlexScrollBar extends AbstractWidget {
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
 		update();
 		if (!shown()) return;
+		//? if >=1.20.2 {
 		gui.blitSprite(TRACK, getX(), getY(), getWidth(), getHeight());
 		var h = knobHeight();
 		gui.blitSprite(KNOB, getX(), knobY(h), getWidth(), h);
+		//?} else {
+		/*gui.blit(TRACK, getX(), getY(), 0, 0, getWidth(), getHeight(), 256, 256);
+		var h = knobHeight();
+		gui.blit(KNOB, getX(), knobY(h), 0, 0, getWidth(), h, 256, 256);
+		*///?}
 	}
 	/** 点滑块进入拖动（保留抓取偏移、不跳位）；点轨道只平滑跳到点击位置，不进入拖动。 */
 	@Override
@@ -88,7 +99,7 @@ public class FlexScrollBar extends AbstractWidget {
 		var travel = getHeight() - knobHeight();
 		if (travel <= 0) return scroll;
 		var max = Math.max(0, owner.maxScroll());
-		return Math.clamp((mouseY - grab - getY()) * (double) max / travel, 0, max);
+		return Math.min(Math.max((mouseY - grab - getY()) * (double) max / travel, 0), max);
 	}
 	/** 内容不超出一屏时整条不绘制也不响应事件。 */
 	public boolean shown() {

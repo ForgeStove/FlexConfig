@@ -49,9 +49,16 @@ public final class ColorPickerScreen extends Screen {
 	}
 	@Override
 	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
+		//? if >=1.20.2 {
 		parent.clearFocus();
 		parent.render(gui, -1, -1, delta);
 		renderBlurredBackground(delta);
+		//?} else {
+		/*// 1.20.1 没有 clearFocus() 与模糊背景，用 setFocused(null) 和背景遮罩代替
+		parent.setFocused(null);
+		parent.render(gui, -1, -1, delta);
+		renderBackground(gui);
+		*///?}
 		var totalWidth = PICKER_SIZE + PADDING + BAR_WIDTH + (hasAlpha ? PADDING + BAR_WIDTH : 0) + PADDING * 2 + 8;
 		var totalHeight = PICKER_SIZE + PADDING * 2 + 16 + 28;
 		gui.fill(pickerPos.x - 4, pickerPos.y - 4, pickerPos.x + totalWidth + 4, pickerPos.y + totalHeight + 4, 0xF0101010);
@@ -271,6 +278,7 @@ public final class ColorPickerScreen extends Screen {
 		}
 		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
 	}
+	//? if >=1.20.2 {
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
 		if (new Rectangle(svPos.x + PICKER_SIZE + PADDING, svPos.y, BAR_WIDTH, PICKER_SIZE).contains(mouseX, mouseY)) {
@@ -288,6 +296,25 @@ public final class ColorPickerScreen extends Screen {
 		}
 		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
 	}
+	//?} else {
+	/*@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
+		if (new Rectangle(svPos.x + PICKER_SIZE + PADDING, svPos.y, BAR_WIDTH, PICKER_SIZE).contains(mouseX, mouseY)) {
+			hue = Mth.clamp(hue - (float) scrollY * 0.005f, 0f, 1f);
+			sbPixels = null;
+			updateHexInput();
+			return true;
+		}
+		if (hasAlpha && new Rectangle(svPos.x + PICKER_SIZE + PADDING + BAR_WIDTH + PADDING, svPos.y, BAR_WIDTH, PICKER_SIZE).contains(mouseX,
+			mouseY
+		)) {
+			alpha = Mth.clamp(alpha + (int) scrollY, 0, 255);
+			updateHexInput();
+			return true;
+		}
+		return super.mouseScrolled(mouseX, mouseY, scrollY);
+	}
+	*///?}
 	private void updateFromMouse(double mouseX, double mouseY) {
 		if (dragMode == DragMode.SV) {
 			saturation = Mth.clamp((float) (mouseX - svPos.x) / (PICKER_SIZE - 1), 0f, 1f);

@@ -28,7 +28,7 @@ public final class FlexSliderButton extends AbstractSliderButton {
 	}
 	private static double progress(double value, double min, double max) {
 		var span = max - min;
-		return span <= 0 ? 0 : Math.clamp((value - min) / span, 0, 1);
+		return span <= 0 ? 0 : Math.min(Math.max((value - min) / span, 0), 1);
 	}
 	@Override
 	public void onRelease(double mouseX, double mouseY) {

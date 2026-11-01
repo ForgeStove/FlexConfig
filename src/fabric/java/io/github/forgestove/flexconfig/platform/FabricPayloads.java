@@ -1,16 +1,18 @@
 package io.github.forgestove.flexconfig.platform;
+import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.platform.Platform.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context;
 import net.fabricmc.fabric.api.networking.v1.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 /**
  * Fabric 的包注册。与 NeoForge 的单入口不同：S2C 的接收器只能用 {@code ClientPlayNetworking} 注册，
  * 那是客户端专属类，只能等到客户端入口再碰——所以这里先把 S2C 接收器暂存，
@@ -26,31 +28,31 @@ public final class FabricPayloads implements Payloads {
 		PENDING.forEach(FabricPayloads::registerClient);
 		PENDING.clear();
 	}
-	private static <P extends CustomPacketPayload> void registerClient(Pending<P> pending) {
+	private static <P extends NetworkPayload> void registerClient(Pending<P> pending) {
 		ClientPlayNetworking.registerGlobalReceiver(
 			pending.type(),
 			(payload, context) -> pending.handler().handle(payload, new FabricClientContext(context))
 		);
 	}
-	@Override
-	public <P extends CustomPacketPayload> void clientToServer(
-		Type<P> type,
-		StreamCodec<FriendlyByteBuf, P> codec,
-		PayloadHandler<P> handler
-	) {
-		PayloadTypeRegistry.playC2S().register(type, codec);
-		ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> handler.handle(payload, new FabricServerContext(context)));
+	private static <P extends NetworkPayload> StreamCodec<FriendlyByteBuf, P> codec(Function<FriendlyByteBuf, P> decoder) {
+		return StreamCodec.of((buf, payload) -> payload.encode(buf), decoder::apply);
 	}
 	@Override
-	public <P extends CustomPacketPayload> void serverToClient(
-		Type<P> type,
-		StreamCodec<FriendlyByteBuf, P> codec,
-		PayloadHandler<P> handler
-	) {
-		PayloadTypeRegistry.playS2C().register(type, codec);
-		PENDING.add(new Pending<>(type, handler));
+	public <P extends NetworkPayload> void clientToServer(String channel, Class<P> type,
+		Function<FriendlyByteBuf, P> decoder, PayloadHandler<P> handler) {
+		Type<P> registered = new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, channel));
+		PayloadTypeRegistry.playC2S().register(registered, FabricPayloads.<P>codec(decoder));
+		ServerPlayNetworking.registerGlobalReceiver(registered,
+			(payload, context) -> handler.handle(payload, new FabricServerContext(context)));
 	}
-	private record Pending<P extends CustomPacketPayload>(Type<P> type, PayloadHandler<P> handler) {}
+	@Override
+	public <P extends NetworkPayload> void serverToClient(String channel, Class<P> type,
+		Function<FriendlyByteBuf, P> decoder, PayloadHandler<P> handler) {
+		Type<P> registered = new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, channel));
+		PayloadTypeRegistry.playS2C().register(registered, FabricPayloads.<P>codec(decoder));
+		PENDING.add(new Pending<>(registered, handler));
+	}
+	private record Pending<P extends NetworkPayload>(Type<P> type, PayloadHandler<P> handler) {}
 	/** 服务端上下文；接收器回调在网络线程，用 {@code server().execute} 切回主线程。 */
 	private record FabricServerContext(ServerPlayNetworking.Context context) implements PayloadContext {
 		@Override

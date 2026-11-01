@@ -3,8 +3,8 @@ import io.github.forgestove.flexconfig.FlexConfig;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.*;
@@ -51,37 +51,38 @@ public final class NeoForgePlatform implements Platform {
 		});
 	}
 	@Override
-	public void sendToPlayer(ServerPlayer player, CustomPacketPayload payload) {
+	public void sendToPlayer(ServerPlayer player, NetworkPayload payload) {
 		PacketDistributor.sendToPlayer(player, payload);
 	}
 	@Override
-	public void sendToAllPlayers(CustomPacketPayload payload) {
+	public void sendToAllPlayers(NetworkPayload payload) {
 		PacketDistributor.sendToAllPlayers(payload);
 	}
 	@Override
-	public void sendToServer(CustomPacketPayload payload) {
+	public void sendToServer(NetworkPayload payload) {
 		PacketDistributor.sendToServer(payload);
 	}
 	@Override
-	public boolean canSendToPlayer(ServerPlayer player, Type<?> type) {
-		return player.connection.hasChannel(type);
+	public boolean canSendToPlayer(ServerPlayer player, String channel) {
+		return player.connection.hasChannel(new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, channel)));
 	}
 	private record NeoForgePayloads(PayloadRegistrar registrar) implements Payloads {
-		@Override
-		public <P extends CustomPacketPayload> void clientToServer(
-			Type<P> type,
-			StreamCodec<FriendlyByteBuf, P> codec,
-			PayloadHandler<P> handler
-		) {
-			registrar.playToServer(type, codec, (payload, context) -> handler.handle(payload, new NeoForgeContext(context)));
+		private static <P extends NetworkPayload> StreamCodec<FriendlyByteBuf, P> codec(Function<FriendlyByteBuf, P> decoder) {
+			return StreamCodec.of((buf, payload) -> payload.encode(buf), decoder::apply);
 		}
 		@Override
-		public <P extends CustomPacketPayload> void serverToClient(
-			Type<P> type,
-			StreamCodec<FriendlyByteBuf, P> codec,
-			PayloadHandler<P> handler
-		) {
-			registrar.playToClient(type, codec, (payload, context) -> handler.handle(payload, new NeoForgeContext(context)));
+		public <P extends NetworkPayload> void clientToServer(String channel, Class<P> type,
+			Function<FriendlyByteBuf, P> decoder, PayloadHandler<P> handler) {
+			Type<P> registered = new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, channel));
+			registrar.playToServer(registered, NeoForgePayloads.<P>codec(decoder),
+				(payload, context) -> handler.handle(payload, new NeoForgeContext(context)));
+		}
+		@Override
+		public <P extends NetworkPayload> void serverToClient(String channel, Class<P> type,
+			Function<FriendlyByteBuf, P> decoder, PayloadHandler<P> handler) {
+			Type<P> registered = new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, channel));
+			registrar.playToClient(registered, NeoForgePayloads.<P>codec(decoder),
+				(payload, context) -> handler.handle(payload, new NeoForgeContext(context)));
 		}
 	}
 	private record NeoForgeContext(IPayloadContext context) implements PayloadContext {

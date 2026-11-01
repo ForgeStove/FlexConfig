@@ -7,12 +7,10 @@ import java.util.*;
 public final class LockValueCodec {
 	public static String format(ValueConfigNode<?, ?> node, Object value) {
 		if (node.isColorValue()) return String.format(node.colorHasAlpha() ? "0x%08X" : "0x%06X", value);
-		return switch (value) {
-			case Enum<?> anEnum -> anEnum.name();
-			case Point point -> point.x + ", " + point.y;
-			case Collection<?> collection -> join(collection);
-			default -> String.valueOf(value);
-		};
+		if (value instanceof Enum<?> anEnum) return anEnum.name();
+		if (value instanceof Point point) return point.x + ", " + point.y;
+		if (value instanceof Collection<?> collection) return join(collection);
+		return String.valueOf(value);
 	}
 	private static String join(Collection<?> values) {
 		var parts = new ArrayList<String>(values.size());
