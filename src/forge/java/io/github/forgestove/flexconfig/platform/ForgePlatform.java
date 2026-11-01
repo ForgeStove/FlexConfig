@@ -2,7 +2,6 @@ package io.github.forgestove.flexconfig.platform;
 import io.github.forgestove.flexconfig.FlexConfig;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory;
 import net.minecraftforge.fml.*;
@@ -21,7 +20,7 @@ public final class ForgePlatform implements Platform {
 	/** 由 {@link io.github.forgestove.flexconfig.ForgeEvents} 在 common setup 里调用，把 SimpleChannel 交给核心。 */
 	public static void registerPayloads(Consumer<Payloads> consumer) {
 		channel = NetworkRegistry.newSimpleChannel(
-			new ResourceLocation(FlexConfig.ID, "main"),
+			FlexConfig.getFlexRes("main"),
 			() -> FlexConfig.NETWORK_VERSION,
 			FlexConfig.NETWORK_VERSION::equals,
 			FlexConfig.NETWORK_VERSION::equals
@@ -53,6 +52,7 @@ public final class ForgePlatform implements Platform {
 	 * 因此只给 FlexConfig 自己挂，使用本库的模组需要自行提供入口。
 	 */
 	@Override
+	@SuppressWarnings("removal")
 	public void registerConfigScreen(String modId, Supplier<Screen> screenFactory) {
 		if (!modId.equals(FlexConfig.ID)) return;
 		ModLoadingContext.get()

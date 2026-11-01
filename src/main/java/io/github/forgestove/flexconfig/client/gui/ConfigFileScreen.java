@@ -4,6 +4,7 @@ import io.github.forgestove.flexconfig.client.*;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.layouts.*;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -58,8 +59,10 @@ public final class ConfigFileScreen extends Screen {
 	}
 	@Override
 	protected void init() {
-		layout.addTitleHeader(title, font);
-		var files = LinearLayout.vertical().spacing(SPACING);
+		layout.addToHeader(new StringWidget(title, font));
+		// 1.20.1 没有静态工厂和 spacing()，间距用子项下内边距
+		var files = new LinearLayout(0, 0, 0, 0, LinearLayout.Orientation.VERTICAL);
+		files.defaultChildLayoutSetting().paddingBottom(SPACING);
 		handlers.forEach(handler -> files.addChild(fileButton(handler)));
 		centerFrame.addChild(files);
 		layout.addToContents(centerFrame);
@@ -69,7 +72,7 @@ public final class ConfigFileScreen extends Screen {
 	}
 	@Override
 	protected void repositionElements() {
-		centerFrame.setMinHeight(layout.getContentHeight());   // 内容区高同样随窗口尺寸变
+		centerFrame.setMinHeight(height - layout.getHeaderHeight() - layout.getFooterHeight());
 		layout.arrangeElements();
 	}
 }
