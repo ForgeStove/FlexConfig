@@ -78,7 +78,7 @@ fun Project.configure(loader: String) {
 		modLoaders.add(loader)
 		github {
 			repository.set("ForgeStove/FlexConfig")
-			commitish.set("main")
+			commitish.set(p("publishCommitish"))
 			accessToken.set(providers.environmentVariable("GITHUB_TOKEN"))
 		}
 	}
