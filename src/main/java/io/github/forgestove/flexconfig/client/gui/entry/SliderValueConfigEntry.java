@@ -26,6 +26,11 @@ public final class SliderValueConfigEntry<C, N extends Number> extends ValueConf
 		children.add(slider);
 	}
 	@Override
+	public void refresh() {
+		super.refresh();
+		slider.syncTo(getValue().doubleValue());
+	}
+	@Override
 	public void render(
 		@NotNull GuiGraphics gui,
 		int index,

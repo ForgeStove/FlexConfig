@@ -28,7 +28,12 @@ public final class FlexSliderButton extends AbstractSliderButton {
 	}
 	private static double progress(double value, double min, double max) {
 		var span = max - min;
-		return span <= 0 ? 0 : Math.min(Math.max((value - min) / span, 0), 1);
+		return span <= 0 ? 0 : Math.clamp((value - min) / span, 0, 1);
+	}
+	/** 值被外部改动（重置/撤销）后同步进度条；只刷新显示，不回写配置。 */
+	public void syncTo(double newValue) {
+		value = progress(newValue, min, max);
+		updateMessage();
 	}
 	@Override
 	public void onRelease(double mouseX, double mouseY) {
