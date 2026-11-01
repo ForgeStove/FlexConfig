@@ -1,5 +1,5 @@
 plugins {
-	id("dev.kikugie.loom-back-compat")
+	id("fabric-loom") version "1.18.4"
 	id("me.modmuss50.mod-publish-plugin")
 }
 configure("fabric")
@@ -12,7 +12,7 @@ loom {
 sourceSets.main.get().runtimeClasspath += sourceSets.test.get().output
 dependencies {
 	minecraft("com.mojang:minecraft:${p("mcVersion")}")
-	loomx.applyMojangMappings()
+	mappings(loom.officialMojangMappings())
 	modImplementation("net.fabricmc:fabric-loader:${p("fabricLoaderVersion")}")
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabricApiVersion")}+${p("mcVersion")}")
 	fun impleclude(string: String) { implementation(string)?.let { include(it) } }

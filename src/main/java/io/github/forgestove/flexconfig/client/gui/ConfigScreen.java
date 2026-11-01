@@ -95,13 +95,7 @@ public final class ConfigScreen<C, V> extends Screen {
 		initTabLayout();
 		cancelButton = Button.builder(getCancelLabel(), b -> onClose()).size(Button.DEFAULT_WIDTH, ConfigEntry.HEIGHT).build();
 		saveButton = Button.builder(Translation.SAVE_CHANGES_LABEL, b -> saveAndQuit()).size(Button.DEFAULT_WIDTH, ConfigEntry.HEIGHT).build();
-		//? if >=1.20.2 {
 		var footerLyt = layout.addToFooter(LinearLayout.horizontal().spacing(8));
-		//?} else {
-		/*// 1.20.1 没有静态工厂和 spacing()，间距用子项右内边距
-		var footerLyt = layout.addToFooter(new LinearLayout(0, 0, 0, 0, LinearLayout.Orientation.HORIZONTAL));
-		footerLyt.defaultChildLayoutSetting().paddingRight(8);
-		*///?}
 		footerLyt.addChild(cancelButton);
 		footerLyt.addChild(saveButton);
 		layout.visitWidgets(w -> {
@@ -184,23 +178,12 @@ public final class ConfigScreen<C, V> extends Screen {
 			if (mc.level == null) return parent;   // 不在世界里，没有可重载的世界
 			return new ConfirmScreen(
 				confirmed -> {
-					//? if >=1.20.2 {
 					if (confirmed) mc.disconnect();
-					//?} else {
-					/*if (confirmed) {
-						mc.level.disconnect();
-						mc.clearLevel();
-					}
-					*///?}
 					else mc.setScreen(parent);
 				},
 				Translation.RESTART_REQUIRED_TITLE,
 				Translation.RESTART_REQUIRED_WORLD,
-				//? if >=1.20.2 {
 				mc.isLocalServer() ? Translation.RETURN_TO_MENU : CommonComponents.GUI_DISCONNECT,
-				//?} else {
-				/*mc.isLocalServer() ? Translation.RETURN_TO_MENU : Component.translatable("menu.disconnect"),
-				*///?}
 				Translation.IGNORE_RESTART_LABEL
 			);
 		}

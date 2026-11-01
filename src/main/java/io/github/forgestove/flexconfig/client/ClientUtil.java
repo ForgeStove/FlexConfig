@@ -15,19 +15,11 @@ public class ClientUtil {
 	}
 	/** 原版命名空间的资源位置；1.20.1 没有 {@code withDefaultNamespace} 工厂。 */
 	public static ResourceLocation getRes(String path) {
-		//? if >=1.20.2 {
 		return ResourceLocation.withDefaultNamespace(path);
-		//?} else {
-		/*return new ResourceLocation(path);
-		*///?}
 	}
 	/** 本模组命名空间的资源位置；1.20.1 没有 {@code fromNamespaceAndPath} 工厂。 */
 	public static ResourceLocation getFlexRes(String path) {
-		//? if >=1.20.2 {
 		return ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, path);
-		//?} else {
-		/*return new ResourceLocation(FlexConfig.ID, path);
-		*///?}
 	}
 	/** 头部与底部的分隔线：原版由列表控件（{@code AbstractSelectionList#renderListSeparators}）绘制，此处没有原版列表。 */
 	public static void renderSeparators(GuiGraphics gui, int width, int height, int headerHeight, int footerHeight) {

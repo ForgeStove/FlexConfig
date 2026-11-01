@@ -39,11 +39,16 @@ fun Project.configure(loader: String) {
 	extensions.getByType(SourceSetContainer::class.java).apply {
 		val main = named("main")
 		main.configure {
+			// 核心源码在根目录共享，加载器专属代码在 src/<loader>
+			java.srcDir(rootProject.file("src/main/java"))
 			java.srcDir(rootProject.file("src/$loader/java"))
+			resources.srcDir(rootProject.file("src/main/resources"))
 			resources.srcDir(generateMetadata)
 		}
 		named("test") {
+			java.srcDir(rootProject.file("src/test/java"))
 			java.srcDir(rootProject.file("src/$loader/test/java"))
+			resources.srcDir(rootProject.file("src/test/resources"))
 			resources.srcDir(rootProject.file("src/$loader/test/resources"))
 			compileClasspath += main.get().output + main.get().compileClasspath
 			runtimeClasspath += main.get().output + main.get().runtimeClasspath
@@ -79,4 +84,4 @@ fun Project.configure(loader: String) {
 	}
 }
 
-fun Project.p(key: String) = extra[key].toString()
+fun Project.p(key: String) = property(key).toString()

@@ -1,10 +1,10 @@
 plugins {
-	id("net.neoforged.moddev.legacyforge") version "2.0.148" // https://plugins.gradle.org/m2/net/neoforged/moddev/legacyforge/net.neoforged.moddev.legacyforge.gradle.plugin/maven-metadata.xml
+	id("net.neoforged.moddev") version "2.0.148" // https://plugins.gradle.org/m2/net/neoforged/moddev/net.neoforged.moddev.gradle.plugin/maven-metadata.xml
 	id("me.modmuss50.mod-publish-plugin")
 }
-configure("forge")
-legacyForge {
-	version = p("loaderVersion")
+configure("neoforge")
+neoForge {
+	version = p("neoforgeVersion")
 	parchment {
 		mappingsVersion.set(p("parchmentVersion"))
 		minecraftVersion.set(p("mcVersion"))
