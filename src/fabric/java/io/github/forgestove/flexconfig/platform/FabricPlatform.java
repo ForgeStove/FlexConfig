@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +61,6 @@ public final class FabricPlatform implements Platform {
 	}
 	@Override
 	public boolean canSendToPlayer(ServerPlayer player, String channel) {
-		return ServerPlayNetworking.canSend(player, new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, channel)));
+		return ServerPlayNetworking.canSend(player, new Type<>(FlexConfig.getFlexRes(channel)));
 	}
 }

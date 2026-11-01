@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.client.gui;
+import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.SpriteContents;
@@ -13,7 +14,7 @@ public enum FlexGuiTextures {
 	ICON_UNLOCK("icon/unlock");
 	public final ResourceLocation id;
 	FlexGuiTextures(String path) {
-		id = ClientUtil.getFlexRes(path);
+		id = FlexConfig.getFlexRes(path);
 	}
 	private @NotNull SpriteContents getContents() {
 		return ClientUtil.mc.getGuiSprites().getSprite(id).contents();

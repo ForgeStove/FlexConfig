@@ -2,7 +2,6 @@ package io.github.forgestove.flexconfig.platform;
 import io.github.forgestove.flexconfig.FlexConfig;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 /**
  * 网络包的最小面：频道名 + 写入缓冲。
@@ -15,6 +14,6 @@ public interface NetworkPayload extends CustomPacketPayload {
 	void encode(FriendlyByteBuf buf);
 	@Override
 	default @NotNull Type<? extends CustomPacketPayload> type() {
-		return new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, channel()));
+		return new Type<>(FlexConfig.getFlexRes(channel()));
 	}
 }

@@ -1,5 +1,5 @@
 package io.github.forgestove.flexconfig.client.gui.components;
-import io.github.forgestove.flexconfig.client.ClientUtil;
+import io.github.forgestove.flexconfig.FlexConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -13,8 +13,8 @@ public class FlexScrollBar extends AbstractWidget {
 	private static final int MIN_KNOB_H = 12, DEFAULT_STEP = 36;
 	/** 每秒按剩余距离衰减的系数；速度随距离缩小，没有固定速率。{@code 20·ln4} 等价于每 tick 吃掉 75% 的差距。 */
 	private static final double DECAY = 27.7;
-	private static final ResourceLocation TRACK = ClientUtil.getRes("widget/scroller_background");
-	private static final ResourceLocation KNOB = ClientUtil.getRes("widget/scroller");
+	private static final ResourceLocation TRACK = FlexConfig.getRes("widget/scroller_background");
+	private static final ResourceLocation KNOB = FlexConfig.getRes("widget/scroller");
 	private final ScrollTarget owner;
 	/** 当前与目标滚动量：渲染用前者，拖动与翻页写后者，由 {@link #update} 逼近。 */
 	private double scroll, target;
@@ -89,7 +89,7 @@ public class FlexScrollBar extends AbstractWidget {
 		var travel = getHeight() - knobHeight();
 		if (travel <= 0) return scroll;
 		var max = Math.max(0, owner.maxScroll());
-		return Math.min(Math.max((mouseY - grab - getY()) * (double) max / travel, 0), max);
+		return Math.clamp((mouseY - grab - getY()) * (double) max / travel, 0, max);
 	}
 	/** 内容不超出一屏时整条不绘制也不响应事件。 */
 	public boolean shown() {

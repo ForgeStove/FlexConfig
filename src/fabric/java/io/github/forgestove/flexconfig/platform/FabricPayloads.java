@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.networking.v1.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,18 +37,28 @@ public final class FabricPayloads implements Payloads {
 		return StreamCodec.of((buf, payload) -> payload.encode(buf), decoder::apply);
 	}
 	@Override
-	public <P extends NetworkPayload> void clientToServer(String channel, Class<P> type,
-		Function<FriendlyByteBuf, P> decoder, PayloadHandler<P> handler) {
-		Type<P> registered = new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, channel));
-		PayloadTypeRegistry.playC2S().register(registered, FabricPayloads.<P>codec(decoder));
-		ServerPlayNetworking.registerGlobalReceiver(registered,
-			(payload, context) -> handler.handle(payload, new FabricServerContext(context)));
+	public <P extends NetworkPayload> void clientToServer(
+		String channel,
+		Class<P> type,
+		Function<FriendlyByteBuf, P> decoder,
+		PayloadHandler<P> handler
+	) {
+		var registered = new Type<P>(FlexConfig.getFlexRes(channel));
+		PayloadTypeRegistry.playC2S().register(registered, codec(decoder));
+		ServerPlayNetworking.registerGlobalReceiver(
+			registered,
+			(payload, context) -> handler.handle(payload, new FabricServerContext(context))
+		);
 	}
 	@Override
-	public <P extends NetworkPayload> void serverToClient(String channel, Class<P> type,
-		Function<FriendlyByteBuf, P> decoder, PayloadHandler<P> handler) {
-		Type<P> registered = new Type<>(ResourceLocation.fromNamespaceAndPath(FlexConfig.ID, channel));
-		PayloadTypeRegistry.playS2C().register(registered, FabricPayloads.<P>codec(decoder));
+	public <P extends NetworkPayload> void serverToClient(
+		String channel,
+		Class<P> type,
+		Function<FriendlyByteBuf, P> decoder,
+		PayloadHandler<P> handler
+	) {
+		var registered = new Type<P>(FlexConfig.getFlexRes(channel));
+		PayloadTypeRegistry.playS2C().register(registered, codec(decoder));
 		PENDING.add(new Pending<>(registered, handler));
 	}
 	private record Pending<P extends NetworkPayload>(Type<P> type, PayloadHandler<P> handler) {}
