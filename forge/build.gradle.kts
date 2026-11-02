@@ -21,5 +21,4 @@ legacyForge {
 		}
 	}
 	mods.create(p("modId")) { sourceSet(sourceSets.main.get()) }
-	mods.create("${p("modId")}_demo") { sourceSet(sourceSets.test.get()) }
 }

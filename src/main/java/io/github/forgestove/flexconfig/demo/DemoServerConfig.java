@@ -1,4 +1,4 @@
-package demo;
+package io.github.forgestove.flexconfig.demo;
 import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.api.*;
 
