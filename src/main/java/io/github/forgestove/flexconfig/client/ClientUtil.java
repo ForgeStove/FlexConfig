@@ -14,12 +14,18 @@ public class ClientUtil {
 	}
 	/** 头部与底部的分隔线：原版由列表控件（{@code AbstractSelectionList#renderListSeparators}）绘制，此处没有原版列表。 */
 	public static void renderSeparators(GuiGraphics gui, int width, int height, int headerHeight, int footerHeight) {
+		renderSeparator(gui, true, width, headerHeight - 2);
+		renderFooterSeparator(gui, width, height, footerHeight);
+	}
+	public static void renderFooterSeparator(GuiGraphics gui, int width, int height, int footerHeight) {
+		renderSeparator(gui, false, width, height - footerHeight - 2);
+	}
+	private static void renderSeparator(GuiGraphics gui, boolean header, int width, int y) {
 		var inWorld = mc.level != null;
-		var header = FlexConfig.getRes(inWorld ? "textures/gui/inworld_header_separator.png" : "textures/gui/header_separator.png");
-		var footer = FlexConfig.getRes(inWorld ? "textures/gui/inworld_footer_separator.png" : "textures/gui/footer_separator.png");
+		var path = header ? inWorld ? "textures/gui/inworld_header_separator.png" : "textures/gui/header_separator.png"
+			: inWorld ? "textures/gui/inworld_footer_separator.png" : "textures/gui/footer_separator.png";
 		RenderSystem.enableBlend();
-		gui.blit(header, 0, headerHeight - 2, 0F, 0F, width, 2, 32, 2);
-		gui.blit(footer, 0, height - footerHeight, 0F, 0F, width, 2, 32, 2);
+		gui.blit(FlexConfig.getRes(path), 0, y, 0F, 0F, width, 2, 32, 2);
 		RenderSystem.disableBlend();
 	}
 	/**

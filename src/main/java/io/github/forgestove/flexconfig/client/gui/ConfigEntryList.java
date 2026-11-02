@@ -56,6 +56,10 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> i
 		return width * 2 / 3;
 	}
 	@Override
+	protected int getScrollbarPosition() {
+		return getRowRight() + 6;
+	}
+	@Override
 	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
 		super.render(gui, mouseX, mouseY, delta);
 		var entry = getHovered();

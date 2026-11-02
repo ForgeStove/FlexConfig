@@ -12,7 +12,6 @@ public enum FlexGuiTextures {
 	ICON_LOCK("icon/lock"),
 	ICON_UNLOCK("icon/unlock");
 	private final ResourceLocation id;
-	/** 1.20.1 没有 gui sprites 图集，尺寸只能从贴图文件本身读，首次使用时缓存。 */
 	private int texWidth = -1, texHeight = -1;
 	FlexGuiTextures(String path) {
 		id = FlexConfig.getFlexRes("textures/gui/sprites/" + path + ".png");

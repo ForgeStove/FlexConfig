@@ -2,10 +2,9 @@ package io.github.forgestove.flexconfig.client.gui;
 import io.github.forgestove.flexconfig.ConfigHandler;
 import io.github.forgestove.flexconfig.client.*;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.layouts.*;
+import net.minecraft.client.gui.layouts.LinearLayout.Orientation;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
@@ -44,6 +43,7 @@ public class ConfigFileScreen extends Screen {
 	}
 	@Override
 	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
+		renderBackground(gui);
 		super.render(gui, mouseX, mouseY, delta);
 		ClientUtil.renderSeparators(gui, width, height, layout.getHeaderHeight(), layout.getFooterHeight());
 	}
@@ -60,8 +60,7 @@ public class ConfigFileScreen extends Screen {
 	@Override
 	protected void init() {
 		layout.addToHeader(new StringWidget(title, font));
-		// 1.20.1 没有静态工厂和 spacing()，间距用子项下内边距
-		var files = new LinearLayout(0, 0, 0, 0, LinearLayout.Orientation.VERTICAL);
+		var files = new LinearLayout(0, 0, 0, 0, Orientation.VERTICAL);
 		files.defaultChildLayoutSetting().paddingBottom(SPACING);
 		handlers.forEach(handler -> files.addChild(fileButton(handler)));
 		centerFrame.addChild(files);

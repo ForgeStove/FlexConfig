@@ -19,6 +19,10 @@ legacyForge {
 			gameDirectory.set(file("run/server"))
 			programArgument("--nogui")
 		}
+		configureEach {
+			jvmArgument("-XX:+IgnoreUnrecognizedVMOptions")
+			jvmArgument("-XX:+AllowEnhancedClassRedefinition")
+		}
 	}
 	mods.create(p("modId")) { sourceSet(sourceSets.main.get()) }
 }

@@ -49,13 +49,14 @@ public class ColorPickerScreen extends Screen {
 	}
 	@Override
 	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
-		// 1.20.1 没有 clearFocus() 与模糊背景，用 setFocused(null) 和背景遮罩代替
 		parent.setFocused(null);
 		parent.render(gui, -1, -1, delta);
-		renderBackground(gui);
+		gui.flush();
+		gui.pose().pushPose();
+		gui.pose().translate(0, 0, 400);
 		var totalWidth = PICKER_SIZE + PADDING + BAR_WIDTH + (hasAlpha ? PADDING + BAR_WIDTH : 0) + PADDING * 2 + 8;
 		var totalHeight = PICKER_SIZE + PADDING * 2 + 16 + 28;
-		gui.fill(pickerPos.x - 4, pickerPos.y - 4, pickerPos.x + totalWidth + 4, pickerPos.y + totalHeight + 4, 0xF0101010);
+		gui.fill(pickerPos.x - 4, pickerPos.y - 4, pickerPos.x + totalWidth + 4, pickerPos.y + totalHeight + 4, 0xFF101010);
 		gui.renderOutline(pickerPos.x - 4, pickerPos.y - 4, totalWidth + 8, totalHeight + 8, 0xFF404040);
 		gui.drawString(font, title, svPos.x, pickerPos.y + PADDING, 0xFFFFFF);
 		if (sbPixels == null) rebuildSBCache();
@@ -65,6 +66,7 @@ public class ColorPickerScreen extends Screen {
 		if (hasAlpha) renderAlphaBar(gui, hueBarX + BAR_WIDTH + PADDING, svPos.y);
 		renderSelectors(gui, hueBarX);
 		for (var child : children()) if (child instanceof AbstractWidget widget) widget.render(gui, mouseX, mouseY, delta);
+		gui.pose().popPose();
 	}
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {

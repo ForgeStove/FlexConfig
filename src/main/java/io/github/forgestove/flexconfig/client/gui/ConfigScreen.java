@@ -7,6 +7,7 @@ import io.github.forgestove.flexconfig.client.gui.api.CaptureHandler;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.tabs.*;
 import net.minecraft.client.gui.layouts.*;
@@ -99,6 +100,17 @@ public class ConfigScreen<C, V> extends Screen {
 			addRenderableWidget(w);
 		});
 		repositionElements();
+	}
+	@Override
+	public void render(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
+		renderBackground(gui);
+		super.render(gui, mouseX, mouseY, delta);
+		cancelButton.render(gui, mouseX, mouseY, delta);
+		saveButton.render(gui, mouseX, mouseY, delta);
+		ClientUtil.renderSeparators(gui, width, height, getHeaderHeight(), getFooterHeight());
+		if (tabNavigationBar == null) return;
+		for (var child : tabNavigationBar.children())
+			if (child instanceof TabButton button) button.render(gui, mouseX, mouseY, delta);
 	}
 	@Override
 	protected void repositionElements() {

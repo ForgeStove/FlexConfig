@@ -1,11 +1,9 @@
 package io.github.forgestove.flexconfig.client.gui.components;
-import io.github.forgestove.flexconfig.FlexConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 /** 竖直滚动条：滚动量、滑块位置、命中、拖动、翻页与平滑，只在内容超过一屏时出现。 */
 public class FlexScrollBar extends AbstractWidget {
@@ -13,8 +11,6 @@ public class FlexScrollBar extends AbstractWidget {
 	private static final int MIN_KNOB_H = 12, DEFAULT_STEP = 36;
 	/** 每秒按剩余距离衰减的系数；速度随距离缩小，没有固定速率。{@code 20·ln4} 等价于每 tick 吃掉 75% 的差距。 */
 	private static final double DECAY = 27.7;
-	private static final ResourceLocation TRACK = FlexConfig.getRes("widget/scroller_background");
-	private static final ResourceLocation KNOB = FlexConfig.getRes("widget/scroller");
 	private final ScrollTarget owner;
 	/** 当前与目标滚动量：渲染用前者，拖动与翻页写后者，由 {@link #update} 逼近。 */
 	private double scroll, target;
@@ -48,9 +44,13 @@ public class FlexScrollBar extends AbstractWidget {
 	protected void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
 		update();
 		if (!shown()) return;
-		gui.blit(TRACK, getX(), getY(), 0, 0, getWidth(), getHeight(), 256, 256);
+		var x = getX();
+		var w = getWidth();
 		var h = knobHeight();
-		gui.blit(KNOB, getX(), knobY(h), 0, 0, getWidth(), h, 256, 256);
+		var y = knobY(h);
+		gui.fill(x, getY(), x + w, getY() + getHeight(), 0xFF000000);
+		gui.fill(x, y, x + w, y + h, 0xFF808080);
+		gui.fill(x, y, x + w - 1, y + h - 1, 0xFFC0C0C0);
 	}
 	/** 点滑块进入拖动（保留抓取偏移、不跳位）；点轨道只平滑跳到点击位置，不进入拖动。 */
 	@Override

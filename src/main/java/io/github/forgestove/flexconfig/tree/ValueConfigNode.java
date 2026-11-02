@@ -11,20 +11,16 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	private Component title;
 	private Component tooltip;
 	private Class<? extends V> valueType;
-	@Nullable private Field field;
-	/** 列表字段声明的元素类型；非列表或无 Class 实参时为 {@code null}。 */
-	@Nullable private Class<?> elementType;
-	/** 生效所需的重启级别；{@code null} 表示改完即生效。 */
-	@Nullable private RestartType requiredRestart;
-	/** 已写入文件、运行时尚未切换过去的新值（延迟生效）；{@code null} 表示运行时与文件一致。 */
-	@Nullable private V pendingValue;
-	@Nullable private ColorValue colorValue;
-	/** 滑块的取值范围；{@code null} 表示该选项用输入框编辑。 */
-	@Nullable private SliderRange sliderRange;
+	private Field field;
+	private Class<?> elementType;
+	private RestartType requiredRestart;
+	private V pendingValue;
+	private ColorValue colorValue;
+	private SliderRange sliderRange;
 	private ValueReader<C, V> valueReader;
 	private ValueWriter<C, V> valueWriter;
-	@Nullable private ValueValidator<V> validator;
-	@Nullable private ConfigChangeCallback changeCallback;
+	private ValueValidator<V> validator;
+	private ConfigChangeCallback changeCallback;
 	private V defaultValue;
 	private V editingValue;
 	private CategoryConfigNode<C> category;
@@ -106,11 +102,9 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 		var newValue = getEditingValue(config);
 		if (requiredRestart == null) {
 			setActiveValue(config, newValue);
-			// 值确实变了才通知（editingValue 未被动过时与 active 相等，天然不触发；copy() 不走这里，启动加载也不会触发）
 			if (changeCallback != null && !Objects.equals(oldValue, newValue)) changeCallback.onChange(oldValue, newValue);
 			return;
 		}
-		// 延迟生效：新值只落盘，运行时保持旧值，等重启后由 applyRestart 切过去（改回原值则取消待生效）
 		pendingValue = Objects.equals(oldValue, newValue) ? null : newValue;
 	}
 	@Override
@@ -123,10 +117,6 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public V getDefaultValue() {
 		return defaultValue;
 	}
-	/**
-	 * 编辑基线：存在未生效改动时取那份新值（已在文件里），否则取运行时值。
-	 * 界面按基线初始化编辑值，「保存过但尚未生效」的项因此显示新值，再点保存不会把文件回退成旧值。
-	 */
 	private V currentBase(C config) {
 		return pendingValue != null ? pendingValue : getActiveValue(config);
 	}
@@ -161,7 +151,6 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public interface ValueValidator<V> {
 		@Nullable Component validate(V value);
 	}
-	/** 值变更回调；去重与异常隔离由 {@link io.github.forgestove.flexconfig.ConfigChangeDispatcher} 负责。 */
 	@FunctionalInterface
 	public interface ConfigChangeCallback {
 		void onChange(Object oldValue, Object newValue);
