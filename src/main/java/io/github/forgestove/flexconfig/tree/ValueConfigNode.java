@@ -3,6 +3,7 @@ import io.github.forgestove.flexconfig.api.*;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 
+import java.lang.reflect.Field;
 import java.util.*;
 public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	private String name;
@@ -10,6 +11,7 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	private Component title;
 	private Component tooltip;
 	private Class<? extends V> valueType;
+	@Nullable private Field field;
 	/** 列表字段声明的元素类型；非列表或无 Class 实参时为 {@code null}。 */
 	@Nullable private Class<?> elementType;
 	/** 生效所需的重启级别；{@code null} 表示改完即生效。 */
@@ -32,6 +34,10 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 	@NotNull
 	public Class<? extends V> getValueType() {
 		return valueType;
+	}
+	@Nullable
+	public Field getField() {
+		return field;
 	}
 	@Nullable
 	public Class<?> getElementType() {
@@ -168,6 +174,10 @@ public final class ValueConfigNode<C, V> implements ConfigNode<C> {
 		}
 		public Builder<C, V> valueType(Class<? extends V> valueType) {
 			node.valueType = valueType;
+			return this;
+		}
+		public Builder<C, V> field(Field field) {
+			node.field = field;
 			return this;
 		}
 		public Builder<C, V> elementType(@Nullable Class<?> elementType) {

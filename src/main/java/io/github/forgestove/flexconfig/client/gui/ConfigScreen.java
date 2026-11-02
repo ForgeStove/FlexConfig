@@ -7,16 +7,13 @@ import io.github.forgestove.flexconfig.client.gui.api.CaptureHandler;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.TabButton;
-import net.minecraft.client.gui.components.tabs.Tab;
-import net.minecraft.client.gui.components.tabs.TabManager;
-import net.minecraft.client.gui.components.tabs.TabNavigationBar;
+import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.tabs.*;
 import net.minecraft.client.gui.layouts.*;
+import net.minecraft.client.gui.layouts.LinearLayout.Orientation;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
-import net.minecraft.client.gui.screens.ConfirmScreen;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.*;
+import net.minecraft.client.gui.screens.*;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 import org.lwjgl.glfw.GLFW;
 
@@ -67,11 +64,7 @@ public final class ConfigScreen<C, V> extends Screen {
 			confirmed -> {
 				if (confirmed) handler.restoreTriggerKeybinds(savedTriggerKeybinds);
 				mc.setScreen(confirmed ? parent : this);
-			},
-			Translation.QUIT_CONFIRM_TITLE,
-			Translation.QUIT_CONFIRM_WARNING,
-			Translation.QUIT_CONFIRM_LABEL,
-			Translation.CANCEL_LABEL
+			}, Translation.QUIT_CONFIRM_TITLE, Translation.QUIT_CONFIRM_WARNING, Translation.QUIT_CONFIRM_LABEL, Translation.CANCEL_LABEL
 		));
 	}
 	@Override
@@ -94,9 +87,10 @@ public final class ConfigScreen<C, V> extends Screen {
 		} else keybindCategory = null;
 		initTabLayout();
 		cancelButton = Button.builder(getCancelLabel(), b -> onClose()).size(Button.DEFAULT_WIDTH, ConfigEntry.HEIGHT).build();
-		saveButton = Button.builder(Translation.SAVE_CHANGES_LABEL, b -> saveAndQuit()).size(Button.DEFAULT_WIDTH, ConfigEntry.HEIGHT).build();
-		// 1.20.1 没有静态工厂和 spacing()，间距用子项右内边距
-		var footerLyt = layout.addToFooter(new LinearLayout(0, 0, 0, 0, LinearLayout.Orientation.HORIZONTAL));
+		saveButton = Button.builder(Translation.SAVE_CHANGES_LABEL, b -> saveAndQuit())
+			.size(Button.DEFAULT_WIDTH, ConfigEntry.HEIGHT)
+			.build();
+		var footerLyt = layout.addToFooter(new LinearLayout(0, 0, 0, 0, Orientation.HORIZONTAL));
 		footerLyt.defaultChildLayoutSetting().paddingRight(8);
 		footerLyt.addChild(cancelButton);
 		footerLyt.addChild(saveButton);
@@ -154,7 +148,7 @@ public final class ConfigScreen<C, V> extends Screen {
 		if (keybindCategory != null) keybindCategory.writeEditingToConfig(config);
 		var mc = ClientUtil.mc;
 		mc.options.save();
-		handler.save(config);
+		if (!handler.save(config)) return;
 		ClientLockManager.flushPendingLocks();
 		savedTriggerKeybinds = new LinkedHashMap<>(handler.getAllTriggerKeybinds());
 		mc.setScreen(restartScreen(restartType));
@@ -183,8 +177,7 @@ public final class ConfigScreen<C, V> extends Screen {
 					if (confirmed) {
 						if (mc.level != null) mc.level.disconnect();
 						mc.clearLevel();
-					}
-					else mc.setScreen(parent);
+					} else mc.setScreen(parent);
 				},
 				Translation.RESTART_REQUIRED_TITLE,
 				Translation.RESTART_REQUIRED_WORLD,

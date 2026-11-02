@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /** 一个模组可按 {@link ConfigType} 注册多份配置，各自对应一个文件。 */
 public final class ConfigRegistry {
 	private static final Map<String, EnumMap<ConfigType, ConfigHandler<?, ?>>> SETS = new ConcurrentHashMap<>();
+	private static final Map<Class<?>, ConfigHandler<?, ?>> BY_CLASS = new ConcurrentHashMap<>();
 	/** 供锁定、下发与热重载按文件精确定位。 */
 	private static final Map<FileKey, ConfigHandler<?, ?>> BY_FILE = new ConcurrentHashMap<>();
 	/** 「主」配置的优先顺序，供按 modId 取配置的调用点（GUI 入口、旧锁代码）使用。 */
@@ -32,6 +33,7 @@ public final class ConfigRegistry {
 			type, ignored -> {
 				var built = ConfigHandler.builder(clazz).type(type).fileName(fileName).build();
 				BY_FILE.put(new FileKey(modId, fileName), built);
+				BY_CLASS.put(clazz, built);
 				return built;
 			}
 		);
@@ -72,6 +74,13 @@ public final class ConfigRegistry {
 		return BY_FILE.containsKey(key) ? getHandler(key).getConfig() : null;
 	}
 	// ========== 按文件精确定位 ==========
+	@SuppressWarnings({"unchecked", "unused"})
+	public static <C> @NotNull ConfigHandler<C, ?> getHandler(Class<C> configClass) {
+		var handler = (ConfigHandler<C, ?>) BY_CLASS.get(configClass);
+		if (handler == null)
+			throw new IllegalStateException("Config handler for '%s' is not initialized.".formatted(configClass.getName()));
+		return handler;
+	}
 	public static @NotNull ConfigHandler<?, ?> getHandler(FileKey key) {
 		var handler = BY_FILE.get(key);
 		if (handler == null) throw new IllegalStateException("Config handler for '%s' is not initialized.".formatted(key));
