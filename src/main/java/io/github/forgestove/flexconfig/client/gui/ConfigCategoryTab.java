@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Consumer;
-public final class ConfigCategoryTab<C, V> implements Tab {
+public class ConfigCategoryTab<C, V> implements Tab {
 	private static final Set<CategoryConfigNode<?>> expandedSubCategories = new HashSet<>();
 	private static final Set<CategoryConfigNode<?>> defaultsApplied = new HashSet<>();
 	public final C config;

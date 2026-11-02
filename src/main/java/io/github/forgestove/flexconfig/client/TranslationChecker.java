@@ -4,7 +4,7 @@ import io.github.forgestove.flexconfig.platform.Platform;
 import io.github.forgestove.flexconfig.tree.RootConfigNode;
 import net.minecraft.client.resources.language.I18n;
 import org.slf4j.Logger;
-public final class TranslationChecker {
+public class TranslationChecker {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/** 缺失的键按行打印，便于直接照抄进语言文件。 */
 	public static void check(RootConfigNode<?, ?> root) {

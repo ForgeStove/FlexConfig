@@ -13,7 +13,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.*;
 @SuppressWarnings("unused")
-public final class EntryTypeRegistry {
+public class EntryTypeRegistry {
 	private static final Map<Class<?>, EntryTypeRegistry> custom = new HashMap<>();
 	private static final EntryTypeRegistry defaultRegistry = new EntryTypeRegistry();
 	static {

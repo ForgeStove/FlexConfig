@@ -3,7 +3,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
-public final class Translation {
+public class Translation {
 	public static final Component ON_LABEL = Component.literal("✔");
 	public static final Component OFF_LABEL = Component.literal("❌");
 	public static final Component RESET_TOOLTIP = Component.translatable("controls.reset");

@@ -10,7 +10,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.function.*;
-public final class FieldValidators {
+public class FieldValidators {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final Map<Class<?>, ValidatorFactory<?>> VALIDATOR_FACTORIES = Map.of(
 		Integer.class,

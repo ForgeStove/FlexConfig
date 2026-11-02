@@ -3,7 +3,7 @@ import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.*;
-public final class FlexSliderButton extends AbstractSliderButton {
+public class FlexSliderButton extends AbstractSliderButton {
 	private final double min, max;
 	private final DoubleConsumer onDrag;
 	private final Runnable onCommit;

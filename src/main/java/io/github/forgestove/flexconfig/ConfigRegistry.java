@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 /** 一个模组可按 {@link ConfigType} 注册多份配置，各自对应一个文件。 */
-public final class ConfigRegistry {
+public class ConfigRegistry {
 	private static final Map<String, EnumMap<ConfigType, ConfigHandler<?, ?>>> SETS = new ConcurrentHashMap<>();
 	private static final Map<Class<?>, ConfigHandler<?, ?>> BY_CLASS = new ConcurrentHashMap<>();
 	/** 供锁定、下发与热重载按文件精确定位。 */

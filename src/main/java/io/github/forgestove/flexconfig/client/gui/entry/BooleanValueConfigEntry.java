@@ -7,7 +7,7 @@ import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
-public final class BooleanValueConfigEntry<C> extends CapturableValueConfigEntry<C, Boolean> {
+public class BooleanValueConfigEntry<C> extends CapturableValueConfigEntry<C, Boolean> {
 	private static final int ON_COLOR = 0x55FF55, OFF_COLOR = 0xFF5555;
 	private final FlexIconButton valueSwitch;
 	public BooleanValueConfigEntry(ConfigCategoryTab<C, Boolean> tab, ValueConfigNode<C, Boolean> node) {

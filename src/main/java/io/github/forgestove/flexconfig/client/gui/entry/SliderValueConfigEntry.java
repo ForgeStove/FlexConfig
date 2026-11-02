@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.function.DoubleFunction;
 /** 带范围的数值条目：注解里写了 {@code slider = true} 才走这里；拖动期间只写节点的编辑值，松手才 {@code refresh()}。 */
-public final class SliderValueConfigEntry<C, N extends Number> extends ValueConfigEntry<C, N> {
+public class SliderValueConfigEntry<C, N extends Number> extends ValueConfigEntry<C, N> {
 	public final FlexSliderButton slider;
 	public SliderValueConfigEntry(ConfigCategoryTab<C, N> tab, ValueConfigNode<C, N> node, DoubleFunction<N> fromDouble) {
 		super(tab, node);

@@ -11,7 +11,7 @@ import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
-public final class ColorValueConfigEntry<C> extends ValueConfigEntry<C, Integer> {
+public class ColorValueConfigEntry<C> extends ValueConfigEntry<C, Integer> {
 	public static final Pattern HEX_PATTERN = Pattern.compile("[0-9A-Fa-f]*");
 	public final FlexEditBox inputField;
 	public final FlexColorPickerButton previewWidget;

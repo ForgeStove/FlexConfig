@@ -4,7 +4,7 @@ import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.network.ConfigNetwork;
 import org.slf4j.Logger;
 /** 把锁定的配置项也应用到服务端自身的活动配置（与客户端那个对等）；先重载撤销旧锁值再逐条应用，解锁后能恢复原值。 */
-public final class ServerLockApplier {
+public class ServerLockApplier {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	public static void applyAll(FileKey key, ServerConfigLockStore store) {
 		if (!ConfigRegistry.getRegisteredFileKeys().contains(key)) return;

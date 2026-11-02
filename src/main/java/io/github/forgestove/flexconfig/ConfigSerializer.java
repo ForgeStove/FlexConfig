@@ -13,7 +13,7 @@ import java.awt.Point;
 import java.lang.reflect.Field;
 import java.nio.file.*;
 import java.util.*;
-public final class ConfigSerializer<C> {
+public class ConfigSerializer<C> {
 	private static final String KEYBINDS_SECTION = "-keybinds-";
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Class<C> configClass;
@@ -363,7 +363,7 @@ public final class ConfigSerializer<C> {
 		field.set(category, value);
 		return true;
 	}
-	public static final class Builder<C> {
+	public static class Builder<C> {
 		private final Class<C> configClass;
 		private Builder(Class<C> configClass) {
 			this.configClass = configClass;

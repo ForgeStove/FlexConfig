@@ -18,7 +18,7 @@ import org.jetbrains.annotations.*;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
-public final class ConfigScreen<C, V> extends Screen {
+public class ConfigScreen<C, V> extends Screen {
 	public static CategoryConfigNode<?> lastSelectedCategory;
 	public final RootConfigNode<C, V> root;
 	private final C config;

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
-public final class ValueConfigNode<C, V> implements ConfigNode<C> {
+public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	private String name;
 	private String path;
 	private Component title;

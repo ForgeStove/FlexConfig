@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 @EventBusSubscriber(modid = FlexConfig.ID)
-public final class ForgeEvents {
+public class ForgeEvents {
 	@SubscribeEvent
 	public static void onServerAboutToStart(ServerAboutToStartEvent event) {
 		ServerLifecycleHandler.onServerAboutToStart(event.getServer());
@@ -29,7 +29,7 @@ public final class ForgeEvents {
 		ServerLifecycleHandler.onServerStopped();
 	}
 	@EventBusSubscriber(modid = FlexConfig.ID, bus = Bus.MOD)
-	public static final class Setup {
+	public static class Setup {
 		@SubscribeEvent
 		public static void onCommonSetup(FMLCommonSetupEvent event) {
 			event.enqueueWork(() -> ForgePlatform.registerPayloads(ConfigNetwork::register));

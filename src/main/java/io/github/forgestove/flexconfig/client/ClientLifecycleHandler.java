@@ -8,7 +8,7 @@ import net.minecraft.client.resources.language.I18n;
 
 import java.util.*;
 /** 各入口由加载器侧的事件订阅转发至此。 */
-public final class ClientLifecycleHandler {
+public class ClientLifecycleHandler {
 	private static final Map<String, Boolean> PREVIOUS_STATES = new HashMap<>();
 	private static int watchTicks;
 	private static String scannedLanguage;

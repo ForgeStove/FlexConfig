@@ -10,7 +10,7 @@ import java.util.*;
  * 深度归零才派发，使 handler 执行时配置对象已是完整新值；不经树遍历的单节点写入（快捷键路径）深度为 0，
  * {@link #record} 时即派发。目前在客户端保存路径上使用（单线程），未做线程安全。
  */
-public final class ConfigChangeDispatcher {
+public class ConfigChangeDispatcher {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final Map<Class<? extends ConfigChangeHandler>, ConfigChangeHandler> INSTANCES = new HashMap<>();
 	private static final Map<Class<? extends ConfigChangeHandler>, Pending> PENDING = new LinkedHashMap<>();

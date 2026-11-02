@@ -8,7 +8,7 @@ import java.awt.Point;
 import java.util.*;
 @Config(FlexConfig.ID)
 @SuppressWarnings("unused")
-public final class DemoConfig {
+public class DemoConfig {
 	@Category public Toggles toggles = new Toggles();
 	@Category public Numbers numbers = new Numbers();
 	public enum Theme {

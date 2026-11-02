@@ -4,7 +4,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 @Mod(FlexConfig.ID)
-public final class ForgeEntry {
+public class ForgeEntry {
 	public ForgeEntry() {
 		DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> DemoRegistration::register);
 	}

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.function.Consumer;
-public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> implements ScrollTarget {
+public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> implements ScrollTarget {
 	private final Screen screen;
 	private final FlexHighlight highlight;
 	private final FlexScrollBar scrollbar;
@@ -135,7 +135,7 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
 		return entry == null ? -1 : children().indexOf(entry);
 	}
 	/** 1.20.1 的列表不是控件，而 Tab 只接受控件，这里包一层把事件转给列表。 */
-	private static final class ListWidget extends AbstractWidget {
+	private static class ListWidget extends AbstractWidget {
 		private final ConfigEntryList list;
 		private ListWidget(ConfigEntryList list) {
 			super(0, 0, 0, 0, Component.empty());

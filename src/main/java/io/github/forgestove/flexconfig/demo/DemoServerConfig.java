@@ -5,7 +5,7 @@ import io.github.forgestove.flexconfig.api.*;
 import java.util.*;
 @Config(value = FlexConfig.ID, type = ConfigType.SERVER)
 @SuppressWarnings("unused") // 配置字段全部由反射读取
-public final class DemoServerConfig {
+public class DemoServerConfig {
 	@Category public Gameplay gameplay = new Gameplay();
 	@Category public Limits limits = new Limits();
 	public static class Gameplay {

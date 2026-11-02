@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.function.*;
 /** {@link Platform} 的 Forge 1.20.1 实现。 */
-public final class ForgePlatform implements Platform {
+public class ForgePlatform implements Platform {
 	private static SimpleChannel channel;
 	private static int nextId;
 	/** 由 {@link io.github.forgestove.flexconfig.ForgeEvents} 在 common setup 里调用，把 SimpleChannel 交给核心。 */

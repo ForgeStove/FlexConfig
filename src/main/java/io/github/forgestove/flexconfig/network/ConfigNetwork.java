@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.*;
-public final class ConfigNetwork {
+public class ConfigNetwork {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/** 每个 (模组, 配置文件) 一份锁定存储。 */
 	private static final Map<FileKey, ServerConfigLockStore> lockStores = new HashMap<>();

@@ -41,7 +41,7 @@ public interface Platform {
 		<P extends NetworkPayload> void serverToClient(String channel, Class<P> type, Function<FriendlyByteBuf, P> decoder,
 			PayloadHandler<P> handler);
 	}
-	final class Holder {
+	class Holder {
 		private static final Platform INSTANCE = PlatformLoader.load();
 	}
 }

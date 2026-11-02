@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import java.util.*;
 /** 文件路径由 {@link ConfigNaming} 解析；SERVER 型要进世界才能定位存档目录，故构造期不读盘，其余类型在构造期读取。 */
 @SuppressWarnings("unused")
-public final class ConfigHandler<C, V> {
+public class ConfigHandler<C, V> {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Map<String, Runnable> triggerActions = new LinkedHashMap<>();
 	private final Class<C> configClass;
@@ -226,7 +226,7 @@ public final class ConfigHandler<C, V> {
 		triggerKeybinds.clear();
 		triggerKeybinds.putAll(snapshot);
 	}
-	public static final class Builder<C, V> {
+	public static class Builder<C, V> {
 		private final Class<C> configClass;
 		private final ConfigSerializer.Builder<C> serializerBuilder;
 		private ConfigType type = ConfigType.CLIENT;
