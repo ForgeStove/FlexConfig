@@ -213,6 +213,7 @@ public record RootConfigNode<C, V>(
 				.append(ConfigTranslation.translatable("flexconfig.warn.cheat.tooltip").withStyle(ChatFormatting.RED));
 			final var finalTooltip = tooltip;
 			categoryBuilder.value(valueBuilder -> valueBuilder.valueType(type)
+				.field(valueField)
 				.name(valueName)
 				.path(fullPath)
 				.title(ConfigTranslation.translatable(titleKey))

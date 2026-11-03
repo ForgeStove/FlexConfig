@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.Point;
 import java.util.*;
-public final class LockValueCodec {
+public class LockValueCodec {
 	public static String format(ValueConfigNode<?, ?> node, Object value) {
 		if (node.isColorValue()) return String.format(node.colorHasAlpha() ? "0x%08X" : "0x%06X", value);
 		if (value instanceof Enum<?> anEnum) return anEnum.name();

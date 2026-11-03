@@ -5,7 +5,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 
 import java.util.function.IntSupplier;
-public final class FlexColorPickerButton extends Button {
+public class FlexColorPickerButton extends Button {
 	private static final int BORDER = 0xFF1E1E1F, BORDER_HOVER = 0xFFFFFFFF;
 	private static final int CHECKER_LIGHT = 0xFFD0D1D4, CHECKER_DARK = 0xFF8C8D90, CHECKER_SIZE = 4;
 	private final IntSupplier colorSupplier;

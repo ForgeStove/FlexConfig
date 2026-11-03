@@ -22,10 +22,7 @@ neoForge {
 		configureEach {
 			jvmArgument("-XX:+IgnoreUnrecognizedVMOptions")
 			jvmArgument("-XX:+AllowEnhancedClassRedefinition")
-			// 演示模组目录来自 test 源集，先编译它，否则 fml.modFolders 会带上不存在的路径
-			taskBefore(tasks.named("testClasses"))
 		}
 	}
 	mods.create(p("modId")) { sourceSet(sourceSets.main.get()) }
-	mods.create("${p("modId")}_demo") { sourceSet(sourceSets.test.get()) }
 }

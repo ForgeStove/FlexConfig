@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.function.*;
 /** {@link Platform} 的 NeoForge 实现。 */
-public final class NeoForgePlatform implements Platform {
+public class NeoForgePlatform implements Platform {
 	/** 由 {@link RegisterPayloadHandlersEvent} 的订阅者调用，把加载器的注册器交给核心。 */
 	public static void registerPayloads(RegisterPayloadHandlersEvent event, Consumer<Payloads> consumer) {
 		consumer.accept(new NeoForgePayloads(event.registrar(FlexConfig.NETWORK_VERSION).optional()));

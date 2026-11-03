@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * 配置文件的外部改动探测（修改时间轮询）；节流与侧别分工由调用方负责：客户端轮询非 SERVER 型，服务端轮询 SERVER 型。
  */
-public final class ConfigWatchService {
+public class ConfigWatchService {
 	/** 轮询间隔：20 tick，约 1 秒。 */
 	public static final int INTERVAL_TICKS = 20;
 	/** 上次见到的修改时间；无条目表示该文件尚未建立基线。 */

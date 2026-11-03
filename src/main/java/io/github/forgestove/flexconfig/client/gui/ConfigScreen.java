@@ -21,7 +21,7 @@ import org.jetbrains.annotations.*;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
-public final class ConfigScreen<C, V> extends Screen {
+public class ConfigScreen<C, V> extends Screen {
 	public static CategoryConfigNode<?> lastSelectedCategory;
 	public final RootConfigNode<C, V> root;
 	private final C config;
@@ -152,7 +152,7 @@ public final class ConfigScreen<C, V> extends Screen {
 		if (keybindCategory != null) keybindCategory.writeEditingToConfig(config);
 		var mc = ClientUtil.mc;
 		mc.options.save();
-		handler.save(config);
+		if (!handler.save(config)) return;
 		ClientLockManager.flushPendingLocks();
 		savedTriggerKeybinds = new LinkedHashMap<>(handler.getAllTriggerKeybinds());
 		mc.setScreen(restartScreen(restartType));

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 /** {@link Platform} 的 Fabric 实现。 */
-public final class FabricPlatform implements Platform {
+public class FabricPlatform implements Platform {
 	/** 当前服务端实例；由 {@code FabricEvents} 在启动/停止时维护，仅用于广播（Fabric 没有全局广播 API）。 */
 	public static MinecraftServer server;
 	@Override

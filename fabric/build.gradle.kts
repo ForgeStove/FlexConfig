@@ -6,10 +6,8 @@ configure("fabric")
 loom {
 	mods {
 		create(p("modId")) { sourceSet("main") }
-		create("${p("modId")}_demo") { sourceSet("test") }
 	}
 }
-sourceSets.main.get().runtimeClasspath += sourceSets.test.get().output
 dependencies {
 	minecraft("com.mojang:minecraft:${p("mcVersion")}")
 	mappings(loom.officialMojangMappings())

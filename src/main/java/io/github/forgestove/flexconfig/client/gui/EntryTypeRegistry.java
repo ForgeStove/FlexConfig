@@ -5,12 +5,17 @@ import io.github.forgestove.flexconfig.client.gui.entry.*;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Point;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.util.*;
-import java.util.function.BiFunction;
-public final class EntryTypeRegistry {
-	private static final Map<Class<?>, EntryFactory> factories = new LinkedHashMap<>();
+import java.util.function.*;
+@SuppressWarnings("unused")
+public class EntryTypeRegistry {
+	private static final Map<Class<?>, EntryTypeRegistry> custom = new HashMap<>();
+	private static final EntryTypeRegistry defaultRegistry = new EntryTypeRegistry();
 	static {
 		register(Boolean.class, BooleanValueConfigEntry::new);
 		register(
@@ -44,24 +49,84 @@ public final class EntryTypeRegistry {
 		register(Point.class, PointValueConfigEntry::new);
 		register(List.class, ListValueConfigEntry::new);
 	}
+	private final List<FieldProvider> annotationProviders = new ArrayList<>();
+	private final List<FieldProvider> predicateProviders = new ArrayList<>();
+	private final List<TypeProvider> typeProviders = new ArrayList<>();
+	private final List<FieldTransformer> transformers = new ArrayList<>();
+	private EntryTypeRegistry() {}
+	public static EntryTypeRegistry get(Class<?> configClass) {
+		return custom.computeIfAbsent(configClass, ignored -> new EntryTypeRegistry());
+	}
 	@SuppressWarnings("unchecked")
 	public static <C, V> void register(
 		Class<? super V> type,
 		BiFunction<ConfigCategoryTab<C, V>, ValueConfigNode<C, V>, ConfigEntry> factory
 	) {
-		factories.put(type, (tab, node) -> factory.apply((ConfigCategoryTab<C, V>) tab, (ValueConfigNode<C, V>) node));
+		defaultRegistry.typeProviders.add(new TypeProvider(
+			type,
+			(tab, node) -> List.of(factory.apply((ConfigCategoryTab<C, V>) tab, (ValueConfigNode<C, V>) node))
+		));
 	}
-	public static ConfigEntry createValueEntry(ConfigCategoryTab<?, ?> tab, ValueConfigNode<?, ?> node) {
-		var type = node.getValueType();
-		for (var entry : factories.entrySet())
-			if (entry.getKey().isAssignableFrom(type)) return entry.getValue().create(tab, node);
-		return new TextConfigEntry(Translation.UNSUPPORTED_TYPE.copy().append(type.getSimpleName()).withStyle(ChatFormatting.RED));
+	public static List<ConfigEntry> createValueEntries(ConfigCategoryTab<?, ?> tab, ValueConfigNode<?, ?> node) {
+		var registry = custom.get(tab.config.getClass());
+		var entries = registry == null ? null : registry.find(tab, node);
+		if (entries == null) entries = defaultRegistry.find(tab, node);
+		if (entries == null) entries = List.of(new TextConfigEntry(Translation.UNSUPPORTED_TYPE.copy()
+			.append(node.getValueType().getSimpleName())
+			.withStyle(ChatFormatting.RED)));
+		if (registry != null) entries = registry.transform(entries, tab, node);
+		return defaultRegistry.transform(entries, tab, node);
 	}
 	public static ConfigEntry createCategoryEntry(Component label, boolean expanded, int depth, Runnable onToggle) {
 		return new CategoryCollapsibleConfigEntry(label, expanded, depth, onToggle);
 	}
-	@FunctionalInterface
-	private interface EntryFactory {
-		ConfigEntry create(ConfigCategoryTab<?, ?> tab, ValueConfigNode<?, ?> node);
+	@SafeVarargs
+	public final void registerAnnotationProvider(EntryProvider provider, Class<? extends Annotation>... annotations) {
+		for (var annotation : annotations)
+			annotationProviders.add(new FieldProvider(field -> field.isAnnotationPresent(annotation), provider));
 	}
+	public void registerPredicateProvider(EntryProvider provider, Predicate<Field> predicate) {
+		predicateProviders.add(new FieldProvider(predicate, provider));
+	}
+	public void registerTypeProvider(EntryProvider provider, Class<?>... types) {
+		for (var type : types) typeProviders.add(new TypeProvider(type, provider));
+	}
+	@SafeVarargs
+	public final void registerAnnotationTransformer(EntryTransformer transformer, Class<? extends Annotation>... annotations) {
+		for (var annotation : annotations)
+			transformers.add(new FieldTransformer(field -> field.isAnnotationPresent(annotation), transformer));
+	}
+	public void registerPredicateTransformer(EntryTransformer transformer, Predicate<Field> predicate) {
+		transformers.add(new FieldTransformer(predicate, transformer));
+	}
+	private @Nullable List<ConfigEntry> find(ConfigCategoryTab<?, ?> tab, ValueConfigNode<?, ?> node) {
+		var field = node.getField();
+		if (field != null) {
+			for (var entry : annotationProviders)
+				if (entry.predicate().test(field)) return entry.provider().create(tab, node);
+			for (var entry : predicateProviders)
+				if (entry.predicate().test(field)) return entry.provider().create(tab, node);
+		}
+		for (var entry : typeProviders)
+			if (entry.type().isAssignableFrom(node.getValueType())) return entry.provider().create(tab, node);
+		return null;
+	}
+	private List<ConfigEntry> transform(List<ConfigEntry> entries, ConfigCategoryTab<?, ?> tab, ValueConfigNode<?, ?> node) {
+		var field = node.getField();
+		if (field == null) return entries;
+		for (var entry : transformers)
+			if (entry.predicate().test(field)) entries = entry.transformer().transform(entries, tab, node);
+		return entries;
+	}
+	@FunctionalInterface
+	public interface EntryProvider {
+		@Nullable List<ConfigEntry> create(ConfigCategoryTab<?, ?> tab, ValueConfigNode<?, ?> node);
+	}
+	@FunctionalInterface
+	public interface EntryTransformer {
+		List<ConfigEntry> transform(List<ConfigEntry> entries, ConfigCategoryTab<?, ?> tab, ValueConfigNode<?, ?> node);
+	}
+	private record FieldProvider(Predicate<Field> predicate, EntryProvider provider) {}
+	private record TypeProvider(Class<?> type, EntryProvider provider) {}
+	private record FieldTransformer(Predicate<Field> predicate, EntryTransformer transformer) {}
 }

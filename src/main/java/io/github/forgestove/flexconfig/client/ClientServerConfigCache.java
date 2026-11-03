@@ -12,7 +12,7 @@ import java.util.*;
  * 保存服务端下发的 SERVER 型配置，仅存内存（下发后该配置的 path 为 {@code null}）：客户端本地的
  * {@code <modId>-server.toml} 不会因此被改写，也不参与读取。
  */
-public final class ClientServerConfigCache {
+public class ClientServerConfigCache {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final Map<FileKey, CommentedConfig> SYNCED = new HashMap<>();
 	public static void accept(String modId, String fileName, String tomlContent) {

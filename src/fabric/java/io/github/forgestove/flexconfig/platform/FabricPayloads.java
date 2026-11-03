@@ -19,7 +19,7 @@ import java.util.function.Function;
  * <p>
  * 类型注册（{@code PayloadTypeRegistry}）与服务端接收器是双端 API，在 common 入口即可完成。
  */
-public final class FabricPayloads implements Payloads {
+public class FabricPayloads implements Payloads {
 	/** 待注册的 S2C 接收器。 */
 	private static final List<Pending<?>> PENDING = new ArrayList<>();
 	/** 由客户端入口调用：把暂存的 S2C 接收器真正挂到 {@code ClientPlayNetworking} 上。 */

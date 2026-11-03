@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import java.nio.file.*;
 import java.util.*;
 /** 按世界存档存储锁定的配置条目，落盘为存档下的 {@code serverconfig/flexconfig/<modId>_locks.toml}；{@code flexconfig} 子目录是为了不和官方认的「server 配置覆盖文件」混在一起。 */
-public final class ServerConfigLockStore {
+public class ServerConfigLockStore {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Path lockFilePath;
 	/** 锁定项结构同配置文件；键由客户端传来的路径按点号分层。 */

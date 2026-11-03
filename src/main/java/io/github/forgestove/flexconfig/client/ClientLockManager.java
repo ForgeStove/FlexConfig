@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import java.io.StringReader;
 import java.util.*;
 /** 追踪服务端锁定的配置项，按 (模组 ID, 配置文件名) 记录，并在解锁或断开时恢复锁定前的原值。 */
-public final class ClientLockManager {
+public class ClientLockManager {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/** 待发送的锁定操作，延迟到保存时才发给服务端。 */
 	private static final Map<LockKey, Boolean> pendingLocks = new LinkedHashMap<>();

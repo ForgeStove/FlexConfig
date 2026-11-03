@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 /** 逗号分隔的列表编辑器：空串表示空列表，{@code [a, b]} 形式也接受；元素类型取自字段声明的 {@code List<T>}。 */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public final class ListValueConfigEntry<C> extends GenericValueConfigEntry<C, List> {
+public class ListValueConfigEntry<C> extends GenericValueConfigEntry<C, List> {
 	public ListValueConfigEntry(ConfigCategoryTab<C, List> tab, ValueConfigNode<C, List> node) {
 		super(
 			tab,

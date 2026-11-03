@@ -5,16 +5,8 @@
 !.idea/icon.png
 !.idea/misc.xml
 !.idea/codeInsightSettings.xml
-# stonecutter 迁移用的临时展开目录，不提交
-/.port
-/.stonecutter-src
-# 旧 Stonecutter 的构建产物目录，迁移完成后可删除
-/versions
-# 多模块
-/fabric/build
-/fabric/run
-/neoforge/build
-/neoforge/run
+/*/build
+/*/run
 # buildSrc
 /buildSrc/build
 /buildSrc/.gradle

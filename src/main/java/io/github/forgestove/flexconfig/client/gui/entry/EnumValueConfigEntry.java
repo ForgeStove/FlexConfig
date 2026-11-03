@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 @SuppressWarnings("rawtypes")
-public final class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C, Enum> {
+public class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C, Enum> {
 	private final Button dropdownButton;
 	private final String enumClassName;
 	public EnumValueConfigEntry(ConfigCategoryTab<C, Enum> tab, ValueConfigNode<C, Enum> node) {

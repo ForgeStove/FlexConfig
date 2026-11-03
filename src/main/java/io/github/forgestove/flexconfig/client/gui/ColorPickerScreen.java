@@ -18,7 +18,7 @@ import java.util.function.IntConsumer;
 import java.util.regex.Pattern;
 
 import static io.github.forgestove.flexconfig.client.ClientUtil.mc;
-public final class ColorPickerScreen extends Screen {
+public class ColorPickerScreen extends Screen {
 	private static final int PICKER_SIZE = 128, BAR_WIDTH = 16, PADDING = 8, SIZE = ConfigEntry.SIZE, BUTTON_WIDTH = SIZE * 2;
 	private static final Pattern HEX_PATTERN = Pattern.compile("[0-9A-Fa-f]*");
 	private final Screen parent;

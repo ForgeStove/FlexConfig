@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.function.Consumer;
-public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> implements ScrollTarget {
+public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> implements ScrollTarget {
 	private final Screen screen;
 	private final FlexHighlight highlight;
 	private final FlexScrollBar scrollbar;

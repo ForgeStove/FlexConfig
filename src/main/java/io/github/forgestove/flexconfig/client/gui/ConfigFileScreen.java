@@ -12,7 +12,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 /** 单份配置的模组不经过本界面，由 {@link FlexConfigScreenFactory} 直接打开 {@link ConfigScreen}。 */
-public final class ConfigFileScreen extends Screen {
+public class ConfigFileScreen extends Screen {
 	private static final int SPACING = 4;
 	private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 	private final FrameLayout centerFrame = new FrameLayout();

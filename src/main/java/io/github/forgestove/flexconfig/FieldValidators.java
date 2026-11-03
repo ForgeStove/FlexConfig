@@ -10,7 +10,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.function.*;
-public final class FieldValidators {
+public class FieldValidators {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final Map<Class<?>, ValidatorFactory<?>> VALIDATOR_FACTORIES = Map.of(
 		Integer.class,
@@ -103,7 +103,7 @@ public final class FieldValidators {
 	public static int correct(Field field, int value) {
 		var range = field.getAnnotation(IntRange.class);
 		if (range == null) return value;
-		var corrected = Math.min(Math.max(value, range.min()), range.max());
+		var corrected = Math.clamp(value, range.min(), range.max());
 		if (corrected != value) corrected(field, value, corrected, range.min(), range.max());
 		return corrected;
 	}
@@ -113,21 +113,21 @@ public final class FieldValidators {
 	public static long correct(Field field, long value) {
 		var range = field.getAnnotation(LongRange.class);
 		if (range == null) return value;
-		var corrected = Math.min(Math.max(value, range.min()), range.max());
+		var corrected = Math.clamp(value, range.min(), range.max());
 		if (corrected != value) corrected(field, value, corrected, range.min(), range.max());
 		return corrected;
 	}
 	public static float correct(Field field, float value) {
 		var range = field.getAnnotation(FloatRange.class);
 		if (range == null || Float.isNaN(value)) return value;
-		var corrected = Math.min(Math.max(value, range.min()), range.max());
+		var corrected = Math.clamp(value, range.min(), range.max());
 		if (corrected != value) corrected(field, value, corrected, range.min(), range.max());
 		return corrected;
 	}
 	public static double correct(Field field, double value) {
 		var range = field.getAnnotation(DoubleRange.class);
 		if (range == null || Double.isNaN(value)) return value;
-		var corrected = Math.min(Math.max(value, range.min()), range.max());
+		var corrected = Math.clamp(value, range.min(), range.max());
 		if (corrected != value) corrected(field, value, corrected, range.min(), range.max());
 		return corrected;
 	}

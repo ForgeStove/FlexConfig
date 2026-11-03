@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.client;
+import io.github.forgestove.flexconfig.demo.DemoRegistration;
 import io.github.forgestove.flexconfig.platform.FabricPayloads;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -9,9 +10,10 @@ import net.fabricmc.fabric.api.client.screen.v1.*;
  * <p>
  * S2C 接收器只能在这里注册（{@code ClientPlayNetworking} 是客户端专属类）。
  */
-public final class FabricClientEvents implements ClientModInitializer {
+public class FabricClientEvents implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
+		DemoRegistration.register();
 		FabricPayloads.registerClientReceivers();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> ClientLifecycleHandler.tick());
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientLifecycleHandler.onLoggingOut());

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.Point;
 import java.util.regex.Pattern;
-public final class PointValueConfigEntry<C> extends ValueConfigEntry<C, Point> {
+public class PointValueConfigEntry<C> extends ValueConfigEntry<C, Point> {
 	public static final Pattern INTEGER_PATTERN = Pattern.compile("-?\\d*");
 	public final FlexEditBox xField;
 	public final FlexEditBox yField;

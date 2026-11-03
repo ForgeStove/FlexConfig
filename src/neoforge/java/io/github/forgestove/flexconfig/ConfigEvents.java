@@ -21,7 +21,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
  * {@link ClientLifecycleHandler} 与 {@link ServerLifecycleHandler} 里。
  */
 @EventBusSubscriber
-public final class ConfigEvents {
+public class ConfigEvents {
 	@SubscribeEvent
 	public static void register(RegisterPayloadHandlersEvent event) {
 		NeoForgePlatform.registerPayloads(event, ConfigNetwork::register);

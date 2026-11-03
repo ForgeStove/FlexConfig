@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Consumer;
-public final class ConfigCategoryTab<C, V> implements Tab {
+public class ConfigCategoryTab<C, V> implements Tab {
 	private static final Set<CategoryConfigNode<?>> expandedSubCategories = new HashSet<>();
 	private static final Set<CategoryConfigNode<?>> defaultsApplied = new HashSet<>();
 	public final C config;
@@ -54,10 +54,11 @@ public final class ConfigCategoryTab<C, V> implements Tab {
 		var entries = new ArrayList<ConfigEntry>();
 		for (var child : node.getChildren())
 			if (child instanceof ValueConfigNode<C, ?> valueNode) {
-				var entry = EntryTypeRegistry.createValueEntry(this, valueNode);
-				if (entry instanceof TabLifecycle lifecycle) lifecycle.onAttachedToTab(this);
-				entry.setIndent(depth * ConfigEntry.INDENT_PX);
-				entries.add(entry);
+				for (var entry : EntryTypeRegistry.createValueEntries(this, valueNode)) {
+					if (entry instanceof TabLifecycle lifecycle) lifecycle.onAttachedToTab(this);
+					entry.setIndent(depth * ConfigEntry.INDENT_PX);
+					entries.add(entry);
+				}
 			} else if (child instanceof CategoryConfigNode<C> subNode) {
 				var expanded = expandedSubCategories.contains(subNode);
 				Runnable onToggle = () -> {

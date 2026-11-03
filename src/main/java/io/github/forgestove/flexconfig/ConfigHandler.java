@@ -12,7 +12,8 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 import java.util.*;
 /** 文件路径由 {@link ConfigNaming} 解析；SERVER 型要进世界才能定位存档目录，故构造期不读盘，其余类型在构造期读取。 */
-public final class ConfigHandler<C, V> {
+@SuppressWarnings("unused")
+public class ConfigHandler<C, V> {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Map<String, Runnable> triggerActions = new LinkedHashMap<>();
 	private final Class<C> configClass;
@@ -25,6 +26,9 @@ public final class ConfigHandler<C, V> {
 	private final String fileName;
 	// ---- 全局快捷键系统 ----
 	private final Map<String, String> triggerKeybinds = new LinkedHashMap<>();
+	private final List<ConfigSaveListener<C>> saveListeners = new ArrayList<>();
+	private final List<ConfigLoadListener<C>> loadListeners = new ArrayList<>();
+	private final List<ConfigValidator<C>> validators = new ArrayList<>();
 	/** 已解析的磁盘路径；SERVER 型在进世界前为 {@code null}。 */
 	@Nullable private Path resolvedPath;
 	private ConfigHandler(Builder<C, V> builder) {
@@ -70,7 +74,7 @@ public final class ConfigHandler<C, V> {
 			LOGGER.error("Failed to read configuration, keeping current values", e);
 			return;
 		}
-		var fresh = toml == null ? newInstance() : deserialize(toml);
+		var fresh = acceptLoaded(toml == null ? newInstance() : deserialize(toml));
 		configTree.copy(fresh, savedConfig);
 		// 运行时按需同步：待生效的延迟项保持旧值（重载不该让它们提前生效）
 		configTree.copyForRuntime(fresh, activeConfig);
@@ -89,7 +93,7 @@ public final class ConfigHandler<C, V> {
 	}
 	/** 用服务端下发的整份内容覆盖 saved 与 active；仅改内存，不落盘也不读本地文件。 */
 	public void applySynced(CommentedConfig toml) {
-		var fresh = deserialize(toml);
+		var fresh = acceptLoaded(deserialize(toml));
 		configTree.copy(fresh, savedConfig);
 		configTree.copy(fresh, activeConfig);
 	}
@@ -109,6 +113,9 @@ public final class ConfigHandler<C, V> {
 	}
 	public C getSavedConfig() {
 		return savedConfig;
+	}
+	public Class<C> getConfigClass() {
+		return configClass;
 	}
 	public ConfigSerializer<C> getSerializer() {
 		return serializer;
@@ -131,12 +138,22 @@ public final class ConfigHandler<C, V> {
 	}
 	// ========== 全局快捷键系统 ==========
 	/** 值、本地化注释与快捷键段一次性写出，采用临时文件加原子替换，写入失败时原文件保持完整。 */
-	public void save(C config) {
+	public boolean save(C config) {
+		var message = validateConfig(config);
+		if (message != null) {
+			LOGGER.warn("Configuration '{}' failed validation: {}", fileName, message);
+			return false;
+		}
+		for (var listener : saveListeners)
+			if (!listener.onSave(config)) {
+				LOGGER.warn("Configuration '{}' save canceled by listener", fileName);
+				return false;
+			}
 		// 全量写入文件模型 → 补上延迟生效项的新值（运行时仍守旧值）→ 运行时仅接收即时生效的改动
 		configTree.copy(config, savedConfig);
 		configTree.flushPending(savedConfig);
 		configTree.copyForRuntime(config, activeConfig);
-		if (resolvedPath == null) return;   // 路径未解析（SERVER 未进世界）时没有落盘目标
+		if (resolvedPath == null) return true;   // 路径未解析（SERVER 未进世界）时没有落盘目标
 		try {
 			serializer.serialize(savedConfig, triggerKeybinds);
 		} catch (SerializationException e) {
@@ -144,6 +161,36 @@ public final class ConfigHandler<C, V> {
 		}
 		// 刚写过盘，把修改时间记为基线，免得热重载把自己的这次写入当成外部改动
 		ConfigWatchService.markCurrent(new FileKey(modId, fileName));
+		return true;
+	}
+	public void registerSaveListener(ConfigSaveListener<C> listener) {
+		saveListeners.add(listener);
+	}
+	public void registerLoadListener(ConfigLoadListener<C> listener) {
+		loadListeners.add(listener);
+	}
+	public void registerValidator(ConfigValidator<C> validator) {
+		validators.add(validator);
+	}
+	private @Nullable String validateConfig(C config) {
+		for (var validator : validators) {
+			var message = validator.validate(config);
+			if (message != null) return message;
+		}
+		return null;
+	}
+	private C acceptLoaded(C fresh) {
+		for (var listener : loadListeners)
+			if (!listener.onLoad(fresh)) {
+				LOGGER.warn("Configuration '{}' load rejected by listener, using defaults", fileName);
+				return newInstance();
+			}
+		var message = validateConfig(fresh);
+		if (message != null) {
+			LOGGER.warn("Configuration '{}' failed validation: {}, using defaults", fileName, message);
+			return newInstance();
+		}
+		return fresh;
 	}
 	/** 退出世界或服务端停止时调用，让 WORLD 型延迟生效的改动写入活动配置。 */
 	public void applyWorldRestart() {
@@ -179,7 +226,7 @@ public final class ConfigHandler<C, V> {
 		triggerKeybinds.clear();
 		triggerKeybinds.putAll(snapshot);
 	}
-	public static final class Builder<C, V> {
+	public static class Builder<C, V> {
 		private final Class<C> configClass;
 		private final ConfigSerializer.Builder<C> serializerBuilder;
 		private ConfigType type = ConfigType.CLIENT;

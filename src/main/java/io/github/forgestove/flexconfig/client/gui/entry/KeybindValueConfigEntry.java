@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-public final class KeybindValueConfigEntry<C> extends ValueConfigEntry<C, Key> implements TabLifecycle, CrossRefreshable, CaptureHandler {
+public class KeybindValueConfigEntry<C> extends ValueConfigEntry<C, Key> implements TabLifecycle, CrossRefreshable, CaptureHandler {
 	private final Button bindButton;
 	private boolean capturing;
 	private CaptureCallback captureCallback = (e, c) -> {};

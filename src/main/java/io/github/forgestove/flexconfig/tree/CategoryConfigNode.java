@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 
 import java.util.function.UnaryOperator;
-public final class CategoryConfigNode<C> implements ConfigNode<C> {
+public class CategoryConfigNode<C> implements ConfigNode<C> {
 	private Component title;
 	private Component tooltip;
 	private boolean defaultExpanded;
@@ -103,7 +103,7 @@ public final class CategoryConfigNode<C> implements ConfigNode<C> {
 		return children;
 	}
 	@SuppressWarnings("UnusedReturnValue")
-	public static final class Builder<C> {
+	public static class Builder<C> {
 		private CategoryConfigNode<C> node;
 		private ImmutableList.Builder<ConfigNode<C>> childrenBuilder;
 		private Builder() {

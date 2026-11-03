@@ -10,7 +10,7 @@ import net.minecraft.sounds.SoundEvents;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-public final class CategoryCollapsibleConfigEntry extends ConfigEntry {
+public class CategoryCollapsibleConfigEntry extends ConfigEntry {
 	private static final String EXPANDED_PREFIX = "- ";
 	private static final String COLLAPSED_PREFIX = "+ ";
 	private final Component label;

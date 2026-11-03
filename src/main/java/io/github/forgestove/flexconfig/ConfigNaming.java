@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.nio.file.*;
 /** 配置文件名与路径的来源；负责把旧命名 {@code <modId>.toml} 迁移为 {@code <modId>-<type>.toml}。 */
-public final class ConfigNaming {
+public class ConfigNaming {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final String SERVER_CONFIG_DIR = "serverconfig";
 	public static String fileName(String modId, ConfigType type, @Nullable String explicit) {

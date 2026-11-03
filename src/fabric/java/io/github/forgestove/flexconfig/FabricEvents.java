@@ -12,7 +12,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
  * {@code ServerAboutToStartEvent}（世界加载前）与 {@code ServerStartingEvent}（加载后）两档，
  * Fabric 只有 {@code SERVER_STARTING} 一档，故两者都压到这里。注册期配置已就绪，早一点应用锁无害。
  */
-public final class FabricEvents implements ModInitializer {
+public class FabricEvents implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ConfigNetwork.register(new FabricPayloads());

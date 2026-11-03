@@ -1,4 +1,4 @@
-package demo;
+package io.github.forgestove.flexconfig.demo;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import io.github.forgestove.flexconfig.FlexConfig;
@@ -7,8 +7,8 @@ import io.github.forgestove.flexconfig.api.*;
 import java.awt.Point;
 import java.util.*;
 @Config(FlexConfig.ID)
-@SuppressWarnings("unused") // 配置字段全部由反射读取
-public final class DemoConfig {
+@SuppressWarnings("unused")
+public class DemoConfig {
 	@Category public Toggles toggles = new Toggles();
 	@Category public Numbers numbers = new Numbers();
 	public enum Theme {
@@ -22,7 +22,6 @@ public final class DemoConfig {
 		@RequiresRestart public boolean heavyFeature = false;
 		@Category(false) public Nested nested = new Nested();
 		@Category(false) public Extras extras = new Extras();
-		// —— 以下纯粹凑数量，凑够一屏好测滚动条 ——
 		public boolean fadeIn = true;
 		public boolean rippleEffect = false;
 		public boolean compactRows = false;
@@ -73,11 +72,11 @@ public final class DemoConfig {
 	public static class Choices {
 		@StringLength(min = 1, max = 32) public String name = "flexconfig";
 		public Theme theme = Theme.Dark;
-		public List<String> keywords = new ArrayList<>(List.of("ore", "ui", "demo"));
+		public List<String> keywords = new ArrayList<>(List.of("flex", "ui", "demo"));
 		public List<Theme> themeCycle = new ArrayList<>(List.of(Theme.Dark, Theme.Light));
 		public Point offset = new Point(0, 0);
 		public Key toggleKey = InputConstants.UNKNOWN;
-		@StringLength(max = 64) public String description = "Ore UI demo";
+		@StringLength(max = 64) public String description = "UI demo";
 		public Theme fallbackTheme = Theme.Default;
 		public Theme hoverTheme = Theme.Light;
 		public List<String> aliases = new ArrayList<>(List.of("fc", "flex"));

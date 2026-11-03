@@ -4,7 +4,7 @@ import io.github.forgestove.flexconfig.api.Order;
 import java.lang.invoke.*;
 import java.lang.reflect.*;
 import java.util.*;
-public final class FieldAccess {
+public class FieldAccess {
 	/**
 	 * 按 {@link Order @Order} 值排序，同值者保持声明顺序，无注解者视为 0。
 	 * 配置树与序列化器须共用本方法，否则会出现「GUI 能看到但永不落盘」一类不一致。
