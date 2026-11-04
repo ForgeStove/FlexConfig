@@ -32,9 +32,24 @@ public class ConfigSerializer<C> {
 		if (value == null) return warnNull(field, "value is null");
 		if (field.isAnnotationPresent(ColorValue.class) && !(value instanceof Integer))
 			return warnNull(field, "color value is not an integer");
+		return toTomlElement(field, value);
+	}
+	/** 标量、点、集合与普通对象统一转换；任意一层失败则整条放弃。 */
+	@Nullable
+	private static Object toTomlElement(Field field, @Nullable Object value) {
+		if (value == null) return warnNull(field, "value is null");
 		if (value instanceof Point point) return pointConfig(point);
+		if (value.getClass().isArray()) return toTomlList(field, FieldAccess.arrayToList(value));
 		if (value instanceof List<?> list) return toTomlList(field, list);
-		return scalar(field, value);
+		if (FieldAccess.isSimpleType(value.getClass())) return scalar(field, value);
+		if (!isConfigObject(value.getClass())) return warnNull(field, "unsupported type " + value.getClass().getName());
+		return objectConfig(value);
+	}
+	/** 只有用户自己的普通对象才写成子表；引擎与 JDK 类型保持原有的「跳过」行为。 */
+	private static boolean isConfigObject(Class<?> type) {
+		var name = type.getName();
+		return !name.startsWith("java.") && !name.startsWith("javax.") && !name.startsWith("com.mojang.") && !name.startsWith(
+			"net.minecraft.");
 	}
 	/** 出现不支持的列表元素时整条放弃，返回 {@code null}。 */
 	@Nullable
@@ -45,11 +60,20 @@ public class ConfigSerializer<C> {
 				warnNull(field, "list contains a null element");
 				return null;
 			}
-			var converted = scalar(field, element);
+			var converted = toTomlElement(field, element);
 			if (converted == null) return null;
 			result.add(converted);
 		}
 		return result;
+	}
+	/** 普通对象写成子表；{@code @Category} 字段同样递归成子表。 */
+	private static CommentedConfig objectConfig(Object value) {
+		var config = inMemory();
+		for (var subField : FieldAccess.collectOrderedFields(value.getClass())) {
+			var subValue = toTomlElement(subField, FieldAccess.getFieldValue(subField, value));
+			if (subValue != null) config.set(subField.getName(), subValue);
+		}
+		return config;
 	}
 	@Nullable
 	private static Object scalar(Field field, Object value) {
@@ -63,6 +87,7 @@ public class ConfigSerializer<C> {
 			case Float floatValue -> finite(field, floatValue);
 			case Enum<?> anEnum -> anEnum.name();
 			case String string -> string;
+			case Character character -> String.valueOf(character);
 			case null, default -> warnNull(field, "unsupported type " + Objects.requireNonNull(value).getClass().getName());
 		};
 	}
@@ -105,39 +130,87 @@ public class ConfigSerializer<C> {
 	}
 	/** 出现不支持的元素时整条放弃，返回 {@code null}。 */
 	@Nullable
-	private static List<Object> toList(Field field, List<?> raw) {
-		var elementType = FieldAccess.elementType(field);
-		if (elementType == null) {
+	private static List<Object> toList(Field field, @Nullable ElementType shape, List<?> raw) {
+		if (shape == null) {
 			LOGGER.warn("Skipping option '{}': raw List without an element type is not supported", field.getName());
 			return null;
 		}
 		var result = new ArrayList<>(raw.size());
 		for (var element : raw) {
-			var converted = toElement(field, elementType, element);
+			var converted = toElement(field, shape, element);
 			if (converted == null) return null;
 			result.add(converted);
 		}
 		return result;
 	}
 	@Nullable
-	private static Object toElement(Field field, Class<?> elementType, @Nullable Object element) {
+	private static Object toElement(Field field, ElementType shape, @Nullable Object element) {
 		if (element == null) return warnNull(field, "list contains a null element");
+		if (shape.isList()) {
+			if (!(element instanceof List<?> nested)) return warnNull(field, "nested list element is not a list");
+			return toList(field, shape.element(), nested);
+		}
+		if (shape.isArray()) {
+			if (!(element instanceof List<?> nested)) return warnNull(field, "nested array element is not a list");
+			var list = toList(field, shape.element(), nested);
+			return list == null ? null : FieldAccess.listToArray(shape.raw().getComponentType(), list);
+		}
+		var elementType = shape.raw();
 		if (elementType.isInstance(element)) return element;
 		if (elementType.isEnum()) {
-			if (element instanceof String name) return Enum.valueOf(elementType.asSubclass(Enum.class), name);
+			if (element instanceof String name) return enumValue(elementType, name);
 			return warnNull(field, "list element is not an enum name");
 		}
-		if (element instanceof Number num) {
-			if (elementType == Integer.class) return num.intValue();
-			if (elementType == Long.class) return num.longValue();
-			if (elementType == Double.class) return num.doubleValue();
-			if (elementType == Float.class) return num.floatValue();
-			if (elementType == Short.class) return num.shortValue();
-			if (elementType == Byte.class) return num.byteValue();
-			if (elementType == String.class) return num.toString();
-			return warnNull(field, "unsupported list element type " + elementType.getSimpleName());
+		switch (element) {
+			case CommentedConfig pointConfig when elementType == Point.class -> {
+				return new Point(pointConfig.getInt("x"), pointConfig.getInt("y"));
+			}
+			case String string when elementType == Character.class || elementType == char.class -> {
+				return string.length() == 1 ? string.charAt(0) : warnNull(field, "character element is not a single character");
+			}
+			case CommentedConfig config when !FieldAccess.isSimpleType(elementType) && isConfigObject(elementType) -> {
+				return readObject(field, elementType, config);
+			}
+			case Number num -> {
+				if (elementType == Integer.class || elementType == int.class) return num.intValue();
+				if (elementType == Long.class || elementType == long.class) return num.longValue();
+				if (elementType == Double.class || elementType == double.class) return num.doubleValue();
+				if (elementType == Float.class || elementType == float.class) return num.floatValue();
+				if (elementType == Short.class || elementType == short.class) return num.shortValue();
+				if (elementType == Byte.class || elementType == byte.class) return num.byteValue();
+				if (elementType == String.class) return num.toString();
+				return warnNull(field, "unsupported list element type " + elementType.getSimpleName());
+			}
+			default -> {
+			}
 		}
 		return warnNull(field, "list element does not match " + elementType.getSimpleName());
+	}
+	/** 运行期才知道枚举类型，类型正确性由 {@code isEnum()} 前置检查保证。 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static Object enumValue(Class<?> type, String name) {
+		return Enum.valueOf((Class) type, name);
+	}
+	/** 列表元素是普通对象时按字段名反序列化。 */
+	@Nullable
+	private static Object readObject(Field field, Class<?> type, CommentedConfig config) {
+		var instance = FieldAccess.newInstance(type);
+		if (instance == null) return warnNull(field, "cannot instantiate nested object type " + type.getSimpleName());
+		for (var subField : FieldAccess.collectOrderedFields(type)) {
+			var raw = config.get(subField.getName());
+			if (raw == null) continue;
+			try {
+				if (!applyValue(instance, subField, raw)) LOGGER.warn(
+					"Ignoring nested field '{}': value '{}' does not match type {}",
+					subField.getName(),
+					raw,
+					subField.getType().getSimpleName()
+				);
+			} catch (Exception e) {
+				LOGGER.warn("Ignoring option '{}': failed to read nested value", subField.getName(), e);
+			}
+		}
+		return instance;
 	}
 	/** 快捷键段：键是配置路径（含点号），必须按字面键写入，否则点号会被解析成层级。 */
 	private static void writeKeybinds(CommentedConfig toml, Map<String, String> keybinds) {
@@ -173,6 +246,74 @@ public class ConfigSerializer<C> {
 	}
 	public static CommentedConfig inMemory() {
 		return CommentedConfig.of(LinkedHashMap::new, InMemoryCommentedFormat.defaultInstance());
+	}
+	/** 含范围校正；类型不匹配或不受支持时返回 {@code false}，由调用方保留默认值。 */
+	private static boolean applyValue(Object category, Field field, Object value) throws IllegalAccessException {
+		field.setAccessible(true);
+		var type = field.getType();
+		if (type.isArray()) {
+			if (!(value instanceof List<?> raw)) return false;
+			var elementType = FieldAccess.elementShape(field);
+			if (elementType == null) return false;
+			var list = toList(field, elementType, raw);
+			if (list == null) return false;
+			field.set(category, FieldAccess.listToArray(type.getComponentType(), list));
+			return true;
+		}
+		if (type == Point.class) {
+			if (!(value instanceof CommentedConfig cc)) return false;
+			field.set(category, new Point(cc.getInt("x"), cc.getInt("y")));
+			return true;
+		}
+		if (type.isEnum()) {
+			if (!(value instanceof String name)) return false;
+			field.set(category, enumValue(type, name));
+			return true;
+		}
+		if (value instanceof Number num) {
+			if (type == int.class || type == Integer.class) field.setInt(category, FieldValidators.correct(field, num.intValue()));
+			else if (type == long.class || type == Long.class) field.setLong(category, FieldValidators.correct(field, num.longValue()));
+			else if (type == double.class || type == Double.class)
+				field.setDouble(category, FieldValidators.correct(field, num.doubleValue()));
+			else if (type == float.class || type == Float.class) field.setFloat(category, FieldValidators.correct(field,
+				num.floatValue()));
+			else if (type == byte.class || type == Byte.class) field.setByte(category, num.byteValue());
+			else if (type == short.class || type == Short.class) field.setShort(category, num.shortValue());
+			else return setString(category, field, num.toString());
+			return true;
+		}
+		if (List.class.isAssignableFrom(type)) {
+			if (!(value instanceof List<?> raw)) return false;
+			var elementType = FieldAccess.elementShape(field);
+			if (elementType == null) {
+				LOGGER.warn("Option '{}' uses a raw List; declare a generic element type", field.getName());
+				return false;
+			}
+			var list = toList(field, elementType, raw);
+			if (list == null) return false;
+			field.set(category, list);
+			return true;
+		}
+		if (value instanceof CommentedConfig config && !FieldAccess.isSimpleType(type) && isConfigObject(type)) {
+			var object = readObject(field, type, config);
+			if (object == null) return false;
+			field.set(category, object);
+			return true;
+		}
+		// 原始 boolean 的 isInstance 恒为 false，需单独放行
+		if (value instanceof Boolean bool && (type == boolean.class || type == Boolean.class)) {
+			field.set(category, bool);
+			return true;
+		}
+		if (value instanceof String string && (type == char.class || type == Character.class)) {
+			if (string.length() != 1) return false;
+			field.set(category, string.charAt(0));
+			return true;
+		}
+		if (value instanceof String string) return setString(category, field, string);
+		if (!type.isInstance(value)) return false;
+		field.set(category, value);
+		return true;
 	}
 	public void setTargetPath(Path targetPath) {
 		this.targetPath = targetPath;
@@ -319,49 +460,6 @@ public class ConfigSerializer<C> {
 				LOGGER.warn("Ignoring option '{}': failed to read value '{}'", field.getName(), value, e);
 			}
 		}
-	}
-	/** 含范围校正；类型不匹配或不受支持时返回 {@code false}，由调用方保留默认值。 */
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	private boolean applyValue(Object category, Field field, Object value) throws IllegalAccessException {
-		var type = field.getType();
-		if (type == Point.class) {
-			if (!(value instanceof CommentedConfig cc)) return false;
-			field.set(category, new Point(cc.getInt("x"), cc.getInt("y")));
-			return true;
-		}
-		if (type.isEnum()) {
-			if (!(value instanceof String name)) return false;
-			field.set(category, Enum.valueOf((Class) type, name));
-			return true;
-		}
-		if (value instanceof Number num) {
-			if (type == int.class || type == Integer.class) field.setInt(category, FieldValidators.correct(field, num.intValue()));
-			else if (type == long.class || type == Long.class) field.setLong(category, FieldValidators.correct(field, num.longValue()));
-			else if (type == double.class || type == Double.class)
-				field.setDouble(category, FieldValidators.correct(field, num.doubleValue()));
-			else if (type == float.class || type == Float.class) field.setFloat(category, FieldValidators.correct(field,
-				num.floatValue()));
-			else if (type == byte.class || type == Byte.class) field.setByte(category, num.byteValue());
-			else if (type == short.class || type == Short.class) field.setShort(category, num.shortValue());
-			else return setString(category, field, num.toString());
-			return true;
-		}
-		if (List.class.isAssignableFrom(type)) {
-			if (!(value instanceof List<?> raw)) return false;
-			var list = toList(field, raw);
-			if (list == null) return false;
-			field.set(category, list);
-			return true;
-		}
-		// 原始 boolean 的 isInstance 恒为 false，需单独放行
-		if (value instanceof Boolean bool && (type == boolean.class || type == Boolean.class)) {
-			field.set(category, bool);
-			return true;
-		}
-		if (value instanceof String string) return setString(category, field, string);
-		if (!type.isInstance(value)) return false;
-		field.set(category, value);
-		return true;
 	}
 	public static class Builder<C> {
 		private final Class<C> configClass;

@@ -24,8 +24,10 @@ public class LockValueCodec {
 		if (node.isColorValue()) return toInt(raw);
 		if (type == String.class) return raw;
 		if (type == List.class) return toList(node.getElementType(), raw);
+
 		if (type == Point.class) return toPoint(raw);
 		if (type == Boolean.class) return raw.equals("true") ? Boolean.TRUE : raw.equals("false") ? Boolean.FALSE : null;
+		if (type == Character.class) return raw.length() == 1 ? raw.charAt(0) : null;
 		if (type.isEnum()) return toEnum(type, raw);
 		return toNumber(type, raw);
 	}
@@ -36,8 +38,10 @@ public class LockValueCodec {
 			return null;
 		}
 	}
-	/** 接受逗号分隔与 {@code [a, b]} 两种写法，元素按 {@code List<T>} 的声明类型转换。 */
-	private static @Nullable Object toList(@Nullable Class<?> elementType, String raw) {
+	/** 接受逗号分隔与 {@code [a, b]} 两种写法，元素按 {@code List<T>} 的声明类型转换；嵌套集合不支持锁定。 */
+	private static @Nullable Object toList(@Nullable ElementType shape, String raw) {
+		if (shape == null || shape.isCollection()) return null;
+		var elementType = shape.raw();
 		var body = raw.trim();
 		if (body.startsWith("[") && body.endsWith("]")) body = body.substring(1, body.length() - 1).trim();
 		if (body.isEmpty()) return List.of();
@@ -45,7 +49,7 @@ public class LockValueCodec {
 		for (var part : body.split(",")) {
 			var token = part.trim();
 			if (token.isEmpty()) continue;
-			var element = elementType == null || elementType == String.class ? token : toElement(elementType, token);
+			var element = elementType == String.class ? token : toElement(elementType, token);
 			if (element == null) return null;
 			result.add(element);
 		}
@@ -76,6 +80,8 @@ public class LockValueCodec {
 		try {
 			if (type == Integer.class) return Integer.decode(raw);
 			if (type == Long.class) return Long.decode(raw);
+			if (type == Byte.class) return Byte.parseByte(raw);
+			if (type == Short.class) return Short.parseShort(raw);
 			if (type == Float.class) return Float.parseFloat(raw);
 			if (type == Double.class) return Double.parseDouble(raw);
 		} catch (NumberFormatException ignored) {}
@@ -83,6 +89,7 @@ public class LockValueCodec {
 	}
 	private static @Nullable Object toElement(Class<?> elementType, String token) {
 		if (elementType == Boolean.class) return token.equals("true") ? Boolean.TRUE : token.equals("false") ? Boolean.FALSE : null;
+		if (elementType == Character.class) return token.length() == 1 ? token.charAt(0) : null;
 		if (elementType.isEnum()) return toEnum(elementType, token);
 		return toNumber(elementType, token);
 	}

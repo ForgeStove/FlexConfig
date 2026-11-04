@@ -30,6 +30,15 @@ public class FlexScrollBar extends AbstractWidget {
 	public void step(double step) {
 		this.step = step;
 	}
+	public double scrollAmount() {
+		return scroll;
+	}
+	/** 直接落位，供键盘导航等外部逻辑同步位置。 */
+	public void seek(double amount) {
+		var max = Math.max(0, owner.maxScroll());
+		scroll = target = Math.clamp(amount, 0, max);
+		owner.applyScroll(scroll);
+	}
 	/** 每帧渲染内容之前调一次：平滑逼近目标，并把结果写给 {@link ScrollTarget}。 */
 	public void update() {
 		var max = Math.max(0, owner.maxScroll());

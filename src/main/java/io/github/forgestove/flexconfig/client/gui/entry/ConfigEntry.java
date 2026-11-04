@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList.Entry;
 import net.minecraft.util.FormattedCharSequence;
@@ -33,6 +34,12 @@ public abstract class ConfigEntry extends Entry<ConfigEntry> {
 		return null;
 	}
 	public void refresh() {}
+	/** 行内容器都画完之后再画：展开的下拉菜单在这里覆盖后续条目。 */
+	public void lateRender(GuiGraphics gui, int mouseX, int mouseY, float delta) {}
+	/** 行外额外需要的高度（如展开的下拉菜单）；{@code -1} 表示没有。 */
+	public int getMorePossibleHeight() {
+		return -1;
+	}
 	public boolean hasError() {
 		return false;
 	}

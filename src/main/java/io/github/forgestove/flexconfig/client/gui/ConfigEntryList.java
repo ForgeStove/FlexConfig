@@ -1,6 +1,7 @@
 package io.github.forgestove.flexconfig.client.gui;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.api.CrossRefreshable;
+import io.github.forgestove.flexconfig.client.gui.api.OverlayDropdown;
 import io.github.forgestove.flexconfig.client.gui.components.*;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import net.minecraft.client.gui.GuiGraphics;
@@ -49,6 +50,16 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> i
 	@Override
 	public void renderWidget(@NotNull GuiGraphics gui, int mouseX, int mouseY, float delta) {
 		super.renderWidget(gui, mouseX, mouseY, delta);
+		// Cloth 式二次绘制：先把已排队的行背景/文字在列表 scissor 下 flush，再画展开菜单
+		gui.enableScissor(getX(), getY(), getX() + getWidth(), getY() + getHeight());
+		gui.flush();
+		var children = children();
+		for (var i = 0; i < children.size(); i++) {
+			if (getRowBottom(i) < getY() || getRowTop(i) > getBottom()) continue;
+			children.get(i).lateRender(gui, mouseX, mouseY, delta);
+		}
+		gui.disableScissor();
+		if (isOverOpenDropdown(mouseX, mouseY)) return;
 		var entry = getHovered();
 		if (entry == null) return;
 		var widgetTooltip = entry.getHoveredWidgetTooltip(mouseX, mouseY);
@@ -68,12 +79,41 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntry> i
 	public int getMaxScroll() {
 		return Math.max(0, super.getMaxScroll() - ConfigEntry.GAP / 2);
 	}
+	/** 展开的下拉菜单超出本行，需要计入滚动范围（同 Cloth 的 morePossibleHeight）。 */
+	@Override
+	protected int getMaxPosition() {
+		var max = super.getMaxPosition();
+		var position = headerHeight;
+		for (var entry : children()) {
+			position += itemHeight;
+			var extra = entry.getMorePossibleHeight();
+			if (extra >= 0) max = Math.max(max, position + extra);
+		}
+		return max;
+	}
+	private boolean isOverOpenDropdown(double mouseX, double mouseY) {
+		for (var entry : children())
+			if (entry instanceof OverlayDropdown dropdown && dropdown.isDropdownOpen() && dropdown.isMouseOverDropdown(mouseX, mouseY))
+				return true;
+		return false;
+	}
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		for (var entry : children()) {
+			if (!(entry instanceof OverlayDropdown dropdown) || !dropdown.isDropdownOpen()) continue;
+			if (dropdown.isMouseOverDropdown(mouseX, mouseY)) return dropdown.dropdownMouseClicked(mouseX, mouseY, button);
+		}
+		return super.mouseClicked(mouseX, mouseY, button);
+	}
 	/** 原版的滚动条区域拖拽判定关掉：滚动条由 {@link FlexScrollBar} 自己处理。 */
 	@Override
 	protected void updateScrollingState(double mouseX, double mouseY, int button) {}
 	/** 滚轮转交给滚动条；没溢出时滚动条不响应，列表自身也不滚。 */
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+		for (var entry : children())
+			if (entry instanceof OverlayDropdown dropdown && dropdown.isDropdownOpen() && dropdown.isMouseOverDropdown(mouseX, mouseY))
+				return dropdown.dropdownMouseScrolled(mouseX, mouseY, vertical);
 		scrollbar.wheel(vertical);
 		return true;
 	}

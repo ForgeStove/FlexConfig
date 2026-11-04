@@ -45,6 +45,9 @@ public abstract class GenericValueConfigEntry<C, V> extends ValueConfigEntry<C, 
 	public static boolean isZero(@NotNull String string) {
 		return string.isEmpty() || string.equals("-");
 	}
+	protected FlexEditBox getInputField() {
+		return inputField;
+	}
 	private String text(@Nullable V value) {
 		return value == null ? "" : formatter.apply(value);
 	}

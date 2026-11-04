@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Map.Entry;
 /** 文件路径由 {@link ConfigNaming} 解析；SERVER 型要进世界才能定位存档目录，故构造期不读盘，其余类型在构造期读取。 */
 @SuppressWarnings("unused")
 public class ConfigHandler<C, V> {
@@ -207,6 +208,41 @@ public class ConfigHandler<C, V> {
 	}
 	public Map<String, String> getAllTriggerKeybinds() {
 		return Collections.unmodifiableMap(triggerKeybinds);
+	}
+	/** 删除列表元素后，同级后续元素的快捷键路径整体前移一位；被删元素自身的绑定一并丢弃。 */
+	public void shiftElementKeybinds(String parentPath, int removedIndex) {
+		var prefix = parentPath + "[";
+		var shiftedBindings = new ArrayList<Entry<String, String>>();
+		var shiftedActions = new LinkedHashMap<String, Runnable>();
+		var iterator = triggerKeybinds.entrySet().iterator();
+		while (iterator.hasNext()) {
+			var entry = iterator.next();
+			var path = entry.getKey();
+			if (!path.startsWith(prefix)) continue;
+			var close = path.indexOf(']', prefix.length());
+			if (close < 0) continue;
+			int index;
+			try {
+				index = Integer.parseInt(path.substring(prefix.length(), close));
+			} catch (NumberFormatException e) {
+				continue;
+			}
+			if (index < removedIndex) continue;
+			iterator.remove();
+			var action = triggerActions.remove(path);
+			if (index == removedIndex) continue;
+			var shifted = "%s[%d]%s".formatted(parentPath, index - 1, path.substring(close + 1));
+			shiftedBindings.add(Map.entry(shifted, entry.getValue()));
+			if (action != null) shiftedActions.put(shifted, action);
+		}
+		shiftedBindings.forEach(entry -> triggerKeybinds.put(entry.getKey(), entry.getValue()));
+		triggerActions.putAll(shiftedActions);
+	}
+	/** 列表整体重置时丢弃挂在其元素上的全部快捷键。 */
+	public void clearElementKeybinds(String parentPath) {
+		var prefix = parentPath + "[";
+		triggerKeybinds.keySet().removeIf(path -> path.startsWith(prefix));
+		triggerActions.keySet().removeIf(path -> path.startsWith(prefix));
 	}
 	public void tickTriggerKeybinds(long window, Map<String, Boolean> previousStates) {
 		triggerKeybinds.forEach((path, value) -> {

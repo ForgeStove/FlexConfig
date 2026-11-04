@@ -123,7 +123,7 @@ public class CategoryConfigNode<C> implements ConfigNode<C> {
 			return this;
 		}
 		public <V> Builder<C> value(UnaryOperator<ValueConfigNode.Builder<C, V>> valueBuilder) {
-			childrenBuilder.add(valueBuilder.apply(ValueConfigNode.builder()).category(node).build());
+			childrenBuilder.add(valueBuilder.apply(ValueConfigNode.builder()).build());
 			return this;
 		}
 		public Builder<C> category(UnaryOperator<Builder<C>> categoryBuilder) {

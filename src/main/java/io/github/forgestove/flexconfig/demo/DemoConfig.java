@@ -76,6 +76,22 @@ public class DemoConfig {
 		public List<Theme> themeCycle = new ArrayList<>(List.of(Theme.Dark, Theme.Light));
 		public Point offset = new Point(0, 0);
 		public Key toggleKey = InputConstants.UNKNOWN;
+		public int[] weights = {1, 2, 3};
+		public String[] tags = {"flex", "config"};
+		public List<Rule> rules = new ArrayList<>(List.of(new Rule("first", 1), new Rule("second", 2)));
+		public List<List<Integer>> matrix = new ArrayList<>(List.of(new ArrayList<>(List.of(1, 2)), new ArrayList<>(List.of(3, 4))));
+		public static class Rule {
+			public String name;
+			public int value;
+			@Category public Extra extra = new Extra();
+			public Rule(String name, int value) {
+				this.name = name;
+				this.value = value;
+			}
+			public static class Extra {
+				public boolean enabled = true;
+			}
+		}
 		@StringLength(max = 64) public String description = "UI demo";
 		public Theme fallbackTheme = Theme.Default;
 		public Theme hoverTheme = Theme.Light;

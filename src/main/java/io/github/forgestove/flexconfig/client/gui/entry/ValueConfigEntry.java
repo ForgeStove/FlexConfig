@@ -22,6 +22,8 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 	public final FlexIconButton lockButton;
 	public final ConfigCategoryTab<C, V> tab;
 	public final List<AbstractWidget> children = new ArrayList<>();
+	/** 子类 render 之外额外绘制的控件（如集合元素行尾的删除按钮）。 */
+	public final List<AbstractWidget> extraWidgets = new ArrayList<>();
 	public final ValueConfigNode<C, V> node;
 	public final Component label;
 	@Nullable public final List<FormattedCharSequence> tooltip;
@@ -51,22 +53,23 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 	}
 	public void resetToDefault() {
 		if (isReadOnly()) return;
-		var path = node.getPath();
-		var pending = ClientLockManager.getPendingLock(fileKey(), path);
-		if (pending != Boolean.FALSE) ClientLockManager.clearPendingLock(fileKey(), path);
+		if (!node.isElement()) clearPendingLock();
 		node.resetToDefault();
 		tab.screen.refresh();
 	}
 	public void resetToActive() {
-		var path = node.getPath();
-		var pending = ClientLockManager.getPendingLock(fileKey(), path);
-		if (pending != Boolean.FALSE) ClientLockManager.clearPendingLock(fileKey(), path);
+		if (!node.isElement()) clearPendingLock();
 		node.resetToActive(tab.config);
 		tab.screen.refresh();
 	}
+	private void clearPendingLock() {
+		var path = node.getLockPath();
+		var pending = ClientLockManager.getPendingLock(fileKey(), path);
+		if (pending != Boolean.FALSE) ClientLockManager.clearPendingLock(fileKey(), path);
+	}
 	/** 切换待处理的锁定状态（延迟至保存时执行）。 */
 	private void onLockToggle() {
-		var path = node.getPath();
+		var path = node.getLockPath();
 		var shouldLock = !isLocked(); // effective state, considering pending
 		ClientLockManager.setPendingLock(fileKey(), path, shouldLock);
 		tab.screen.refresh();
@@ -96,7 +99,7 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 	public void refresh() {
 		var locked = isLocked();
 		var readOnly = isReadOnly();
-		var hasPendingLock = Boolean.TRUE.equals(ClientLockManager.getPendingLock(fileKey(), node.getPath()));
+		var hasPendingLock = Boolean.TRUE.equals(ClientLockManager.getPendingLock(fileKey(), node.getLockPath()));
 		resetButton.active = !readOnly && !node.isDefaultValue(tab.config);
 		undoButton.active = !readOnly && !node.isActiveValue(tab.config);
 		validationError = node.validate(tab.config);
@@ -118,7 +121,7 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 	}
 	/** 待处理的锁定优先，未处理时回退到服务器确认的锁定。 */
 	public boolean isLocked() {
-		var path = node.getPath();
+		var path = node.getLockPath();
 		var pending = ClientLockManager.getPendingLock(fileKey(), path);
 		if (pending != null) return pending;
 		return ClientLockManager.isLocked(fileKey(), path);
@@ -138,7 +141,9 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		return errorTooltip;
 	}
 	private boolean shouldShowLockButton() {
-		if (!tab.screen.isLockable()) return false;   // SERVER 型不接受锁定
+		if (!tab.screen.isLockable() || node.isElement()) return false;   // SERVER 型不接受锁定；集合元素随列表一起锁
+		// 嵌套集合无法用「路径 → 标量」的锁格式表达
+		if (node.getValueType() == List.class && node.getElementType() != null && node.getElementType().isCollection()) return false;
 		if (ClientUtil.mc.player == null) return false;
 		if (ClientUtil.mc.isSingleplayer()) return false;
 		return ClientLockManager.hasReceivedSync();
@@ -161,13 +166,16 @@ public abstract class ValueConfigEntry<C, V> extends ConfigEntry {
 		if (isLocked()) label = label.copy().withStyle(ChatFormatting.GRAY, ChatFormatting.STRIKETHROUGH);
 		else if (!tab.screen.isEditable()) label = label.copy().withStyle(ChatFormatting.GRAY);
 		gui.drawString(ClientUtil.mc.font, label.getVisualOrderText(), x + indent, y + 5, -1, true);
+		var allWidgets = new ArrayList<AbstractWidget>(widgets.length + extraWidgets.size());
+		allWidgets.addAll(Arrays.asList(widgets));
+		allWidgets.addAll(extraWidgets);
 		var right = x + width;
-		for (var widget : widgets) {
+		for (var widget : allWidgets) {
 			if (!widget.visible) continue;
 			right -= widget.getWidth();
 			widget.setPosition(right, y);
 			right -= GAP;
 		}
-		for (var widget : widgets) if (widget.visible) widget.render(gui, mouseX, mouseY, delta);
+		for (var widget : allWidgets) if (widget.visible) widget.render(gui, mouseX, mouseY, delta);
 	}
 }

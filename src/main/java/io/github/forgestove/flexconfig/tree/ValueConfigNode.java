@@ -1,4 +1,6 @@
 package io.github.forgestove.flexconfig.tree;
+import io.github.forgestove.flexconfig.ElementType;
+import io.github.forgestove.flexconfig.FieldAccess;
 import io.github.forgestove.flexconfig.api.*;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
@@ -12,7 +14,7 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	private Component tooltip;
 	private Class<? extends V> valueType;
 	private Field field;
-	private Class<?> elementType;
+	private ElementType elementType;
 	private RestartType requiredRestart;
 	private V pendingValue;
 	private ColorValue colorValue;
@@ -23,7 +25,12 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	private ConfigChangeCallback changeCallback;
 	private V defaultValue;
 	private V editingValue;
-	private CategoryConfigNode<C> category;
+	private V baselineValue;
+	/** 绑定在集合元素上：值直接读写目标对象，不保存独立编辑副本。 */
+	private boolean writeThrough;
+	/** 集合元素或元素字段：不参与锁定与快捷键绑定。 */
+	private boolean element;
+	private String lockPath;
 	public static <C, V> Builder<C, V> builder() {
 		return new Builder<>();
 	}
@@ -35,13 +42,23 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public Field getField() {
 		return field;
 	}
-	@Nullable
-	public Class<?> getElementType() {
+	public @Nullable ElementType getElementType() {
 		return elementType;
+	}
+	public boolean isElement() {
+		return element;
+	}
+	/** 锁定状态挂在所属集合的路径上，元素自身没有独立锁。 */
+	public String getLockPath() {
+		return lockPath != null ? lockPath : path;
 	}
 	@NotNull
 	public Component getTitle() {
 		return title;
+	}
+	@NotNull
+	public String getName() {
+		return name;
 	}
 	@Nullable
 	@Override
@@ -50,11 +67,11 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	}
 	@Override
 	public void resetToDefault() {
-		setEditingValue(getDefaultValue());
+		setEditingValue(copyValue(getDefaultValue()));
 	}
 	@Override
 	public void resetToActive(C config) {
-		setEditingValue(currentBase(config));
+		setEditingValue(copyValue(writeThrough ? baselineValue : currentBase(config)));
 	}
 	@Override
 	public @Nullable RestartType restartType(C config) {
@@ -62,11 +79,11 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	}
 	@Override
 	public boolean isDefaultValue(C config) {
-		return Objects.equals(getDefaultValue(), getEditingValue(config));
+		return FieldAccess.deepEquals(getDefaultValue(), getEditingValue(config));
 	}
 	@Override
 	public boolean isActiveValue(C config) {
-		return Objects.equals(currentBase(config), getEditingValue(config));
+		return FieldAccess.deepEquals(writeThrough ? baselineValue : currentBase(config), getEditingValue(config));
 	}
 	@Override
 	public @Nullable Component validate(C config) {
@@ -88,7 +105,7 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	}
 	@Override
 	public void applyRestart(C saved, C active, RestartType restartType) {
-		if (requiredRestart != restartType || pendingValue == null) return;
+		if (writeThrough || requiredRestart != restartType || pendingValue == null) return;
 		var oldValue = getActiveValue(active);
 		var newValue = getActiveValue(saved);
 		pendingValue = null;
@@ -98,6 +115,7 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	}
 	@Override
 	public void writeEditingToConfig(C config) {
+		if (writeThrough) return;   // 已经直接写进集合元素
 		var oldValue = getActiveValue(config);
 		var newValue = getEditingValue(config);
 		if (requiredRestart == null) {
@@ -112,6 +130,10 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 		return path;
 	}
 	public void setEditingValue(V value) {
+		if (writeThrough) {
+			valueWriter.write(null, value);
+			return;
+		}
 		editingValue = value;
 	}
 	public V getDefaultValue() {
@@ -124,8 +146,12 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 		return valueReader.read(config);
 	}
 	public V getEditingValue(C config) {
-		if (editingValue == null) setEditingValue(currentBase(config));
+		if (writeThrough) return valueReader.read(config);
+		if (editingValue == null) editingValue = copyValue(currentBase(config));
 		return editingValue;
+	}
+	private V copyValue(V value) {
+		return FieldAccess.deepCopy(value);
 	}
 	public void setActiveValue(C config, V value) {
 		valueWriter.write(config, value);
@@ -169,7 +195,7 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 			node.field = field;
 			return this;
 		}
-		public Builder<C, V> elementType(@Nullable Class<?> elementType) {
+		public Builder<C, V> elementType(@Nullable ElementType elementType) {
 			node.elementType = elementType;
 			return this;
 		}
@@ -221,13 +247,25 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 			node.changeCallback = changeCallback;
 			return this;
 		}
-		public Builder<C, V> category(CategoryConfigNode<C> category) {
-			node.category = category;
+		public Builder<C, V> writeThrough(boolean writeThrough) {
+			node.writeThrough = writeThrough;
+			return this;
+		}
+		public Builder<C, V> element(boolean element) {
+			node.element = element;
+			return this;
+		}
+		public Builder<C, V> lockPath(String lockPath) {
+			node.lockPath = lockPath;
+			return this;
+		}
+		public Builder<C, V> baselineValue(@Nullable V baselineValue) {
+			node.baselineValue = baselineValue;
 			return this;
 		}
 		public ValueConfigNode<C, V> build() {
 			var n = node;
-			List.of(n.name, n.path, n.valueType, n.title, n.valueReader, n.valueWriter, n.category).forEach(Objects::requireNonNull);
+			List.of(n.name, n.path, n.valueType, n.title, n.valueReader, n.valueWriter).forEach(Objects::requireNonNull);
 			node = null;
 			return n;
 		}

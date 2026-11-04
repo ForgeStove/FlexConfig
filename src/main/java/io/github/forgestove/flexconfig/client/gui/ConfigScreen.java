@@ -4,6 +4,7 @@ import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.gui.api.CaptureHandler;
+import io.github.forgestove.flexconfig.client.gui.components.InlineDropdown;
 import io.github.forgestove.flexconfig.client.gui.entry.ConfigEntry;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.client.KeyMapping;
@@ -34,6 +35,8 @@ public class ConfigScreen<C, V> extends Screen {
 	private TabNavigationBar tabNavigationBar;
 	private Button cancelButton, saveButton;
 	private CaptureHandler capturingEntry;
+	/** 首次打开才重置编辑值；从子界面（颜色选择、下拉）返回时保留未保存的修改。 */
+	private boolean initialized;
 	private Map<String, String> savedTriggerKeybinds = Map.of();
 	public ConfigScreen(ConfigHandler<C, V> handler) {
 		super(handler.getConfigTree().getTitle());
@@ -47,6 +50,10 @@ public class ConfigScreen<C, V> extends Screen {
 	}
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (keyCode == GLFW.GLFW_KEY_ESCAPE && InlineDropdown.isAnyOpen()) {
+			InlineDropdown.closeOpen();
+			return true;
+		}
 		if (capturingEntry != null && capturingEntry.handleCaptureKey(keyCode)) return true;
 		if (tabNavigationBar != null && tabNavigationBar.keyPressed(keyCode)) {
 			cacheTabIndex();
@@ -77,10 +84,14 @@ public class ConfigScreen<C, V> extends Screen {
 	@Override
 	protected void init() {
 		capturingEntry = null;
-		ClientLockManager.clearPendingLocks();
-		savedTriggerKeybinds = new LinkedHashMap<>(handler.getAllTriggerKeybinds());
+		InlineDropdown.closeOpen();
+		if (!initialized) {
+			initialized = true;
+			ClientLockManager.clearPendingLocks();
+			savedTriggerKeybinds = new LinkedHashMap<>(handler.getAllTriggerKeybinds());
+			root.resetToActive(config);
+		}
 		tabs.clear();
-		root.resetToActive(config);
 		for (var category : root.categories()) {
 			var tab = new ConfigCategoryTab<>(this, category, config);
 			tabs.add(tab);
@@ -249,6 +260,7 @@ public class ConfigScreen<C, V> extends Screen {
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (capturingEntry != null && capturingEntry.handleCaptureMouse(button)) return true;
+		InlineDropdown.closeOpenIfOutside(mouseX, mouseY);
 		var result = super.mouseClicked(mouseX, mouseY, button);
 		cacheTabIndex();
 		return result;

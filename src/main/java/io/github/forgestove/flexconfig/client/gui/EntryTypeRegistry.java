@@ -43,11 +43,18 @@ public class EntryTypeRegistry {
 				? new SliderValueConfigEntry<>(tab, node, d -> d)
 				: new DoubleValueConfigEntry<>(tab, node)
 		);
-		register(Enum.class, EnumValueConfigEntry::new);
+		register(Byte.class, ByteValueConfigEntry::new);
+		register(Short.class, ShortValueConfigEntry::new);
+		register(Character.class, CharacterValueConfigEntry::new);
+		registerEnumEntry();
 		register(String.class, StringValueConfigEntry::new);
 		register(Key.class, KeybindValueConfigEntry::new);
 		register(Point.class, PointValueConfigEntry::new);
-		register(List.class, ListValueConfigEntry::new);
+	}
+	/** 枚举类型运行期才确定，注册入口在这里集中做一次裸类型桥接。 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static void registerEnumEntry() {
+		register(Enum.class, (tab, node) -> new EnumValueConfigEntry(tab, node));
 	}
 	private final List<FieldProvider> annotationProviders = new ArrayList<>();
 	private final List<FieldProvider> predicateProviders = new ArrayList<>();
@@ -67,9 +74,13 @@ public class EntryTypeRegistry {
 			(tab, node) -> List.of(factory.apply((ConfigCategoryTab<C, V>) tab, (ValueConfigNode<C, V>) node))
 		));
 	}
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static List<ConfigEntry> createValueEntries(ConfigCategoryTab<?, ?> tab, ValueConfigNode<?, ?> node) {
 		var registry = custom.get(tab.config.getClass());
-		var entries = registry == null ? null : registry.find(tab, node);
+		List<ConfigEntry> entries = registry == null ? null : registry.find(tab, node);
+		// 集合由元素行组成；自定义提供器仍可优先覆盖
+		if (entries == null && List.class.isAssignableFrom(node.getValueType()))
+			entries = CollectionValueConfigEntry.create((ConfigCategoryTab) tab, (ValueConfigNode) node);
 		if (entries == null) entries = defaultRegistry.find(tab, node);
 		if (entries == null) entries = List.of(new TextConfigEntry(Translation.UNSUPPORTED_TYPE.copy()
 			.append(node.getValueType().getSimpleName())

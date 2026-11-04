@@ -1,21 +1,37 @@
 package io.github.forgestove.flexconfig.client.gui.entry;
+
 import io.github.forgestove.flexconfig.ConfigTranslation;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.gui.ConfigCategoryTab;
+import io.github.forgestove.flexconfig.client.gui.api.OverlayDropdown;
+import io.github.forgestove.flexconfig.client.gui.components.InlineDropdown;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
-@SuppressWarnings("rawtypes")
-public class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C, Enum> {
-	private final Button dropdownButton;
+
+import java.util.ArrayList;
+import java.util.List;
+public class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C, Enum<?>> implements OverlayDropdown {
+	private final InlineDropdown<Enum<?>> dropdown;
 	private final String enumClassName;
-	public EnumValueConfigEntry(ConfigCategoryTab<C, Enum> tab, ValueConfigNode<C, Enum> node) {
+	public EnumValueConfigEntry(ConfigCategoryTab<C, Enum<?>> tab, ValueConfigNode<C, Enum<?>> node) {
 		super(tab, node);
 		enumClassName = node.getValueType().getSimpleName();
-		dropdownButton = Button.builder(getDisplayComponent(getValue()), b -> selectValue(nextValue())).size(HALF_VALUE_WIDTH, HEIGHT).build();
-		children.add(dropdownButton);
+		var constants = node.getValueType().getEnumConstants();
+		var values = new ArrayList<>(List.of(constants));
+		dropdown = new InlineDropdown<>(
+			WIDTH,
+			HEIGHT,
+			values,
+			this::getValue,
+			this::getDisplayComponent,
+			this::selectValue,
+			tab::listTop,
+			tab::listBottom
+		);
+		children.add(dropdown.topCell());
 		registerKeybindTask();
 	}
 	private Component getDisplayComponent(Enum<?> value) {
@@ -23,7 +39,7 @@ public class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C, Enum>
 	}
 	private Enum<?> nextValue() {
 		var values = node.getValueType().getEnumConstants();
-		return (Enum<?>) values[(getValue().ordinal() + 1) % values.length];
+		return values[(getValue().ordinal() + 1) % values.length];
 	}
 	@Override
 	protected void registerKeybindTask() {
@@ -37,15 +53,38 @@ public class EnumValueConfigEntry<C> extends CapturableValueConfigEntry<C, Enum>
 	}
 	@Override
 	protected AbstractWidget getValueWidget() {
-		return dropdownButton;
+		return dropdown.topCell();
 	}
 	@Override
 	public void refresh() {
 		super.refresh();
-		dropdownButton.setMessage(getDisplayComponent(getValue()));
+		dropdown.refresh();
+	}
+	@Override
+	public void lateRender(GuiGraphics gui, int mouseX, int mouseY, float delta) {
+		dropdown.lateRender(gui, mouseX, mouseY, delta);
+	}
+	@Override
+	public int getMorePossibleHeight() {
+		return dropdown.extraHeight();
+	}
+	@Override
+	public boolean isDropdownOpen() {
+		return dropdown.expanded();
+	}
+	@Override
+	public boolean isMouseOverDropdown(double mouseX, double mouseY) {
+		return dropdown.isMouseOverMenu(mouseX, mouseY);
+	}
+	@Override
+	public boolean dropdownMouseClicked(double mouseX, double mouseY, int button) {
+		return dropdown.menuClicked(mouseX, mouseY, button);
+	}
+	@Override
+	public boolean dropdownMouseScrolled(double mouseX, double mouseY, double vertical) {
+		return dropdown.menuScrolled(mouseX, mouseY, vertical);
 	}
 	private void selectValue(Enum<?> value) {
 		setValue(value);
-		dropdownButton.setMessage(getDisplayComponent(value));
 	}
 }

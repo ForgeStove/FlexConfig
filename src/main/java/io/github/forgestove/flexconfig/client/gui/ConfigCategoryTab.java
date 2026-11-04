@@ -29,6 +29,13 @@ public class ConfigCategoryTab<C, V> implements Tab {
 		if (defaultsApplied.add(node)) collectDefaultExpanded(node);
 		list = new ConfigEntryList(screen, buildEntries(node, 0));
 	}
+	/** 列表在屏幕上的上下边界，供下拉菜单计算可用高度（构造期 {@code list} 尚未赋值，故走方法调用）。 */
+	public int listTop() {
+		return list.getY();
+	}
+	public int listBottom() {
+		return list.getBottom();
+	}
 	public static @NotNull Component styleAsState(@NotNull Component component, boolean hasError, boolean hasChanged) {
 		var result = component.copy();
 		if (hasError) result.withStyle(ChatFormatting.RED);
@@ -53,13 +60,8 @@ public class ConfigCategoryTab<C, V> implements Tab {
 	private @NotNull List<ConfigEntry> buildEntries(@NotNull CategoryConfigNode<C> node, int depth) {
 		var entries = new ArrayList<ConfigEntry>();
 		for (var child : node.getChildren())
-			if (child instanceof ValueConfigNode<C, ?> valueNode) {
-				for (var entry : EntryTypeRegistry.createValueEntries(this, valueNode)) {
-					if (entry instanceof TabLifecycle lifecycle) lifecycle.onAttachedToTab(this);
-					entry.setIndent(depth * ConfigEntry.INDENT_PX);
-					entries.add(entry);
-				}
-			} else if (child instanceof CategoryConfigNode<C> subNode) {
+			if (child instanceof ValueConfigNode<C, ?> valueNode) addValueEntries(entries, valueNode, depth);
+			else if (child instanceof CategoryConfigNode<C> subNode) {
 				var expanded = expandedSubCategories.contains(subNode);
 				Runnable onToggle = () -> {
 					if (expandedSubCategories.contains(subNode)) expandedSubCategories.remove(subNode);
@@ -72,12 +74,25 @@ public class ConfigCategoryTab<C, V> implements Tab {
 			}
 		return entries;
 	}
+	private void addValueEntries(List<ConfigEntry> entries, ValueConfigNode<C, ?> valueNode, int depth) {
+		for (var entry : EntryTypeRegistry.createValueEntries(this, valueNode)) {
+			if (entry instanceof TabLifecycle lifecycle) lifecycle.onAttachedToTab(this);
+			// 条目自带集合元素的相对缩进，这里只叠加分类层级
+			entry.setIndent(entry.getIndent() + depth * ConfigEntry.INDENT_PX);
+			entries.add(entry);
+		}
+	}
 	private void collectDefaultExpanded(@NotNull CategoryConfigNode<C> node) {
 		for (var child : node.getChildren()) {
 			if (!(child instanceof CategoryConfigNode<C> subNode)) continue;
 			if (subNode.isDefaultExpanded()) expandedSubCategories.add(subNode);
 			collectDefaultExpanded(subNode);
 		}
+	}
+	/** 列表增删元素后重建整页条目，元素行按当前编辑列表重新生成。 */
+	public void rebuildEntries() {
+		list.replaceAllEntries(buildEntries(node, 0));
+		list.refresh();
 	}
 	public void refresh() {
 		var hasChanged = !node.isActiveValue(config);

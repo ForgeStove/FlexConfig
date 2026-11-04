@@ -195,9 +195,12 @@ public record RootConfigNode<C, V>(
 		) {
 			if (!ConfigCondition.evaluate(valueField)) return;
 			if (!evaluatePathCondition(path)) return;
+			var rawType = valueField.getType();
 			var defaultValue = FieldAccess.getFieldValue(valueField, defaultCategory);
-			var type = FieldAccess.boxed(valueField.getType());
-			var elementType = FieldAccess.elementType(valueField);
+			// 数组在配置树里按 List 编辑，落盘时再转回数组
+			var type = rawType.isArray() ? List.class : FieldAccess.boxed(rawType);
+			var treeDefault = rawType.isArray() ? FieldAccess.arrayToList(defaultValue) : defaultValue;
+			var elementType = FieldAccess.elementShape(valueField);
 			var valueName = valueField.getName();
 			var pathKey = buildPathKey(path);
 			var titleKey = "%s.config.option.%s.%s".formatted(modId, pathKey, valueName);
@@ -206,6 +209,9 @@ public record RootConfigNode<C, V>(
 			// 枚举值的显示键：<modId>.config.enum.<枚举类名>.<常量名>
 			if (type.isEnum()) for (var constant : type.getEnumConstants())
 				translationKeys.add("%s.config.enum.%s.%s".formatted(modId, type.getSimpleName(), ((Enum<?>) constant).name()));
+			else if (elementType != null && elementType.raw().isEnum()) for (var constant : elementType.raw().getEnumConstants())
+				translationKeys.add("%s.config.enum.%s.%s".formatted(modId, elementType.raw().getSimpleName(), ((Enum<?>) constant).name()));
+			else if (elementType != null && !elementType.isSimple()) collectElementTranslationKeys(elementType, titleKey);
 			var fullPath = (pathKey.isEmpty() ? "" : pathKey + ".") + valueName;
 			var tooltip = ConfigTranslation.translatable(titleKey + ".tooltip");
 			if (valueField.isAnnotationPresent(WarnCheat.class)) tooltip = tooltip.copy()
@@ -218,7 +224,7 @@ public record RootConfigNode<C, V>(
 				.path(fullPath)
 				.title(ConfigTranslation.translatable(titleKey))
 				.tooltip(finalTooltip)
-				.defaultValue(defaultValue)
+				.defaultValue(treeDefault)
 				.colorValue(valueField.getAnnotation(ColorValue.class))
 				.elementType(elementType)
 				.valueReader(makePathValueReader(type, path, valueField))
@@ -252,20 +258,53 @@ public record RootConfigNode<C, V>(
 		private @NotNull <V> ValueReader<C, V> makePathValueReader(Class<? extends V> type, @NotNull List<Field> path, Field valueField) {
 			var pathHandles = path.stream().map(FieldAccess::varHandle).toArray(VarHandle[]::new);
 			var valueHandle = FieldAccess.varHandle(valueField);
+			var isArray = valueField.getType().isArray();
 			return config -> {
 				Object current = config;
 				for (var handle : pathHandles) current = handle.get(current);
-				return type.cast(FieldAccess.readField(valueHandle, current, valueField));
+				Object value = FieldAccess.readField(valueHandle, current, valueField);
+				if (isArray) value = FieldAccess.arrayToList(value);
+				return type.cast(value);
 			};
 		}
 		private @NotNull <V> ValueWriter<C, V> makePathValueWriter(Class<? extends V> type, @NotNull List<Field> path, Field valueField) {
 			var pathHandles = path.stream().map(FieldAccess::varHandle).toArray(VarHandle[]::new);
 			var valueHandle = FieldAccess.varHandle(valueField);
+			var elementType = valueField.getType().isArray() ? valueField.getType().getComponentType() : null;
 			return (config, value) -> {
 				Object current = config;
 				for (var handle : pathHandles) current = handle.get(current);
-				FieldAccess.writeField(valueHandle, current, type.cast(value), valueField);
+				var target = elementType != null
+					? value == null ? null : FieldAccess.listToArray(elementType, (List<?>) value)
+					: type.cast(value);
+				FieldAccess.writeField(valueHandle, current, target, valueField);
 			};
+		}
+		/** 集合元素对象的字段键：{@code <列表选项键>.<元素类名>.<字段名>}；嵌套集合取最内层元素类型。 */
+		private void collectElementTranslationKeys(ElementType shape, String listKey) {
+			if (shape.isCollection()) {
+				if (shape.element() != null) collectElementTranslationKeys(shape.element(), listKey);
+				return;
+			}
+			if (shape.isSimple()) return;
+			collectObjectTranslationKeys(shape.raw(), "%s.%s".formatted(listKey, shape.raw().getSimpleName()));
+		}
+		/** 对象元素及其 {@code @Category} 子对象的显示键。 */
+		private void collectObjectTranslationKeys(Class<?> type, String prefix) {
+			translationKeys.add(prefix);
+			for (var field : FieldAccess.collectOrderedFields(type)) {
+				var fieldKey = "%s.%s".formatted(prefix, field.getName());
+				translationKeys.add(fieldKey);
+				translationKeys.add(fieldKey + ".tooltip");
+				if (field.isAnnotationPresent(Category.class)) {
+					collectObjectTranslationKeys(field.getType(), fieldKey);
+					continue;
+				}
+				var fieldType = field.getType().isArray() ? field.getType().getComponentType() : field.getType();
+				if (!fieldType.isEnum()) continue;
+				for (var constant : fieldType.getEnumConstants())
+					translationKeys.add("%s.config.enum.%s.%s".formatted(modId, fieldType.getSimpleName(), ((Enum<?>) constant).name()));
+			}
 		}
 	}
 }
