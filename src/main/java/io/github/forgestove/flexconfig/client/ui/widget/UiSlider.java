@@ -40,8 +40,11 @@ public class UiSlider extends UiControl {
 		var progress = progress(value.getAsDouble());
 		painter.rect(track, UiTheme.WINDOW_EDGE);
 		var fillX = track.x() + 1 + (int) Math.round((track.width() - 2) * progress);
-		trackPart(painter, track.x() + 1, fillX, track.y(), accent.bright(), enabled ? accent.strong() : UiTheme.OFF_FILL);
-		trackPart(painter, fillX, track.right() - 1, track.y(), UiTheme.TRACK_LIGHT, UiTheme.OFF_FILL);
+		trackPart(painter, track.x() + 1, fillX, track.y(),
+			enabled ? accent.light() : 0xFFA3A3A6,
+			enabled ? accent.base() : 0xFF8C8D90,
+			enabled ? accent.lightest() : 0xFF97989B);
+		trackPart(painter, fillX, track.right() - 1, track.y(), 0xFFA3A3A6, 0xFF8C8D90, 0xFF97989B);
 		var steps = (int) Math.round((max - min) / step);
 		var tickSteps = steps > 1 && steps <= 24 ? steps : 0;
 		for (var i = 1; i < tickSteps; i++) {
@@ -55,13 +58,14 @@ public class UiSlider extends UiControl {
 			thumbInit = true;
 		} else thumb.update(ctx.delta);
 		var knobX = (int) Math.round(thumb.get()) - 5;
+		var knobFace = !enabled ? 0xFFD0D1D4 : dragging ? 0xFFB1B2B5 : hover.get() > 0.5 ? 0xFFF4F6F9 : 0xFFD0D1D4;
 		painter.bevel(
 			new UiBounds(knobX, bounds().y() + (bounds().height() - 12) / 2, 10, 12),
-			UiTheme.WINDOW_EDGE,
-			!enabled ? UiTheme.KNOB_LO : dragging || hover.get() > 0.5 ? UiTheme.KNOB_HI : UiTheme.KNOB,
-			UiTheme.KNOB_HI,
-			UiTheme.KNOB_HI,
-			UiTheme.KNOB_LO,
+			enabled ? UiTheme.WINDOW_EDGE : 0xFF8C8D90,
+			knobFace,
+			0xFFECECED,
+			0xFFE2E3E5,
+			enabled ? 0xFF58585A : 0xFFB1B2B5,
 			2,
 			dragging
 		);
@@ -198,9 +202,11 @@ public class UiSlider extends UiControl {
 		}
 		return false;
 	}
-	private static void trackPart(UiPainter painter, int from, int to, int ty, int top, int face) {
-		painter.rect(from, ty + 1, Math.max(0, to - from), 1, top);
-		painter.rect(from, ty + 2, Math.max(0, to - from), 3, face);
+	private static void trackPart(UiPainter painter, int from, int to, int ty, int top, int face, int bottom) {
+		var width = Math.max(0, to - from);
+		painter.rect(from, ty + 1, width, 1, top);
+		painter.rect(from, ty + 2, width, 2, face);
+		painter.rect(from, ty + 4, width, 1, bottom);
 	}
 	private void dragTo(double mouseX) {
 		var track = trackBounds();

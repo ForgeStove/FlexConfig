@@ -93,7 +93,7 @@ public class ColorPickerScreen extends Screen {
 		painter.rect(titleBar.x(), titleBar.bottom() - 1, titleBar.width(), 1, UiTheme.WINDOW_EDGE);
 		painter.rect(panel.x(), titleBar.bottom(), panel.width(), panel.height() - titleBar.height(), UiTheme.PANEL);
 		var heading = title.getString().toUpperCase(Locale.ROOT);
-		painter.text(heading, titleBar.x() + (titleBar.width() - painter.textWidth(heading)) / 2, titleBar.y() + (titleBar.height() - 3 - 10 + 1) / 2, UiTheme.TITLE_INK, true);
+		painter.textEmphasis(heading, titleBar.x() + (titleBar.width() - painter.textWidthEmphasis(heading)) / 2, titleBar.y() + (titleBar.height() - 3 - 10 + 1) / 2, UiTheme.TITLE_INK);
 		renderSBSquare(painter);
 		renderHueBar(painter);
 		if (hasAlpha) renderAlphaBar(painter);

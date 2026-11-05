@@ -36,6 +36,11 @@ public class PointRow extends ValueRow {
 		return text.isEmpty() || text.equals("-");
 	}
 	@Override
+	protected String defaultText() {
+		var value = node.getDefaultValue();
+		return value instanceof Point point ? point.x + ", " + point.y : super.defaultText();
+	}
+	@Override
 	public void refresh() {
 		super.refresh();
 		xField.setError(state.validationError != null);

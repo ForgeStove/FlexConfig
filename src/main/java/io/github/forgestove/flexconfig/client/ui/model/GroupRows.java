@@ -24,12 +24,8 @@ public class GroupRows {
 		boolean canDelete,
 		List<ConfigRow> out
 	) {
-		var header = new GroupHeaderRow(ctx, target, label, depth, canDelete, onDelete, () -> {
-			GroupHeaderRow.toggleExpanded(target);
-			ctx.rebuildTab();
-		});
-		out.add(header);
-		if (header.isExpanded()) appendChildren(ctx, target, defaults, path, keyPrefix, lockPath, depth + 1, out);
+		out.add(new GroupHeaderRow(ctx, label, depth, canDelete, onDelete));
+		appendChildren(ctx, target, defaults, path, keyPrefix, lockPath, depth + 1, out);
 	}
 	public static void appendChildren(
 		RowContext ctx,

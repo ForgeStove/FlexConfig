@@ -80,7 +80,10 @@ public abstract class ValueRow extends ConfigRow {
 		return value == null ? "" : String.valueOf(value);
 	}
 	public boolean canReset() {
-		return !state.readOnly;
+		return !state.readOnly && !node.isDefaultValue(ctx.config());
+	}
+	public Component resetLabel() {
+		return Component.translatableWithFallback("flexconfig.row.reset_to", "Reset to default (%s)", defaultText());
 	}
 	private boolean focusedWithin(UiContext ui) {
 		var current = ui.focus.current();
@@ -159,11 +162,31 @@ public abstract class ValueRow extends ConfigRow {
 		return UiTheme.TEXT;
 	}
 	protected @Nullable Component tooltip() {
-		if (tooltip == null && state.validationError == null) return null;
 		var out = label.copy();
-		if (tooltip != null) out.append(Component.literal("\n")).append(tooltip);
-		if (state.validationError != null) out.append(Component.literal("\n")).append(state.validationError.copy().withStyle(ChatFormatting.RED));
-		return out;
+		var hasBody = false;
+		if (tooltip != null) {
+			out.append(Component.literal("\n")).append(tooltip);
+			hasBody = true;
+		}
+		var defaultValue = defaultText();
+		if (!defaultValue.isEmpty()) {
+			var hint = Component.translatableWithFallback("flexconfig.tooltip.default", "Default: %s", defaultValue).withStyle(ChatFormatting.GRAY);
+			out.append(Component.literal("\n")).append(hint);
+			hasBody = true;
+			if (!node.isDefaultValue(ctx.config()))
+				out.append(Component.literal("\n")).append(Component.translatableWithFallback("flexconfig.tooltip.changed", "Changed from default").withStyle(ChatFormatting.GRAY));
+		}
+		if (state.validationError != null) {
+			out.append(Component.literal("\n")).append(state.validationError.copy().withStyle(ChatFormatting.RED));
+			hasBody = true;
+		}
+		return hasBody ? out : null;
+	}
+	protected String defaultText() {
+		var value = node.getDefaultValue();
+		if (value == null) return "";
+		if (value instanceof Enum<?> constant) return constant.name();
+		return String.valueOf(value);
 	}
 	@Override
 	public List<UiControl> controls() {

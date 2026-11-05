@@ -1,6 +1,13 @@
 package io.github.forgestove.flexconfig.client.ui.core;
 /** 界面配色和尺寸常量。 */
 public class UiTheme {
+	public static int fadeToward(int argb, int surface, float amount) {
+		var t = UiMath.clamp(amount, 0F, 1F);
+		var r = Math.round((surface >> 16 & 0xFF) + ((argb >> 16 & 0xFF) - (surface >> 16 & 0xFF)) * t);
+		var g = Math.round((surface >> 8 & 0xFF) + ((argb >> 8 & 0xFF) - (surface >> 8 & 0xFF)) * t);
+		var b = Math.round((surface & 0xFF) + ((argb & 0xFF) - (surface & 0xFF)) * t);
+		return argb & 0xFF000000 | r << 16 | g << 8 | b;
+	}
 	public static int mulAlpha(int argb, float factor) {
 		var a = Math.round((argb >>> 24 & 0xFF) * UiMath.clamp(factor, 0F, 1F));
 		return a << 24 | argb & 0xFFFFFF;
@@ -56,7 +63,6 @@ public class UiTheme {
 	public static final int INDENT = 8;
 	public static final int PADDING = 6;
 	public static final int HEADER_HEIGHT = 22;
-	public static final int FOOTER_HEIGHT = 40;
 	public static final int SCROLLBAR_WIDTH = 5;
 	public static final int MIN_PANEL_WIDTH = 400;
 	public static final int MIN_PANEL_HEIGHT = 240;

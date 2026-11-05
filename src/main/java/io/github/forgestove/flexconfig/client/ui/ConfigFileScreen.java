@@ -19,11 +19,17 @@ public class ConfigFileScreen extends Screen {
 	private final List<ConfigHandler<?, ?>> handlers;
 	private final @Nullable Screen parent;
 	private final List<UiButton> fileButtons = new ArrayList<>();
-	private UiButton backButton;
+	private UiButton doneButton;
 	private final UiContext ui = new UiContext();
 	private UiControl pressedControl;
 	private int zoom = 1, logicalWidth, logicalHeight;
 	private UiBounds panel = UiBounds.EMPTY;
+	private final UiTween backdropAnim = new UiTween(0);
+	private final UiTween windowAnim = new UiTween(0);
+	private final UiTween riseAnim = new UiTween(UiMotion.RISE);
+	private final UiTween closeAnim = new UiTween(1);
+	private boolean opened, closing;
+	private @Nullable Runnable closeAction;
 	public ConfigFileScreen(String modId, List<ConfigHandler<?, ?>> handlers) {
 		super(ClientUtil.modName(modId));
 		this.modId = modId;
@@ -41,7 +47,20 @@ public class ConfigFileScreen extends Screen {
 			if (!available) button.tooltip(Translation.tooltip(Translation.SERVER_CONFIG_UNAVAILABLE, Translation.SERVER_CONFIG_UNAVAILABLE_TOOLTIP));
 			fileButtons.add(button);
 		}
-		backButton = new UiButton(Translation.BACK_LABEL, Style.SECONDARY, this::onClose);
+		doneButton = new UiButton(Component.translatableWithFallback("flexconfig.done", "Done"), Style.PRIMARY, this::onClose);
+		if (!opened) {
+			opened = true;
+			backdropAnim.start(0, 1, UiMotion.BACKDROP_IN);
+			windowAnim.start(0, 1, UiMotion.ENTER);
+			riseAnim.start(UiMotion.RISE, 0, UiMotion.ENTER);
+		} else {
+			closing = false;
+			closeAction = null;
+			backdropAnim.snap(1);
+			windowAnim.snap(1);
+			riseAnim.snap(0);
+			closeAnim.snap(1);
+		}
 		zoom = UiPrefs.zoom(width, height);
 		logicalWidth = Math.max(1, width / zoom);
 		logicalHeight = Math.max(1, height / zoom);
@@ -62,14 +81,30 @@ public class ConfigFileScreen extends Screen {
 	@Override
 	@SuppressWarnings("DuplicatedCode")
 	public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+		var seconds = ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F;
 		ui.onRefresh(() -> {});
-		ui.beginFrame(graphics, ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F, mouseX / (double) zoom, mouseY / (double) zoom);
+		ui.beginFrame(graphics, seconds, mouseX / (double) zoom, mouseY / (double) zoom);
 		ui.viewport(logicalWidth, logicalHeight);
+		backdropAnim.update(seconds);
+		windowAnim.update(seconds);
+		riseAnim.update(seconds);
+		closeAnim.update(seconds);
+		if (closing && closeAnim.done()) {
+			var action = closeAction;
+			closing = false;
+			closeAction = null;
+			if (action != null) action.run();
+			return;
+		}
 		renderBackground(graphics, mouseX, mouseY, delta);
 		updatePanel();
 		var painter = ui.painter;
-		painter.rect(0, 0, width, height, UiTheme.BACKDROP_TOP);
+		var closeFactor = closeAnim.value();
+		painter.rect(0, 0, width, height, UiTheme.mulAlpha(UiTheme.BACKDROP_TOP, backdropAnim.value() * closeFactor));
 		painter.pushScale(zoom);
+		var rise = riseAnim.value() + (closing ? (1F - closeFactor) * UiMotion.CLOSE_DROP : 0);
+		painter.pushAlpha(windowAnim.value() * closeFactor);
+		painter.pushTranslate(0, rise);
 		painter.rect(panel.x() + 4, panel.y() + 4, panel.width(), panel.height(), UiTheme.SHADOW);
 		painter.rect(panel.x() + 2, panel.y() + 2, panel.width(), panel.height(), UiTheme.SHADOW);
 		painter.border(panel.x() - 1, panel.y() - 1, panel.width() + 2, panel.height() + 2, UiTheme.WINDOW_EDGE);
@@ -79,7 +114,7 @@ public class ConfigFileScreen extends Screen {
 		painter.rect(titleBar.x(), titleBar.bottom() - 1, titleBar.width(), 1, UiTheme.WINDOW_EDGE);
 		painter.rect(panel.x(), titleBar.bottom(), panel.width(), panel.height() - titleBar.height(), UiTheme.PANEL);
 		var heading = title.getString().toUpperCase(Locale.ROOT);
-		painter.text(heading, titleBar.x() + (titleBar.width() - painter.textWidth(heading)) / 2, titleBar.y() + (titleBar.height() - 3 - 10 + 1) / 2, UiTheme.TITLE_INK, true);
+		painter.textEmphasis(heading, titleBar.x() + (titleBar.width() - painter.textWidthEmphasis(heading)) / 2, titleBar.y() + (titleBar.height() - 3 - 10 + 1) / 2, UiTheme.TITLE_INK);
 		var focusables = new ArrayList<Target>();
 		var y = titleBar.bottom() + 12;
 		for (var button : fileButtons) {
@@ -88,17 +123,20 @@ public class ConfigFileScreen extends Screen {
 			if (button.focusable()) focusables.add(button);
 			y += BUTTON_HEIGHT + SPACING;
 		}
-		backButton.setBounds(new UiBounds(panel.x() + 12, panel.bottom() - 12 - BUTTON_HEIGHT, panel.width() - 24, BUTTON_HEIGHT));
-		backButton.render(ui);
-		focusables.add(backButton);
+		doneButton.setBounds(new UiBounds(panel.x() + 12, panel.bottom() - 12 - BUTTON_HEIGHT, panel.width() - 24, BUTTON_HEIGHT));
+		doneButton.render(ui);
+		focusables.add(doneButton);
 		ui.focus.setOrder(focusables);
 		var current = ui.focus.current();
 		if (ui.focusVisible() && current instanceof UiControl control) painter.border(control.focusBounds().inset(-1), ui.accent().light());
-		ui.renderTooltip();
+		if (!closing) ui.renderTooltip();
+		painter.popTranslate();
+		painter.popAlpha();
 		painter.popScale();
 	}
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (closing) return false;
 		mouseX /= zoom;
 		mouseY /= zoom;
 		ui.setFocusVisible(false);
@@ -107,14 +145,15 @@ public class ConfigFileScreen extends Screen {
 			pressedControl = fileButton;
 			return true;
 		}
-		if (backButton.mouseClicked(ui, mouseX, mouseY, button)) {
-			pressedControl = backButton;
+		if (doneButton.mouseClicked(ui, mouseX, mouseY, button)) {
+			pressedControl = doneButton;
 			return true;
 		}
 		return false;
 	}
 	@Override
 	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		if (closing) return false;
 		mouseX /= zoom;
 		mouseY /= zoom;
 		if (pressedControl == null) return false;
@@ -126,6 +165,7 @@ public class ConfigFileScreen extends Screen {
 	}
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (closing) return true;
 		if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_BACKSPACE) {
 			onClose();
 			return true;
@@ -136,10 +176,13 @@ public class ConfigFileScreen extends Screen {
 			return true;
 		}
 		for (var fileButton : fileButtons) if (fileButton.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
-		return backButton.keyPressed(ui, keyCode, scanCode, modifiers);
+		return doneButton.keyPressed(ui, keyCode, scanCode, modifiers);
 	}
 	@Override
 	public void onClose() {
-		ClientUtil.mc.setScreen(parent);
+		if (closing) return;
+		closing = true;
+		closeAction = () -> ClientUtil.mc.setScreen(parent);
+		closeAnim.start(1, 0, UiMotion.EXIT);
 	}
 }

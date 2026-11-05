@@ -10,6 +10,7 @@ public class UiMotion {
 	public static final SpringSpec HOVER_IN = new SpringSpec(0.08F, 1F);
 	public static final SpringSpec HOVER_OUT = new SpringSpec(0.16F, 1F);
 	public static final SpringSpec CONTROL = new SpringSpec(0.18F, 0.82F);
+	public static final SpringSpec SELECT = new SpringSpec(0.18F, 0.9F);
 	public static final SpringSpec INDICATOR_LEAD = new SpringSpec(0.14F, 1F);
 	public static final SpringSpec INDICATOR_TRAIL = new SpringSpec(0.24F, 1F);
 	public static final SpringSpec THUMB = new SpringSpec(0.12F, 1F);

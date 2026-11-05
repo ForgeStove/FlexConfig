@@ -54,6 +54,11 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 		return (Enum<?>) constants[(current.ordinal() + 1) % constants.length];
 	}
 	@Override
+	protected String defaultText() {
+		var value = node.getDefaultValue();
+		return value instanceof Enum<?> constant ? label(constant).getString() : super.defaultText();
+	}
+	@Override
 	public void refresh() {
 		super.refresh();
 		trigger.setEnabled(!state.readOnly);

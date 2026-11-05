@@ -45,6 +45,11 @@ public class ColorRow extends ValueRow {
 		field.setValue(format(color));
 	}
 	@Override
+	protected String defaultText() {
+		var value = node.getDefaultValue();
+		return value instanceof Number number ? format(number.intValue()) : super.defaultText();
+	}
+	@Override
 	public void refresh() {
 		super.refresh();
 		var valid = state.validationError == null && field.value().length() == maxLength();

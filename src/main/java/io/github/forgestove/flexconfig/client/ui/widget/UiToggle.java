@@ -26,28 +26,32 @@ public class UiToggle extends UiControl {
 		var ty = bounds().y() + (bounds().height() - TRACK_HEIGHT) / 2;
 		var track = new UiBounds(tx, ty, TRACK_WIDTH, TRACK_HEIGHT);
 		var knobX = tx + (int) Math.round(knob.get());
-		var knobWidth = down ? 18 : KNOB;
-		if (down && value.getAsBoolean()) knobX = Math.max(tx, knobX - 2);
-		if (down && !value.getAsBoolean()) knobX = Math.min(knobX, tx + TRACK_WIDTH - knobWidth);
-		painter.rect(track, UiTheme.WINDOW_EDGE);
-		painter.rect(tx + 1, ty + 1, Math.max(0, knobX - tx - 1), TRACK_HEIGHT - 2, enabled ? accent.strong() : UiTheme.OFF_FILL);
-		painter.rect(knobX + knobWidth, ty + 1, Math.max(0, tx + TRACK_WIDTH - 1 - knobX - knobWidth), TRACK_HEIGHT - 2, UiTheme.OFF_FILL);
-		if (knobX > tx) painter.rect(tx + 1, ty + 1, knobX - tx - 1, 1, accent.bright());
-		if (knobX > tx + 7) painter.rect(tx + 7, ty + 4, 1, 6, accent.lightest());
+		var knobWidth = KNOB;
+		var outline = enabled ? UiTheme.WINDOW_EDGE : 0xFF8C8D90;
+		var onFill = enabled ? accent.base() : 0xFFD0D1D4;
+		var offFill = enabled ? 0xFF8C8D90 : 0xFFD0D1D4;
+		var onShare = UiMath.clamp(knob.get() / TRAVEL, 0D, 1D);
+		painter.rect(track, outline);
+		painter.rect(tx + 1, ty + 1, Math.max(0, knobX - tx - 1), TRACK_HEIGHT - 2, onFill);
+		painter.rect(knobX + knobWidth, ty + 1, Math.max(0, tx + TRACK_WIDTH - 1 - knobX - knobWidth), TRACK_HEIGHT - 2, offFill);
+		if (knobX > tx) painter.rect(tx + 1, ty + 1, knobX - tx - 1, 1, enabled ? UiTheme.fadeToward(accent.light(), onFill, (float) onShare) : offFill);
+		if (knobX > tx + 7) painter.rect(tx + 7, ty + 4, 1, 6, enabled ? 0xFFFFFFFF : 0xFF6D6D6D);
 		if (knobX < tx + 18) {
 			var ox = tx + 20;
-			painter.rect(ox + 1, ty + 4, 3, 1, UiTheme.TEXT_2);
-			painter.rect(ox + 1, ty + 9, 3, 1, UiTheme.TEXT_2);
-			painter.rect(ox, ty + 5, 1, 4, UiTheme.TEXT_2);
-			painter.rect(ox + 4, ty + 5, 1, 4, UiTheme.TEXT_2);
+			var mark = enabled ? 0xFF242425 : 0xFF666666;
+			painter.rect(ox + 1, ty + 4, 3, 1, mark);
+			painter.rect(ox + 1, ty + 9, 3, 1, mark);
+			painter.rect(ox, ty + 5, 1, 4, mark);
+			painter.rect(ox + 4, ty + 5, 1, 4, mark);
 		}
+		var knobFace = !enabled ? 0xFFD0D1D4 : down ? 0xFFB1B2B5 : hover.get() > 0.5 ? 0xFFF4F6F9 : 0xFFD0D1D4;
 		painter.bevel(
-			new UiBounds(knobX, ty + TRACK_HEIGHT - 16, knobWidth, 14),
-			UiTheme.WINDOW_EDGE,
-			(hover.get() > 0.5 || down) && enabled ? UiTheme.KNOB_HI : UiTheme.KNOB,
-			UiTheme.KNOB_HI,
-			UiTheme.KNOB_HI,
-			UiTheme.KNOB_LO,
+			new UiBounds(knobX, ty + TRACK_HEIGHT - 16, knobWidth, 16),
+			outline,
+			knobFace,
+			0xFFECECED,
+			0xFFE2E3E5,
+			enabled ? 0xFF58585A : 0xFFB1B2B5,
 			2,
 			down
 		);

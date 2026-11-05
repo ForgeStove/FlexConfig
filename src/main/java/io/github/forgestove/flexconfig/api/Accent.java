@@ -1,41 +1,65 @@
 package io.github.forgestove.flexconfig.api;
 import java.awt.Color;
-/**
- * 界面的强调色阶：调用者在注册配置时给一个基色，明暗、悬停和按下变体由基色的 HSB 推导。
- * 默认值对应 punchy 的金色阶。
- */
-public record Accent(int base, int lightest, int light, int bright, int strong, int deep, int darkest, int ink, int wash) {
-	public static final Accent GOLD = new Accent(
-		0xFFF2B01E,
-		0xFFFFF6D6,
-		0xFFFFD866,
-		0xFFFFC93D,
-		0xFFD99A0C,
-		0xFFA87406,
-		0xFF7A5207,
-		0xFF1B1405,
-		0x2EF2B01E
-	);
+public class Accent {
+	public static final Accent DEFAULT = of(0xFF3C8527);
+	private final int base, lightest, light, bright, strong, darkest, ink, wash;
+	private Accent(int base, int lightest, int light, int bright, int strong, int darkest, int ink, int wash) {
+		this.base = base;
+		this.lightest = lightest;
+		this.light = light;
+		this.bright = bright;
+		this.strong = strong;
+		this.darkest = darkest;
+		this.ink = ink;
+		this.wash = wash;
+	}
 	public static Accent of(int base) {
 		base |= 0xFF000000;
-		if (base == GOLD.base) return GOLD;
-		var hsb = Color.RGBtoHSB(base >> 16 & 0xFF, base >> 8 & 0xFF, base & 0xFF, null);
+		var red = base >> 16 & 0xFF;
+		var green = base >> 8 & 0xFF;
+		var blue = base & 0xFF;
+		var hsb = Color.RGBtoHSB(red, green, blue, null);
 		var h = hsb[0];
 		var s = hsb[1];
 		var b = hsb[2];
+		var luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255D;
+		var ink = luminance < 0.5 ? 0xFFFFFFFF : hsb(h, s * 0.92F, b * 0.11F);
 		return new Accent(
 			base,
-			hsb(h, s * 0.18F, 1F),
-			hsb(h, s * 0.50F, 1F),
-			hsb(h, s * 0.76F, 1F),
-			hsb(h, Math.min(1F, s * 1.08F), b * 0.90F),
-			hsb(h, s, b * 0.66F),
-			hsb(h, s, b * 0.48F),
-			hsb(h, s * 0.92F, b * 0.11F),
-			base & 0x00FFFFFF | 0x2E000000
+			hsb(h, s * 0.819F, b * 1.09F),
+			hsb(h, s * 0.676F, b * 1.18F),
+			hsb(h, s * 0.96F, b * 1.24F),
+			hsb(h, s * 1.018F, b * 0.75F),
+			hsb(h, s * 1.065F, b * 0.48F),
+			ink,
+			base & 0xFFFFFF | 0x2E000000
 		);
 	}
 	private static int hsb(float h, float s, float b) {
-		return 0xFF000000 | Color.HSBtoRGB(h, s, Math.min(1F, b)) & 0xFFFFFF;
+		return 0xFF000000 | Color.HSBtoRGB(h, Math.min(1F, s), Math.min(1F, b)) & 0xFFFFFF;
+	}
+	public int base() {
+		return base;
+	}
+	public int lightest() {
+		return lightest;
+	}
+	public int light() {
+		return light;
+	}
+	public int bright() {
+		return bright;
+	}
+	public int strong() {
+		return strong;
+	}
+	public int darkest() {
+		return darkest;
+	}
+	public int ink() {
+		return ink;
+	}
+	public int wash() {
+		return wash;
 	}
 }

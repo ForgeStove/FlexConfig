@@ -9,8 +9,10 @@ import java.util.function.DoubleFunction;
 /** 滑条行：轨道横跨整行，数值显示在右端。 */
 public class SliderRow extends ValueRow {
 	private final UiSlider slider;
+	private final DoubleFunction<Object> converter;
 	public SliderRow(RowContext ctx, ValueConfigNode<?, ?> node, DoubleFunction<Object> converter) {
 		super(ctx, node);
+		this.converter = converter;
 		var range = Objects.requireNonNull(node.getSliderRange(), "slider row needs a slider range");
 		slider = new UiSlider(
 			range.min(),
@@ -20,6 +22,11 @@ public class SliderRow extends ValueRow {
 			ctx::refresh,
 			value -> String.valueOf(converter.apply(value))
 		);
+	}
+	@Override
+	protected String defaultText() {
+		var value = node.getDefaultValue();
+		return value instanceof Number number ? String.valueOf(converter.apply(number.doubleValue())) : super.defaultText();
 	}
 	@Override
 	protected boolean showDescription() {

@@ -4,12 +4,11 @@ import io.github.forgestove.flexconfig.client.ui.row.*;
 import java.util.*;
 /** 跨 tab 搜索：匹配标题、tooltip 与配置路径，可选只看修改项和限定当前 tab。 */
 public class SearchIndex {
-	public static List<ConfigRow> search(RowContext ctx, ConfigUiModel model, String query, boolean changedOnly, ConfigTabModel scope) {
+	public static List<ConfigRow> search(RowContext ctx, ConfigUiModel model, String query, boolean changedOnly) {
 		var needle = query.trim().toLowerCase();
 		var out = new ArrayList<ConfigRow>();
-		if (needle.isEmpty()) return out;
-		var tabs = scope == null ? model.tabs() : List.of(scope);
-		for (var tab : tabs) {
+		if (needle.isEmpty() && !changedOnly) return out;
+		for (var tab : model.tabs()) {
 			var matches = new ArrayList<ValueRow>();
 			for (var row : tab.rows) {
 				if (!(row instanceof ValueRow valueRow)) continue;
@@ -24,7 +23,7 @@ public class SearchIndex {
 				}
 			}
 			if (matches.isEmpty()) continue;
-			if (scope == null) out.add(new SearchHeaderRow(ctx, tab.title, 0));
+			out.add(new SearchHeaderRow(ctx, tab.title, 0));
 			out.addAll(matches);
 		}
 		return out;

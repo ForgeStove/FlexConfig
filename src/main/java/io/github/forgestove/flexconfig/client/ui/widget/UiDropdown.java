@@ -52,6 +52,7 @@ public class UiDropdown extends UiControl implements UiPopup {
 		closing = true;
 		openAnim.start(1, 0, UiMotion.POPUP_OUT);
 	}
+	@Override
 	public boolean closing() {
 		return closing;
 	}

@@ -10,4 +10,5 @@ public interface UiPopup {
 	boolean popupKeyPressed(UiContext ui, int keyCode, int scanCode, int modifiers);
 	boolean popupCharTyped(UiContext ui, char codePoint);
 	void close();
+	boolean closing();
 }

@@ -22,6 +22,11 @@ public class NumberRow extends ValueRow {
 		field.setResponder(this::onInput);
 		actionBar.add(field, UiTheme.CONTROL_WIDTH);
 	}
+	@Override
+	protected String defaultText() {
+		var value = node.getDefaultValue();
+		return value == null ? "" : formatter.apply(value);
+	}
 	private void onInput(String text) {
 		if (!validator.test(text)) {
 			parseError = true;

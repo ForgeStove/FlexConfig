@@ -67,13 +67,14 @@ public class ConfigScreen<C, V> extends Screen {
 	private @Nullable UiDropdown openDropdown;
 	private @Nullable UiDropdown fadingDropdown;
 	private @Nullable UiPopup openMenu;
+	private @Nullable UiPopup fadingMenu;
 	private UiTextField searchField;
-	private UiChip changedChip, scopeChip;
+	private UiChip changedChip;
 	private UiButton pageMenuButton;
 	private RowContext rowContext;
 	private List<ConfigRow> outgoingRows = List.of();
 	private double outgoingScroll;
-	private boolean changedOnly, scopeCurrent;
+	private boolean changedOnly;
 	private String searchQuery = "";
 	private List<ConfigRow> searchResults = List.of();
 	private double searchScroll;
@@ -113,71 +114,56 @@ public class ConfigScreen<C, V> extends Screen {
 				return;
 			}
 	}
-	private void updateScopeLabel() {
-		if (scopeChip == null) return;
-		var tab = model.activeTab();
-		scopeChip.setLabel(scopeCurrent && tab != null
-			? tab.title
-			: Component.translatableWithFallback("flexconfig.search.scope_all", "All"));
-	}
 	private void updateSearch(String query) {
 		searchQuery = query.trim();
 		SearchIndex.clearHighlights(model);
-		var tab = model.activeTab();
-		searchResults = searchQuery.isEmpty()
+		searchResults = searchQuery.isEmpty() && !changedOnly
 			? List.of()
-			: SearchIndex.search(rowContext, model, searchQuery, changedOnly, scopeCurrent ? tab : null);
+			: SearchIndex.search(rowContext, model, searchQuery, changedOnly);
 		searchScroll = 0;
 		if (scrollbar != null) scrollbar.setScroll(0);
 		pageIn.start(0, 1, UiMotion.TAB_ROWS_IN);
 		revealRows(searchResults);
 	}
-	private void cycleMenuSize() {
-		UiPrefs.cycleSize();
-		recomputeZoom();
-		layout = new ScreenLayout(logicalWidth, logicalHeight);
-		sidebar.setBounds(layout.tabs);
-		footer.setBounds(layout.footer);
-		scrollbar.setBounds(layout.scrollbar);
-		ui.focus.clear();
-	}
 	private void openPageMenu() {
 		var items = new ArrayList<Item>();
+		var tab = model.activeTab();
 		items.add(new Item(
-			Component.translatableWithFallback("flexconfig.menu.size", "Menu size: %s", UiPrefs.label().getString()),
-			true,
+			Component.translatableWithFallback("flexconfig.page.reset", "Reset this page"),
+			tab != null && tab.changedCount > 0,
 			false,
-			this::cycleMenuSize
+			this::resetPage
 		));
-		items.add(new Item(
-			Component.translatableWithFallback(
-				"flexconfig.menu.high_contrast",
-				"High contrast: %s",
-				Component.translatableWithFallback(
-						UiPrefs.highContrast() ? "flexconfig.menu.on" : "flexconfig.menu.off",
-						UiPrefs.highContrast() ? "On" : "Off"
-					)
-					.getString()
-			), true, UiPrefs.highContrast(), UiPrefs::toggleHighContrast
-		));
-		var tabs = model.tabs();
-		var active = model.activeIndex();
-		for (var i = 0; i < tabs.size(); i++) {
-			var index = i;
-			items.add(new Item(tabs.get(i).title, true, i == active, () -> selectTab(index)));
-		}
 		var menu = new UiPopupMenu(items, index -> items.get(index).action().run());
 		menu.place(layout.panel, pageMenuButton.bounds().x(), pageMenuButton.bounds().bottom() + 2);
 		openPopup(menu);
 	}
+	private void resetPage() {
+		var tab = model.activeTab();
+		if (tab == null) return;
+		var restores = new ArrayList<Runnable>();
+		for (var row : tab.rows)
+			if (row instanceof ValueRow valueRow && valueRow.canReset()) {
+				var node = valueRow.node();
+				var previous = FieldAccess.deepCopy(node.getEditingValue(config));
+				valueRow.resetToDefault();
+				restores.add(() -> node.setEditingValue(previous));
+			}
+		if (restores.isEmpty()) return;
+		refresh();
+		toast.info(
+			Component.translatableWithFallback("flexconfig.toast.page_reset", "%s settings reset", restores.size()),
+			Component.translatableWithFallback("flexconfig.undo.tooltip", "Undo"),
+			() -> {
+				for (var restore : restores) restore.run();
+				refresh();
+				toast.info(Component.translatableWithFallback("flexconfig.toast.undone", "Changes undone"));
+			}
+		);
+	}
 	private void openRowMenu(ValueRow row, double mouseX, double mouseY) {
 		var items = new ArrayList<Item>();
-		items.add(new Item(
-			Component.translatableWithFallback("flexconfig.row.reset", "Reset"),
-			row.canReset(),
-			false,
-			row::resetToDefault
-		));
+		items.add(new Item(row.resetLabel(), row.canReset(), false, row::resetToDefault));
 		items.add(new Item(
 			Component.translatableWithFallback("flexconfig.row.copy", "Copy value"),
 			true,
@@ -211,7 +197,6 @@ public class ConfigScreen<C, V> extends Screen {
 			scrollbar.setScroll(next.scroll);
 			revealRows(next.rows);
 		}
-		updateScopeLabel();
 		ui.focus.clear();
 	}
 	private void recomputeZoom() {
@@ -284,7 +269,7 @@ public class ConfigScreen<C, V> extends Screen {
 		}
 		sidebar.render(ui);
 		var tab = model.activeTab();
-		var searching = !searchQuery.isEmpty();
+		var searching = !searchQuery.isEmpty() || changedOnly;
 		var rows = searching ? searchResults : tab == null ? List.<ConfigRow>of() : tab.rows;
 		var height = 0;
 		for (var row : rows) height += row.heightFor(layout.content.width());
@@ -303,8 +288,16 @@ public class ConfigScreen<C, V> extends Screen {
 		footer.render(ui);
 		scrollbar.render(ui);
 		renderFocusRing(ui);
+		if (openMenu != null && openMenu.closing()) {
+			fadingMenu = openMenu;
+			openMenu = null;
+		}
 		var popup = activePopup();
 		if (popup != null) popup.renderPopup(ui);
+		if (fadingMenu != null) {
+			fadingMenu.renderPopup(ui);
+			if (!fadingMenu.closing()) fadingMenu = null;
+		}
 		if (fadingDropdown != null) {
 			fadingDropdown.renderPopup(ui);
 			if (!fadingDropdown.closing()) fadingDropdown = null;
@@ -312,7 +305,7 @@ public class ConfigScreen<C, V> extends Screen {
 		painter.popTranslate();
 		painter.popAlpha();
 		if (dialogOpen) renderDialog(ui);
-		toast.update(seconds);
+		toast.update(ui, seconds);
 		toast.render(ui, logicalWidth, logicalHeight);
 		if (!closing) ui.renderTooltip();
 		painter.popScale();
@@ -335,8 +328,10 @@ public class ConfigScreen<C, V> extends Screen {
 					field.keyPressed(ui, keyCode, scanCode, modifiers);   // 编辑中先退出编辑
 					return true;
 				}
-				if (!field.value().isEmpty()) {
+				if (!field.value().isEmpty() || changedOnly) {
 					field.setValue("");
+					changedOnly = false;
+					changedChip.setSelected(false);
 					updateSearch("");
 					return true;
 				}
@@ -353,7 +348,6 @@ public class ConfigScreen<C, V> extends Screen {
 		}
 		if (searchField != null && searchField.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
 		if (changedChip.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
-		if (scopeChip.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
 		if (pageMenuButton.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
 		if (globalToggle != null && globalToggle.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
 		if (undoButton.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
@@ -453,22 +447,13 @@ public class ConfigScreen<C, V> extends Screen {
 		searchField.setLeadingSearch(true);
 		searchField.setPlaceholder(Component.translatableWithFallback("flexconfig.search.placeholder", "Search settings"));
 		searchField.setResponder(this::updateSearch);
-		changedChip = new UiChip(
-			Component.translatableWithFallback("flexconfig.search.changed", "Changed"), () -> {
+		changedChip = new UiChip(Component.empty(), () -> {
 			changedOnly = !changedOnly;
 			changedChip.setSelected(changedOnly);
 			updateSearch(searchField.value());
-		}
-		);
-		scopeChip = new UiChip(
-			Component.translatableWithFallback("flexconfig.search.scope_all", "All"), () -> {
-			scopeCurrent = !scopeCurrent;
-			updateScopeLabel();
-			updateSearch(searchField.value());
-		}
-		);
+		});
 		pageMenuButton = new UiButton(Component.literal("..."), Style.SECONDARY, this::openPageMenu);
-		pageMenuButton.tooltip(Component.translatableWithFallback("flexconfig.search.menu", "Pages"));
+		pageMenuButton.tooltip(Component.translatableWithFallback("flexconfig.search.menu", "Page options"));
 		searchQuery = "";
 		searchResults = List.of();
 		searchScroll = 0;
@@ -530,7 +515,7 @@ public class ConfigScreen<C, V> extends Screen {
 		if (root.restartType(config) != null)
 			headerText = headerText.copy().append("  ·  ").append(Translation.RESTART_REQUIRED_TITLE.copy().withStyle(ChatFormatting.RED));
 		painter.text(headerText, layout.pageHeader.x(), layout.pageHeader.y() + 4, UiTheme.TEXT_3);
-		if (!searchQuery.isEmpty()) {
+		if (!searchQuery.isEmpty() || changedOnly) {
 			var count = Component.translatableWithFallback("flexconfig.search.results", "%s results", searchResults.size());
 			painter.text(count, layout.pageHeader.x() + painter.textWidth(headerText) + 8, layout.pageHeader.y() + 4, UiTheme.TEXT_3);
 		}
@@ -541,17 +526,17 @@ public class ConfigScreen<C, V> extends Screen {
 		undoButton.render(ui);
 		var y = layout.pageHeader.y() + 3;
 		var right = layout.pageHeader.right();
-		pageMenuButton.setBounds(new UiBounds(right - 24, y, 24, UiTheme.CONTROL_HEIGHT));
-		pageMenuButton.render(ui);
-		right -= 28;
+		var tab = model.activeTab();
+		pageMenuButton.setVisible(searchQuery.isEmpty() && !changedOnly && tab != null && tab.changedCount > 0);
+		if (pageMenuButton.visible()) {
+			pageMenuButton.setBounds(new UiBounds(right - 24, y, 24, UiTheme.CONTROL_HEIGHT));
+			pageMenuButton.render(ui);
+			right -= 28;
+		}
 		var changedW = Math.min(90, changedChip.preferredWidth());
 		changedChip.setBounds(new UiBounds(right - changedW, y, changedW, UiTheme.CONTROL_HEIGHT));
 		changedChip.render(ui);
 		right -= changedW + 4;
-		var scopeW = Math.min(90, scopeChip.preferredWidth());
-		scopeChip.setBounds(new UiBounds(right - scopeW, y, scopeW, UiTheme.CONTROL_HEIGHT));
-		scopeChip.render(ui);
-		right -= scopeW + 4;
 		searchWidth.target(searchField.isFocused(ui) || !searchField.value().isEmpty() ? 140 : 90);
 		searchWidth.update(ui.delta);
 		searchField.setBounds(new UiBounds(
@@ -598,8 +583,7 @@ public class ConfigScreen<C, V> extends Screen {
 			if (row.bounds().intersects(content)) for (var control : row.controls()) if (control.focusable()) focusables.add(control);
 		if (searchField != null) focusables.add(searchField);
 		focusables.add(changedChip);
-		focusables.add(scopeChip);
-		focusables.add(pageMenuButton);
+		if (pageMenuButton.focusable()) focusables.add(pageMenuButton);
 		if (globalToggle != null) focusables.add(globalToggle);
 		if (undoButton.visible()) focusables.add(undoButton);
 		focusables.add(closeButton);
@@ -669,6 +653,7 @@ public class ConfigScreen<C, V> extends Screen {
 		mouseY /= zoom;
 		ui.setFocusVisible(false);
 		ui.pointer(mouseX, mouseY);
+		if (toast.mouseClicked(mouseX, mouseY, button)) return true;
 		if (dialogOpen) {
 			if (dialogCancel.mouseClicked(ui, mouseX, mouseY, button)) {
 				pressedControl = dialogCancel;
@@ -706,10 +691,6 @@ public class ConfigScreen<C, V> extends Screen {
 		}
 		if (changedChip.mouseClicked(ui, mouseX, mouseY, button)) {
 			pressedControl = changedChip;
-			return true;
-		}
-		if (scopeChip.mouseClicked(ui, mouseX, mouseY, button)) {
-			pressedControl = scopeChip;
 			return true;
 		}
 		if (pageMenuButton.mouseClicked(ui, mouseX, mouseY, button)) {
@@ -756,6 +737,7 @@ public class ConfigScreen<C, V> extends Screen {
 		mouseX /= zoom;
 		mouseY /= zoom;
 		ui.pointer(mouseX, mouseY);
+		if (toast.mouseReleased(mouseX, mouseY, button)) return true;
 		if (pressedControl != null) {
 			var control = pressedControl;
 			pressedControl = null;
@@ -854,12 +836,12 @@ public class ConfigScreen<C, V> extends Screen {
 		}
 	}
 	private List<ConfigRow> activeRows() {
-		if (!searchQuery.isEmpty()) return searchResults;
+		if (!searchQuery.isEmpty() || changedOnly) return searchResults;
 		var tab = model.activeTab();
 		return tab == null ? List.of() : tab.rows;
 	}
 	private double activeScroll() {
-		if (!searchQuery.isEmpty()) return searchScroll;
+		if (!searchQuery.isEmpty() || changedOnly) return searchScroll;
 		var tab = model.activeTab();
 		return tab == null ? 0 : tab.scroll;
 	}
@@ -951,6 +933,8 @@ public class ConfigScreen<C, V> extends Screen {
 		var changed = model.changedCount();
 		undoButton.setVisible(changed > 0 && isEditable());
 		undoButton.setLabel(Component.translatableWithFallback("flexconfig.undo_changes", "Undo changes (%s)", changed));
+		changedChip.setLabel(Component.translatableWithFallback("flexconfig.search.changed", "Changed (%s)", changed));
+		changedChip.setSelected(changedOnly);
 	}
 	public void undoAll() {
 		root.resetToActive(config);
@@ -1046,7 +1030,10 @@ public class ConfigScreen<C, V> extends Screen {
 			openDropdown.beginClose();
 			fadingDropdown = openDropdown;
 		}
-		if (openMenu != null) openMenu.close();
+		if (openMenu != null) {
+			openMenu.close();
+			fadingMenu = openMenu;
+		}
 		openDropdown = null;
 		openMenu = null;
 	}

@@ -334,7 +334,7 @@ public class ConfigHandler<C, V> {
 		private ConfigType type;
 		private String fileName;
 		private boolean lockable;
-		private Accent accent = Accent.GOLD;
+		private Accent accent = Accent.DEFAULT;
 		private @Nullable ResourceLocation menuIcon;
 		private @Nullable Component menuToggleLabel, menuToggleTooltip;
 		private @Nullable String menuToggleField;

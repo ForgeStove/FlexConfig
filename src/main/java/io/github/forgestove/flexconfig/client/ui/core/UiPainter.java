@@ -115,7 +115,7 @@ public class UiPainter {
 			rect(fx0, fy0, fx1 - fx0, 1, highlight);
 			rect(fx0, fy0 + 1, 1, fy1 - fy0 - 2, highlight);
 			rect(fx1 - 1, fy0 + 1, 1, fy1 - fy0 - 2, highlight);
-			rect(fx0, fy1 - 1, fx1 - fx0, 1, shine);
+			rect(fx0, fy1 - 1, fx1 - fx0, 1, pressed ? UiTheme.fadeToward(shine, face, 0.55F) : shine);
 			rect(fx0 + 1, fy0 + 1, fx1 - fx0 - 2, fy1 - fy0 - 2, face);
 			if (!pressed) rect(fx0, fy1, fx1 - fx0, bounds.bottom() - 1 - fy1, depthColor);
 		} else rect(fx0, fy0, fx1 - fx0, bounds.bottom() - 1 - fy0, face);
@@ -181,7 +181,6 @@ public class UiPainter {
 		if (alpha <= 0.004F) return;
 		gui.drawString(ClientUtil.mc.font, text, x, y, col(color), false);
 	}
-	/** 强调文字：原版字体没有 punchy 的标题字体，统一用粗体代替，不描影。 */
 	public void textEmphasis(String text, int x, int y, int color) {
 		text(Component.literal(text).withStyle(ChatFormatting.BOLD), x, y, color, false);
 	}

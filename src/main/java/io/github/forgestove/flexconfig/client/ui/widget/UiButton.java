@@ -14,7 +14,8 @@ public class UiButton extends UiControl {
 	}
 	private final UiAnim hover = new UiAnim(0);
 	private Component label;
-	private Style style;
+	private static final Palette PRIMARY_DISABLED = new Palette(0xFF6E6A5C, 0xFF6E6A5C, 0xFF6E6A5C, 0xFF58585A, 0xFF6E6A5C, 0xFF6E6A5C);
+	private final Style style;
 	private final Runnable action;
 	public UiButton(@NotNull Component label, @NotNull Style style, @NotNull Runnable action) {
 		this.label = label;
@@ -23,9 +24,6 @@ public class UiButton extends UiControl {
 	}
 	public void setLabel(Component label) {
 		this.label = label;
-	}
-	public void setStyle(Style style) {
-		this.style = style;
 	}
 	@Override
 	public void render(UiContext ctx) {
@@ -42,10 +40,26 @@ public class UiButton extends UiControl {
 			showTooltip(ctx);
 			return;
 		}
-		var palette = palette(ctx.accent());
-		var faceColor = !enabled ? 0xFF6E6A5C : down ? palette.pressed : hover.get() > 0.5 ? palette.hover : palette.face;
-		var face = painter.bevel(bounds(), UiTheme.WINDOW_EDGE, faceColor, palette.highlight, palette.shine, palette.depth, 2, down);
-		drawLabel(ctx, enabled ? style == Style.SECONDARY ? UiTheme.TITLE_INK : ctx.accent().ink() : 0xFF3A3830, face);
+		UiBounds face;
+		if (style == Style.PRIMARY) {
+			var palette = enabled ? palette(ctx.accent()) : PRIMARY_DISABLED;
+			var faceColor = !enabled ? palette.face : down ? palette.pressed : hover.get() > 0.5 ? palette.hover : palette.face;
+			face = painter.bevel(bounds(), UiTheme.WINDOW_EDGE, faceColor, palette.highlight, palette.shine, palette.depth, 2, down);
+			drawLabel(ctx, enabled ? ctx.accent().ink() : 0xFF3A3830, face);
+		} else {
+			var palette = palette(ctx.accent());
+			face = painter.bevel(
+				bounds(),
+				UiTheme.WINDOW_EDGE,
+				fade(down ? palette.pressed : hover.get() > 0.5 ? palette.hover : palette.face),
+				fade(palette.highlight),
+				fade(palette.shine),
+				fade(palette.depth),
+				2,
+				down
+			);
+			drawLabel(ctx, fade(style == Style.DANGER ? 0xFFFFFFFF : UiTheme.TITLE_INK), face);
+		}
 		showTooltip(ctx);
 	}
 	private String trimmedLabel(UiPainter painter) {
@@ -55,10 +69,16 @@ public class UiButton extends UiControl {
 	private void drawLabel(UiContext ctx, int color, UiBounds face) {
 		var painter = ctx.painter;
 		var text = trimmedLabel(painter);
-		var x = bounds().x() + (bounds().width() - painter.textWidth(text)) / 2;
-		var capH = style == Style.PRIMARY ? 10 : 7;
+		var primary = style == Style.PRIMARY;
+		var width = primary ? painter.textWidthEmphasis(text) : painter.textWidth(text);
+		var x = bounds().x() + (bounds().width() - width) / 2;
+		var capH = primary ? 10 : 7;
 		var y = face.y() + (face.height() - capH) / 2;
-		painter.text(text, x, y, color);
+		if (primary) painter.textEmphasis(text, x, y, color);
+		else painter.text(text, x, y, color);
+	}
+	private int fade(int color) {
+		return enabled ? color : UiTheme.fadeToward(color, UiTheme.PANEL, 0.4F);
 	}
 	private Palette palette(Accent accent) {
 		return switch (style) {

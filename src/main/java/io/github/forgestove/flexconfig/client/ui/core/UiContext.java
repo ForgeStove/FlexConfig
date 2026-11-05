@@ -26,7 +26,7 @@ public class UiContext {
 	private int viewportWidth, viewportHeight;
 	private Object dragOwner;
 	private boolean focusVisible;
-	private Accent accent = Accent.GOLD;
+	private Accent accent = Accent.DEFAULT;
 	private Runnable refresh = () -> {};
 	public Accent accent() {
 		return accent;

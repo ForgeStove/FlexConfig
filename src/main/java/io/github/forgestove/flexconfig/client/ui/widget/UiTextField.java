@@ -99,7 +99,7 @@ public class UiTextField extends UiControl {
 			painter.rect(lx + 5, ly + 6, 1, 1, lens);
 		}
 		var textX = inner.x() + textLeft() - scroll;
-		var textY = inner.y() + (inner.height() - painter.lineHeight()) / 2;
+		var textY = bounds().y() + (bounds().height() - painter.lineHeight()) / 2 + 1;
 		painter.scissorOn(inner);
 		if (value.isEmpty()) {
 			if (placeholder != null) painter.text(placeholder, inner.x() + textLeft(), textY, UiTheme.TEXT_3);
@@ -109,7 +109,7 @@ public class UiTextField extends UiControl {
 			if (selectionStart >= 0 && selectionEnd > selectionStart) {
 				var from = painter.textWidth(value.substring(0, selectionStart));
 				var to = painter.textWidth(value.substring(0, selectionEnd));
-				painter.rect(textX + from, textY - 1, to - from, painter.lineHeight() + 1, 0xFF5C4A1A);
+				painter.rect(textX + from, textY - 1, to - from, painter.lineHeight() + 1, UiTheme.mulAlpha(ctx.accent().base(), 0.45F));
 			}
 			painter.text(value, textX, textY, enabled ? error ? UiTheme.DANGER_LIGHT : UiTheme.TEXT : UiTheme.DISABLED);
 		}
