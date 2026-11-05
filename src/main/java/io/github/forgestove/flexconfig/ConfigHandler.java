@@ -3,7 +3,7 @@ import com.electronwill.nightconfig.core.CommentedConfig;
 import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.api.MenuOptions.Toggle;
-import io.github.forgestove.flexconfig.client.gui.factory.EntryKeybind;
+import io.github.forgestove.flexconfig.client.ui.factory.EntryKeybind;
 import io.github.forgestove.flexconfig.platform.Platform;
 import io.github.forgestove.flexconfig.tree.RootConfigNode;
 import net.minecraft.network.chat.Component;

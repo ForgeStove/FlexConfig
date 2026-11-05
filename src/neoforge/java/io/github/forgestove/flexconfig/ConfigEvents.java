@@ -9,7 +9,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut;
 import net.neoforged.neoforge.client.event.ClientTickEvent.Post;
-import net.neoforged.neoforge.client.event.ScreenEvent.MouseButtonPressed.Pre;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.neoforged.neoforge.event.server.*;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -40,10 +39,6 @@ public class ConfigEvents {
 	}
 	@EventBusSubscriber(Dist.CLIENT)
 	public static class Client {
-		@SubscribeEvent
-		public static void register(Pre event) {
-			ClientLifecycleHandler.onScreenMousePressed(event.getMouseX(), event.getMouseY());
-		}
 		@SubscribeEvent
 		public static void onClientTick(Post event) {
 			ClientLifecycleHandler.tick();

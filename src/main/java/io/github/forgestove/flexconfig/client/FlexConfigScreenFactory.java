@@ -1,7 +1,7 @@
 package io.github.forgestove.flexconfig.client;
 import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.api.ConfigType;
-import io.github.forgestove.flexconfig.client.gui.*;
+import io.github.forgestove.flexconfig.client.ui.*;
 import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.NotNull;
 /** 配置界面的构建入口；挂到模组列表的动作由加载器侧的 {@code Platform#registerConfigScreen} 实现。 */

@@ -1,8 +1,7 @@
 package io.github.forgestove.flexconfig.client;
 import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.api.ConfigType;
-import io.github.forgestove.flexconfig.client.gui.ConfigScreen;
-import io.github.forgestove.flexconfig.client.gui.components.FlexEditBox;
+import io.github.forgestove.flexconfig.client.ui.ConfigScreen;
 import io.github.forgestove.flexconfig.platform.Platform;
 import net.minecraft.client.resources.language.I18n;
 
@@ -42,8 +41,5 @@ public class ClientLifecycleHandler {
 		ClientServerConfigCache.clear();
 		ClientLockManager.clear();
 		ConfigRegistry.applyWorldRestart();
-	}
-	public static void onScreenMousePressed(double mouseX, double mouseY) {
-		FlexEditBox.onScreenMouseClicked(mouseX, mouseY);
 	}
 }

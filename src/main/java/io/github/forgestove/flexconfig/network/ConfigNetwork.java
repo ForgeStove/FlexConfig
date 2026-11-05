@@ -3,7 +3,7 @@ import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.api.ConfigType;
 import io.github.forgestove.flexconfig.client.*;
-import io.github.forgestove.flexconfig.client.gui.ConfigScreen;
+import io.github.forgestove.flexconfig.client.ui.ConfigScreen;
 import io.github.forgestove.flexconfig.platform.Platform;
 import io.github.forgestove.flexconfig.platform.Platform.*;
 import io.github.forgestove.flexconfig.server.*;
