@@ -4,47 +4,56 @@ import io.github.forgestove.flexconfig.client.FlexConfigScreenFactory;
 import io.github.forgestove.flexconfig.platform.Platform;
 import io.github.forgestove.flexconfig.tree.*;
 import net.minecraft.server.MinecraftServer;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 /** 一个模组可按 {@link ConfigType} 注册多份配置，各自对应一个文件。 */
 public class ConfigRegistry {
-	private static final Map<String, EnumMap<ConfigType, ConfigHandler<?, ?>>> SETS = new ConcurrentHashMap<>();
-	private static final Map<Class<?>, ConfigHandler<?, ?>> BY_CLASS = new ConcurrentHashMap<>();
-	/** 供锁定、下发与热重载按文件精确定位。 */
-	private static final Map<FileKey, ConfigHandler<?, ?>> BY_FILE = new ConcurrentHashMap<>();
-	/** 「主」配置的优先顺序，供按 modId 取配置的调用点（GUI 入口、旧锁代码）使用。 */
+	private static final Object LOCK = new Object();
 	private static final List<ConfigType> PRIMARY_ORDER = List.of(ConfigType.CLIENT, ConfigType.COMMON, ConfigType.SERVER);
-	/** 同一 (模组 ID, 类型) 仅构建一次；同类型重复注册不同配置类会抛异常。 */
-	@SuppressWarnings({"unused", "UnusedReturnValue"})
-	public static <C> C init(Class<C> clazz) {
-		var annotation = requireAnnotation(clazz);
-		var modId = annotation.value();
-		var type = annotation.type();
-		var fileName = ConfigNaming.fileName(modId, type, annotation.fileName());
-		var set = SETS.computeIfAbsent(
-			modId, id -> {
-				initConfigScreenForClient(id);
-				return new EnumMap<>(ConfigType.class);
-			}
-		);
-		var handler = set.computeIfAbsent(
-			type, ignored -> {
-				var built = ConfigHandler.builder(clazz).type(type).fileName(fileName).build();
-				BY_FILE.put(new FileKey(modId, fileName), built);
-				BY_CLASS.put(clazz, built);
-				return built;
-			}
-		);
-		var config = handler.getConfig();
-		if (clazz.isInstance(config)) return clazz.cast(config);
-		throw new IllegalStateException("Config handler for %s/%s returned %s, expected %s".formatted(
-			modId,
-			type,
-			config.getClass().getName(),
-			clazz.getName()
+	/** 注册成功后整体替换，读路径永远看到一致的一组索引。 */
+	private static volatile Snapshot SNAPSHOT = Snapshot.EMPTY;
+	/** 由 {@code ConfigHandler.Builder#build()} 调用；同一 (模组 ID, 类型)、同一 Class、同一文件均只能注册一次。 */
+	public static <C, V> void register(ConfigHandler<C, V> handler) {
+		var modId = handler.getModId();
+		var type = handler.getType();
+		var fileName = handler.getFileName();
+		var configClass = handler.getConfigClass();
+		boolean firstForMod;
+		var fileKey = new FileKey(modId, fileName);
+		synchronized (LOCK) {
+			var cur = SNAPSHOT;
+			var oldMod = cur.byMod().get(modId);
+			var dupType = oldMod == null ? null : oldMod.get(type);
+			if (dupType != null) throw duplicate("type", "%s/%s".formatted(modId, type), dupType);
+			var dupFile = cur.byFile().get(fileKey);
+			if (dupFile != null) throw duplicate("file", fileKey.toString(), dupFile);
+			var dupClass = getByClass(cur.byClass(), configClass);
+			if (dupClass != null) throw duplicate("class", configClass.getName(), dupClass);
+			var byFile = new HashMap<>(cur.byFile());
+			byFile.put(fileKey, handler);
+			var byClass = new HashMap<>(cur.byClass());
+			putByClass(byClass, configClass, handler);
+			var byMod = new HashMap<>(cur.byMod());
+			var modMap = new EnumMap<ConfigType, ConfigHandler<?, ?>>(ConfigType.class);
+			if (oldMod != null) modMap.putAll(oldMod);
+			modMap.put(type, handler);
+			byMod.put(modId, Collections.unmodifiableMap(modMap));
+			SNAPSHOT = new Snapshot(Map.copyOf(byFile), Map.copyOf(byClass), Map.copyOf(byMod));
+			firstForMod = oldMod == null;
+		}
+		if (firstForMod) ensureScreenRegistered(modId);
+	}
+	private static IllegalStateException duplicate(String dimension, String id, ConfigHandler<?, ?> existing) {
+		return new IllegalStateException("Config %s '%s' is already registered by %s".formatted(
+			dimension,
+			id,
+			existing.getConfigClass().getName()
 		));
+	}
+	private static void ensureScreenRegistered(String modId) {
+		if (!Platform.get().isClient()) return;
+		Platform.get().registerConfigScreen(modId, () -> FlexConfigScreenFactory.createConfigScreen(modId));
 	}
 	public static @NotNull Config requireAnnotation(Class<?> configClass) {
 		var annotation = configClass.getAnnotation(Config.class);
@@ -52,37 +61,34 @@ public class ConfigRegistry {
 		if (annotation.value().isBlank()) throw new IllegalStateException("Mod id must be provided before building ConfigHandler");
 		return annotation;
 	}
-	private static void initConfigScreenForClient(String modId) {
-		if (!Platform.get().isClient()) return;
-		Platform.get().registerConfigScreen(modId, () -> FlexConfigScreenFactory.createConfigScreen(modId));
-	}
 	public static String getModId(@NotNull Class<?> configClass) {
 		return requireAnnotation(configClass).value();
 	}
 	// ========== 按 modId（主配置）访问 ==========
+	/** 按 {@link #PRIMARY_ORDER} 顺序返回该 mod 已注册的主配置 handler；未注册返回空列表。 */
 	public static List<ConfigHandler<?, ?>> getHandlers(String modId) {
-		var set = SETS.get(modId);
-		if (set == null) return List.of();
-		var handlers = new ArrayList<ConfigHandler<?, ?>>(set.size());
+		var modMap = SNAPSHOT.byMod().get(modId);
+		if (modMap == null) return List.of();
+		var handlers = new ArrayList<ConfigHandler<?, ?>>(PRIMARY_ORDER.size());
 		for (var type : PRIMARY_ORDER) {
-			var handler = set.get(type);
+			var handler = modMap.get(type);
 			if (handler != null) handlers.add(handler);
 		}
 		return List.copyOf(handlers);
 	}
-	public static Object getActiveConfig(FileKey key) {
-		return BY_FILE.containsKey(key) ? getHandler(key).getConfig() : null;
+	public static @Nullable Object getActiveConfig(FileKey key) {
+		var handler = findByFile(key);
+		return handler == null ? null : handler.getConfig();
 	}
-	// ========== 按文件精确定位 ==========
-	@SuppressWarnings({"unchecked", "unused"})
+	// ========== 按 Class / 文件精确定位 ==========
 	public static <C> @NotNull ConfigHandler<C, ?> getHandler(Class<C> configClass) {
-		var handler = (ConfigHandler<C, ?>) BY_CLASS.get(configClass);
+		var handler = getByClass(SNAPSHOT.byClass(), configClass);
 		if (handler == null)
 			throw new IllegalStateException("Config handler for '%s' is not initialized.".formatted(configClass.getName()));
 		return handler;
 	}
 	public static @NotNull ConfigHandler<?, ?> getHandler(FileKey key) {
-		var handler = BY_FILE.get(key);
+		var handler = findByFile(key);
 		if (handler == null) throw new IllegalStateException("Config handler for '%s' is not initialized.".formatted(key));
 		return handler;
 	}
@@ -98,27 +104,45 @@ public class ConfigRegistry {
 	}
 	/** 退出世界或服务端停止时调用，让各份配置的 WORLD 型延迟改动写入活动配置。 */
 	public static void applyWorldRestart() {
-		BY_FILE.values().forEach(ConfigHandler::applyWorldRestart);
+		for (var handler : allHandlers()) handler.applyWorldRestart();
 	}
 	// ========== 生命周期 ==========
 	/** 世界即将开始：解析并加载 SERVER 型配置（存档优先，回退全局 config）。 */
 	public static void loadServerConfigs(MinecraftServer server) {
-		BY_FILE.values().forEach(handler -> {
-			if (handler.getType() == ConfigType.SERVER) handler.loadFromDisk(server);
-		});
+		for (var handler : allHandlers()) if (handler.getType() == ConfigType.SERVER) handler.loadFromDisk(server);
 	}
 	public static void unloadServerConfigs() {
-		BY_FILE.values().forEach(handler -> {
-			if (handler.getType() == ConfigType.SERVER) handler.unload();
-		});
+		for (var handler : allHandlers()) if (handler.getType() == ConfigType.SERVER) handler.unload();
 	}
 	// ========== 查询 ==========
-	/** 锁的语义是服务端强制客户端的本地配置，故可锁的仅是 {@link ConfigType#CLIENT}（客户端自己读的那份）。 */
+	/** 锁的语义是服务端强制客户端的本地配置；只有 CLIENT 型且注册时显式开启 {@code lockable} 才生效。 */
 	public static boolean isLockable(FileKey key) {
-		var handler = BY_FILE.get(key);
-		return handler != null && handler.getType() == ConfigType.CLIENT;
+		var handler = findByFile(key);
+		return handler != null && handler.getType() == ConfigType.CLIENT && handler.isLockable();
 	}
 	public static Set<FileKey> getRegisteredFileKeys() {
-		return Set.copyOf(BY_FILE.keySet());
+		return SNAPSHOT.byFile().keySet();
+	}
+	private static @Nullable ConfigHandler<?, ?> findByFile(FileKey key) {
+		return SNAPSHOT.byFile().get(key);
+	}
+	private static Collection<ConfigHandler<?, ?>> allHandlers() {
+		return SNAPSHOT.byFile().values();
+	}
+	/** 把 key 的配置类与 value 的类型参数绑在一起，避免向通配符表写错类型。 */
+	private static <C, V> void putByClass(Map<Class<?>, ConfigHandler<?, ?>> target, Class<C> configClass, ConfigHandler<C, V> handler) {
+		target.put(configClass, handler);
+	}
+	@SuppressWarnings("unchecked")
+	private static <C> @Nullable ConfigHandler<C, ?> getByClass(Map<Class<?>, ConfigHandler<?, ?>> source, Class<C> configClass) {
+		return (ConfigHandler<C, ?>) source.get(configClass);
+	}
+	/** 按文件、Class、modId 建立索引；{@code byMod} 的内层 map 保留枚举声明顺序。 */
+	private record Snapshot(
+		Map<FileKey, ConfigHandler<?, ?>> byFile,
+		Map<Class<?>, ConfigHandler<?, ?>> byClass,
+		Map<String, Map<ConfigType, ConfigHandler<?, ?>>> byMod
+	) {
+		static final Snapshot EMPTY = new Snapshot(Map.of(), Map.of(), Map.of());
 	}
 }

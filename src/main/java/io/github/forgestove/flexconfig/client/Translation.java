@@ -11,11 +11,7 @@ public class Translation {
 	public static final Component KEYBINDS_LABEL = Component.translatable("flexconfig.keybinds");
 	public static final Component CANCEL_LABEL = Component.translatable("gui.cancel");
 	public static final Component BACK_LABEL = Component.translatable("gui.back");
-	public static final Component QUIT_UNSAVED_LABEL = Component.translatable("flexconfig.quit.unsaved");
-	/** 保存键文案恒定；能不能保存由按钮可用性与 tooltip 表达。 */
-	public static final Component SAVE_CHANGES_LABEL = Component.translatable("flexconfig.save_changes");
 	public static final Component SAVE_UNAVAILABLE = Component.translatable("flexconfig.save_unavailable");
-	public static final Component SAVE_UNAVAILABLE_NO_CHANGES = Component.translatable("flexconfig.save_unavailable.no_changes");
 	public static final Component SAVE_UNAVAILABLE_INVALID = Component.translatable("flexconfig.save_unavailable.invalid");
 	public static final Component SAVE_UNAVAILABLE_READ_ONLY = Component.translatable("flexconfig.save_unavailable.read_only");
 	public static final Component SERVER_CONFIG_UNAVAILABLE = Component.translatable("flexconfig.server_config.unavailable");

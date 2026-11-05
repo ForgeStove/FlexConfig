@@ -60,7 +60,6 @@ public class EntryTypeRegistry {
 	private final List<FieldProvider> predicateProviders = new ArrayList<>();
 	private final List<TypeProvider> typeProviders = new ArrayList<>();
 	private final List<FieldTransformer> transformers = new ArrayList<>();
-	private EntryTypeRegistry() {}
 	public static EntryTypeRegistry get(Class<?> configClass) {
 		return custom.computeIfAbsent(configClass, ignored -> new EntryTypeRegistry());
 	}

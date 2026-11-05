@@ -237,7 +237,7 @@ public class InlineDropdown<T> {
 		}
 		select(filtered.get(Math.max(highlighted, 0)));
 	}
-	public static final class TopCell extends FlexEditBox {
+	public static class TopCell extends FlexEditBox {
 		private final InlineDropdown<?> owner;
 		private TopCell(InlineDropdown<?> owner, int width, int height) {
 			super(ClientUtil.mc.font, 0, 0, width, height, Component.empty());

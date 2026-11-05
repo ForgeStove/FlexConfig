@@ -15,7 +15,6 @@ public class ConfigChangeDispatcher {
 	private static final Map<Class<? extends ConfigChangeHandler>, ConfigChangeHandler> INSTANCES = new HashMap<>();
 	private static final Map<Class<? extends ConfigChangeHandler>, Pending> PENDING = new LinkedHashMap<>();
 	private static int depth;
-	private ConfigChangeDispatcher() {}
 	public static void begin() {
 		depth++;
 	}

@@ -1,8 +1,8 @@
 package io.github.forgestove.flexconfig.demo;
-import io.github.forgestove.flexconfig.ConfigRegistry;
+import io.github.forgestove.flexconfig.ConfigHandler;
 public class DemoRegistration {
 	public static void register() {
-		ConfigRegistry.init(DemoConfig.class);
-		ConfigRegistry.init(DemoServerConfig.class);
+		ConfigHandler.builder(DemoConfig.class).build();
+		ConfigHandler.builder(DemoServerConfig.class).build();
 	}
 }

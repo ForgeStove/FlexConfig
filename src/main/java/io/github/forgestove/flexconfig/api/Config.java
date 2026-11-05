@@ -1,11 +1,10 @@
 package io.github.forgestove.flexconfig.api;
 import java.lang.annotation.*;
+/** 标记配置类：模组 ID 与类型由注解声明，其余注册信息由 {@code ConfigHandler.Builder} 提供。 */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Config {
 	/** 模组 ID，同时用作翻译键前缀。 */
 	String value();
 	ConfigType type() default ConfigType.CLIENT;
-	/** 显式文件名（{@code .toml} 可省略）；留空按 {@code <modId>-<type>.toml} 推导。 */
-	String fileName() default "";
 }

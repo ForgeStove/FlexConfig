@@ -2,13 +2,17 @@ package io.github.forgestove.flexconfig;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.api.MenuOptions.Toggle;
 import io.github.forgestove.flexconfig.client.gui.factory.EntryKeybind;
 import io.github.forgestove.flexconfig.platform.Platform;
 import io.github.forgestove.flexconfig.tree.RootConfigNode;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
@@ -25,6 +29,9 @@ public class ConfigHandler<C, V> {
 	private final String modId;
 	private final ConfigType type;
 	private final String fileName;
+	private final boolean lockable;
+	private final MenuOptions menuOptions;
+	private final Accent accent;
 	// ---- 全局快捷键系统 ----
 	private final Map<String, String> triggerKeybinds = new LinkedHashMap<>();
 	private final List<ConfigSaveListener<C>> saveListeners = new ArrayList<>();
@@ -37,6 +44,9 @@ public class ConfigHandler<C, V> {
 		modId = ConfigRegistry.getModId(configClass);
 		type = builder.type;
 		fileName = builder.fileName;
+		lockable = builder.lockable;
+		menuOptions = buildMenuOptions(builder);
+		accent = builder.accent;
 		serializer = builder.serializerBuilder.build();
 		configTree = RootConfigNode.create(newInstance(), modId, fileName, type);
 		savedConfig = newInstance();
@@ -126,6 +136,62 @@ public class ConfigHandler<C, V> {
 	}
 	public ConfigType getType() {
 		return type;
+	}
+	public boolean isLockable() {
+		return lockable;
+	}
+	public MenuOptions getMenuOptions() {
+		return menuOptions;
+	}
+	public Accent getAccent() {
+		return accent;
+	}
+	private @NotNull MenuOptions buildMenuOptions(Builder<C, V> builder) {
+		if (builder.menuToggleField == null) return builder.menuIcon == null ? MenuOptions.NONE : new MenuOptions(builder.menuIcon, null);
+		var fields = resolveFieldPath(builder.menuToggleField);
+		if (fields == null) return new MenuOptions(builder.menuIcon, null);
+		var label = builder.menuToggleLabel == null ? Component.empty() : builder.menuToggleLabel;
+		var tooltip = builder.menuToggleTooltip;
+		return new MenuOptions(
+			builder.menuIcon, new Toggle(
+			label,
+			tooltip,
+			builder.menuToggleField,
+			() -> Boolean.TRUE.equals(readPath(activeConfig, fields)),
+			value -> writePath(activeConfig, fields, value)
+		)
+		);
+	}
+	private Field @Nullable [] resolveFieldPath(String path) {
+		var parts = path.split("\\.");
+		var fields = new Field[parts.length];
+		Class<?> type = configClass;
+		for (var i = 0; i < parts.length; i++)
+			try {
+				var field = type.getDeclaredField(parts[i]);
+				fields[i] = field;
+				type = field.getType();
+			} catch (NoSuchFieldException e) {
+				LOGGER.error("Menu toggle field '{}' does not exist on {}", path, configClass.getName());
+				return null;
+			}
+		return fields;
+	}
+	private static @Nullable Object readPath(Object root, Field[] fields) {
+		var current = root;
+		for (var field : fields) {
+			if (current == null) return null;
+			current = FieldAccess.getFieldValue(field, current);
+		}
+		return current;
+	}
+	private static void writePath(Object root, Field[] fields, Object value) {
+		var current = root;
+		for (var i = 0; i < fields.length - 1; i++) {
+			if (current == null) return;
+			current = FieldAccess.getFieldValue(fields[i], current);
+		}
+		if (current != null) FieldAccess.setFieldValue(fields[fields.length - 1], current, value);
 	}
 	public String getFileName() {
 		return fileName;
@@ -265,11 +331,17 @@ public class ConfigHandler<C, V> {
 	public static class Builder<C, V> {
 		private final Class<C> configClass;
 		private final ConfigSerializer.Builder<C> serializerBuilder;
-		private ConfigType type = ConfigType.CLIENT;
+		private ConfigType type;
 		private String fileName;
+		private boolean lockable;
+		private Accent accent = Accent.GOLD;
+		private @Nullable ResourceLocation menuIcon;
+		private @Nullable Component menuToggleLabel, menuToggleTooltip;
+		private @Nullable String menuToggleField;
 		private Builder(Class<C> configClass) {
 			this.configClass = configClass;
 			serializerBuilder = ConfigSerializer.builder(configClass);
+			type = ConfigRegistry.requireAnnotation(configClass).type();
 		}
 		public Builder<C, V> type(ConfigType type) {
 			this.type = type;
@@ -279,8 +351,32 @@ public class ConfigHandler<C, V> {
 			this.fileName = fileName;
 			return this;
 		}
+		public Builder<C, V> lockable(boolean lockable) {
+			this.lockable = lockable;
+			return this;
+		}
+		/** 强调色基色；明暗和按下/悬停变体由 {@link Accent#of(int)} 推导。 */
+		public Builder<C, V> theme(int accent) {
+			this.accent = Accent.of(accent);
+			return this;
+		}
+		public Builder<C, V> menuIcon(@Nullable ResourceLocation icon) {
+			menuIcon = icon;
+			return this;
+		}
+		public Builder<C, V> menuToggle(@Nullable Component label, @Nullable Component tooltip, @Nullable String fieldPath) {
+			menuToggleField = fieldPath == null || fieldPath.isBlank() ? null : fieldPath;
+			var key = ConfigRegistry.getModId(configClass) + ".config.menu.toggle";
+			menuToggleLabel = label == null ? Component.translatable(key) : label;
+			menuToggleTooltip = tooltip == null ? Component.translatable(key + ".tooltip") : tooltip;
+			return this;
+		}
+		/** 构建并注册到 {@link ConfigRegistry}；同一 (模组, 类型) 只能注册一次。 */
 		public @NotNull ConfigHandler<C, V> build() {
-			return new ConfigHandler<>(this);
+			if (fileName == null || fileName.isBlank()) fileName = ConfigNaming.fileName(ConfigRegistry.getModId(configClass), type, "");
+			var handler = new ConfigHandler<>(this);
+			ConfigRegistry.register(handler);
+			return handler;
 		}
 	}
 }

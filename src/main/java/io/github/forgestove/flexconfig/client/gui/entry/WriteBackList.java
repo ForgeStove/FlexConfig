@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 /** 数组字段/数组元素的 List 视图：任何增删改都立刻写回目标数组。 */
-final class WriteBackList extends ArrayList<Object> {
+class WriteBackList extends ArrayList<Object> {
 	private final Runnable onChange;
 	private boolean updating;
 	WriteBackList(List<?> values, Runnable onChange) {
