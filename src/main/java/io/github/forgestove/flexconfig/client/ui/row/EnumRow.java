@@ -37,7 +37,7 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 			actionBar.add(segmented, UiMath.clamp(constants.length * 50, 64, 150)).add(trigger, 96);
 		} else {
 			segmented = null;
-			var dropdown = new UiDropdown(options, this::value, this::setValue, d -> ctx.screen().openDropdown(d));
+			var dropdown = new UiDropdown(options, this::value, this::setValue, d -> ctx.shell().openDropdown(d));
 			actionBar.add(dropdown, UiTheme.CONTROL_WIDTH).add(trigger, 96);
 		}
 		keybind.register(() -> {
@@ -51,7 +51,7 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 	}
 	private Component label(Enum<?> value) {
 		return ConfigTranslation.translatable("%s.config.enum.%s.%s".formatted(
-			ctx.screen().root.modId(),
+			ctx.shell().root.modId(),
 			value.getDeclaringClass().getSimpleName(),
 			value.name()
 		));

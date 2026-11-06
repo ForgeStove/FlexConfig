@@ -1,36 +1,36 @@
 package io.github.forgestove.flexconfig.client.ui.model;
 import io.github.forgestove.flexconfig.*;
-import io.github.forgestove.flexconfig.client.ui.ConfigScreen;
-/** 行与配置界面之间的窄接口，行不直接依赖界面的私有状态。 */
-public record RowContext(ConfigScreen<?, ?> screen) {
+import io.github.forgestove.flexconfig.client.ui.ConfigShell;
+/** 行与配置界面之间的窄接口，行不直接依赖界面或 Screen 的私有状态。 */
+public record RowContext(ConfigShell<?, ?> shell) {
 	public ConfigHandler<?, ?> handler() {
-		return screen.getHandler();
+		return shell.getHandler();
 	}
 	public Object config() {
-		return screen.config();
+		return shell.config();
 	}
 	public FileKey fileKey() {
-		return new FileKey(screen.root.modId(), screen.root.fileName());
+		return new FileKey(shell.root.modId(), shell.root.fileName());
 	}
 	public boolean editable() {
-		return screen.isEditable();
+		return shell.isEditable();
 	}
 	public boolean lockable() {
-		return screen.isLockable();
+		return shell.isLockable();
 	}
 	public void refresh() {
-		screen.refresh();
+		shell.refresh();
 	}
 	public void rebuildTab() {
-		screen.rebuildActiveTab();
+		shell.rebuildActiveTab();
 	}
 	public void beginCapture(CaptureTarget target) {
-		screen.beginCapture(target);
+		shell.beginCapture(target);
 	}
 	public void endCapture(CaptureTarget target) {
-		screen.endCapture(target);
+		shell.endCapture(target);
 	}
 	public void saveByKeybind() {
-		screen.saveByKeybind();
+		shell.saveByKeybind();
 	}
 }

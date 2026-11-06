@@ -5,11 +5,9 @@ import io.github.forgestove.flexconfig.client.ui.widget.UiScrollPane;
 
 import java.util.*;
 import java.util.function.IntConsumer;
-public class SidebarView {
+public class SidebarView extends UiScrollPane {
 	private final ConfigUiModel model;
 	private final IntConsumer onSelect;
-	private final UiScrollPane pane = new UiScrollPane();
-	private UiBounds bounds = UiBounds.EMPTY;
 	private int pressedIndex = -1;
 	private final UiAnim indicatorTop = new UiAnim(0, UiMotion.INDICATOR_LEAD);
 	private final UiAnim indicatorBottom = new UiAnim(UiTheme.TAB_PITCH, UiMotion.INDICATOR_LEAD);
@@ -19,26 +17,19 @@ public class SidebarView {
 	public SidebarView(ConfigUiModel model, IntConsumer onSelect) {
 		this.model = model;
 		this.onSelect = onSelect;
-		pane.setPitch(UiTheme.TAB_PITCH);
-		pane.content(this::renderTabs);
-	}
-	public void setBounds(UiBounds bounds) {
-		this.bounds = bounds;
-		pane.setBounds(bounds);
+		setPitch(UiTheme.TAB_PITCH);
 	}
 	public UiBounds tabBounds(int index) {
-		var width = bounds.width() - (pane.shown() ? UiTheme.SCROLLBAR_WIDTH + 2 : 0);
-		return new UiBounds(bounds.x(), bounds.y() + index * UiTheme.TAB_PITCH - (int) Math.round(pane.scroll()), width,
-			UiTheme.TAB_PITCH);
+		var width = bounds().width() - (shown() ? UiTheme.SCROLLBAR_WIDTH + 2 : 0);
+		return new UiBounds(bounds().x(), bounds().y() + index * UiTheme.TAB_PITCH - (int) Math.round(scroll()), width, UiTheme.TAB_PITCH);
 	}
-	public void wheel(double amount) {
-		pane.wheel(amount);
-	}
+	@Override
 	public void render(UiContext ui) {
-		pane.setContentHeight(model.tabs().size() * UiTheme.TAB_PITCH);
-		pane.render(ui);
+		setContentHeight(model.tabs().size() * UiTheme.TAB_PITCH);
+		super.render(ui);
 	}
-	private void renderTabs(UiContext ui) {
+	@Override
+	protected void renderContent(UiContext ui) {
 		var tabs = model.tabs();
 		while (hovers.size() < tabs.size()) hovers.add(new UiAnim(0, UiMotion.HOVER_IN));
 		for (var i = 0; i < tabs.size(); i++) {
@@ -56,18 +47,21 @@ public class SidebarView {
 				ui.painter.rect(item.x(), item.y() + 1, item.width(), item.height() - 2, UiTheme.PANEL);
 				ui.painter.rect(item.x(), item.bottom() - 1, item.width(), 1, UiTheme.SEP);
 			} else if (hover.get() > 0.01) ui.painter.rect(item, UiTheme.mulAlpha(UiTheme.ROW_HOVER, 0.6F * (float) hover.get()));
+			var nudge = active ? 0F : (float) hover.get();
+			if (nudge != 0F) ui.painter.pushTranslate(nudge, 0F);
 			var glyph = new UiBounds(item.x() + 7, item.y() + (item.height() - 7) / 2, 7, 7);
 			drawGlyph(ui.painter, i, glyph, active ? ui.accent().base() : UiTheme.TEXT_3);
 			var label = ui.painter.trim(tab.title.getString(), item.width() - 34);
 			ui.painter.text(
 				label,
-				item.x() + 18 + (active ? 0 : (int) (hover.get() * 1)),
+				item.x() + 18,
 				item.y() + (item.height() - ui.painter.lineHeight()) / 2,
 				active || hover.get() > 0.5 ? UiTheme.TEXT : UiTheme.TEXT_2
 			);
 			var dotY = item.y() + item.height() / 2 - 1;
 			if (tab.hasError) ui.painter.rect(item.right() - 9, dotY, 2, 2, UiTheme.DANGER);
 			else if (tab.changedCount > 0) ui.painter.rect(item.right() - 9, dotY, 2, 2, ui.accent().base());
+			if (nudge != 0F) ui.painter.popTranslate();
 		}
 		var activeIndex = model.activeIndex();
 		if (activeIndex >= 0 && activeIndex < tabs.size()) {
@@ -88,7 +82,7 @@ public class SidebarView {
 			indicatorBottom.update(ui.delta);
 			var top = (int) Math.round(indicatorTop.get());
 			var bottom = (int) Math.round(indicatorBottom.get());
-			ui.painter.rect(bounds.x(), top, 3, Math.max(1, bottom - top), ui.accent().base());
+			ui.painter.rect(bounds().x(), top, 3, Math.max(1, bottom - top), ui.accent().base());
 		}
 	}
 	private static void drawGlyph(UiPainter painter, int index, UiBounds b, int color) {
@@ -143,24 +137,25 @@ public class SidebarView {
 			}
 		}
 	}
-	@SuppressWarnings("unused")
+	@Override
 	public boolean mouseClicked(UiContext ui, double mouseX, double mouseY, int button) {
-		if (button != 0 || !bounds.contains(mouseX, mouseY)) return false;
-		if (pane.mouseClicked(ui, mouseX, mouseY, button)) return true;
+		if (button != 0 || !bounds().contains(mouseX, mouseY)) return false;
+		if (super.mouseClicked(ui, mouseX, mouseY, button)) return true;
 		var tabs = model.tabs();
-		var index = (int) ((mouseY - bounds.y() + pane.scroll()) / UiTheme.TAB_PITCH);
+		var index = (int) ((mouseY - bounds().y() + scroll()) / UiTheme.TAB_PITCH);
 		if (index >= 0 && index < tabs.size()) {
 			pressedIndex = index;
 			return true;
 		}
 		return true;
 	}
+	@Override
 	public boolean mouseDragged(UiContext ui, double mouseX, double mouseY, int button, double dragX, double dragY) {
-		return pane.mouseDragged(ui, mouseX, mouseY, button, dragX, dragY);
+		return super.mouseDragged(ui, mouseX, mouseY, button, dragX, dragY);
 	}
-	@SuppressWarnings("unused")
+	@Override
 	public boolean mouseReleased(UiContext ui, double mouseX, double mouseY, int button) {
-		pane.mouseReleased(ui, mouseX, mouseY, button);
+		super.mouseReleased(ui, mouseX, mouseY, button);
 		if (pressedIndex < 0) return false;
 		var index = pressedIndex;
 		pressedIndex = -1;

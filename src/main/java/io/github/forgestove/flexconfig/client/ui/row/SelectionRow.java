@@ -15,7 +15,7 @@ public class SelectionRow extends ValueRow {
 		super(ctx, node);
 		var options = new ArrayList<Option>();
 		for (var candidate : candidates) options.add(new Option(candidate, text.apply(candidate)));
-		var dropdown = new UiDropdown(options, this::value, this::setValue, d -> ctx.screen().openDropdown(d));
+		var dropdown = new UiDropdown(options, this::value, this::setValue, d -> ctx.shell().openDropdown(d));
 		actionBar.add(dropdown, UiTheme.CONTROL_WIDTH);
 	}
 }

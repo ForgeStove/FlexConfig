@@ -1,24 +1,17 @@
 package io.github.forgestove.flexconfig.client.ui.widget;
 import io.github.forgestove.flexconfig.client.ui.core.*;
 import net.minecraft.Util;
-import org.jetbrains.annotations.Nullable;
 /** 滚动容器：裁剪内容、平滑滚动，右侧带常驻的立体滚动条。 */
 public class UiScrollPane extends UiControl {
 	private static final int TRACK_WIDTH = 2, KNOB_WIDTH = 8, MIN_KNOB = 12, SHADOW_HEIGHT = 6, KNOB_SHADOW = 2;
 	private static final double[] WHEEL_ACCEL = {1, 1.2, 1.6, 2.2, 3};
-	public interface Content {
-		void render(UiContext ui);
-	}
 	private final UiAnim offset = new UiAnim(0, UiMotion.SCROLL);
-	private @Nullable Content content;
 	private int contentHeight, pitch = 30;
 	private long lastWheelMs = -1_000_000_000L;
 	private int wheelRun;
 	private boolean draggingBar;
 	private int dragGrabY;
-	public void content(Content content) {
-		this.content = content;
-	}
+	protected void renderContent(UiContext ui) {}
 	public void setPitch(int pitch) {
 		this.pitch = Math.max(1, pitch);
 	}
@@ -67,7 +60,7 @@ public class UiScrollPane extends UiControl {
 		if (!visible) return;
 		offset.update(ctx.delta);
 		ctx.painter.scissorOn(bounds());
-		if (content != null) content.render(ctx);
+		renderContent(ctx);
 		ctx.painter.scissorOff();
 		paintShadows(ctx);
 		paintBar(ctx);

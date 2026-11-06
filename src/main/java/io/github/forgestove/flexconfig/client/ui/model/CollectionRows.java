@@ -76,7 +76,7 @@ public class CollectionRows {
 		var list = values(node, ctx);
 		if (index < 0 || index >= list.size()) return;
 		var element = list.get(index);
-		ctx.screen().exitRow(element, () -> {
+		ctx.shell().exitRow(element, () -> {
 			ctx.handler().shiftElementKeybinds(node.getPath(), index);
 			list.remove(index);
 			//noinspection rawtypes
@@ -193,7 +193,7 @@ public class CollectionRows {
 		}
 	}
 	private static String optionKey(RowContext ctx, ValueConfigNode<?, ?> node) {
-		return "%s.config.option.%s".formatted(ctx.screen().root.modId(), node.getPath());
+		return "%s.config.option.%s".formatted(ctx.shell().root.modId(), node.getPath());
 	}
 	private static void addDelete(ConfigRow row, RowContext ctx, ValueConfigNode<?, ?> node, int index) {
 		if (!(row instanceof ValueRow valueRow)) return;
