@@ -76,20 +76,27 @@ public class CollectionRows {
 		var list = values(node, ctx);
 		if (index < 0 || index >= list.size()) return;
 		var element = list.get(index);
-		ctx.shell().exitRow(element, () -> {
-			ctx.handler().shiftElementKeybinds(node.getPath(), index);
-			list.remove(index);
-			//noinspection rawtypes
-			((ValueConfigNode) node).setEditingValue(list);
-			ctx.rebuildTab();
-		});
+		ctx.shell().exitRow(
+			element, () -> {
+				ctx.handler().shiftElementKeybinds(node.getPath(), index);
+				list.remove(index);
+				//noinspection rawtypes
+				((ValueConfigNode) node).setEditingValue(list);
+				ctx.rebuildTab();
+			}
+		);
 	}
 	private static boolean isReadOnly(RowContext ctx, ValueConfigNode<?, ?> node) {
 		if (!ctx.editable()) return true;
 		var pending = ClientLockManager.getPendingLock(ctx.fileKey(), node.getLockPath());
 		return pending != null ? pending : ClientLockManager.isLocked(ctx.fileKey(), node.getLockPath());
 	}
-	private static ValueConfigNode<Object, Object> elementNode(ValueConfigNode<?, ?> node, RowContext ctx, int index, Class<?> elementType) {
+	private static ValueConfigNode<Object, Object> elementNode(
+		ValueConfigNode<?, ?> node,
+		RowContext ctx,
+		int index,
+		Class<?> elementType
+	) {
 		var list = values(node, ctx);
 		var baseline = index < list.size() ? FieldAccess.deepCopy(list.get(index)) : null;
 		return ValueConfigNode.builder()
@@ -109,7 +116,12 @@ public class CollectionRows {
 			.baselineValue(baseline)
 			.build();
 	}
-	private static ValueConfigNode<Object, Object> nestedElementNode(ValueConfigNode<?, ?> node, RowContext ctx, int index, ElementType shape) {
+	private static ValueConfigNode<Object, Object> nestedElementNode(
+		ValueConfigNode<?, ?> node,
+		RowContext ctx,
+		int index,
+		ElementType shape
+	) {
 		var list = values(node, ctx);
 		var raw = shape.raw();
 		var array = raw.isArray();
@@ -122,10 +134,9 @@ public class CollectionRows {
 			var componentType = raw.getComponentType();
 			var holder = new WriteBackList[1];
 			var cached = new WriteBackList(
-				FieldAccess.arrayToList(list.get(index)),
-				() -> {
-					if (index < list.size()) list.set(index, FieldAccess.listToArray(componentType, holder[0]));
-				}
+				FieldAccess.arrayToList(list.get(index)), () -> {
+				if (index < list.size()) list.set(index, FieldAccess.listToArray(componentType, holder[0]));
+			}
 			);
 			holder[0] = cached;
 			reader = ignored -> cached;
@@ -198,7 +209,6 @@ public class CollectionRows {
 	private static void addDelete(ConfigRow row, RowContext ctx, ValueConfigNode<?, ?> node, int index) {
 		if (!(row instanceof ValueRow valueRow)) return;
 		var delete = new UiButton(Component.literal("-"), Style.DANGER, () -> remove(ctx, node, index));
-		delete.tooltip(Component.literal("-"));
 		delete.setEnabled(!isReadOnly(ctx, node));
 		valueRow.addAction(delete, UiTheme.ACTION_SIZE);
 	}

@@ -24,11 +24,11 @@ public class UiGlyphButton extends UiControl {
 			ctx.painter.rect(bounds(), alpha << 24 | 0xB1B2B5);
 		}
 		var painter = ctx.painter;
-		var x = bounds().x() + Math.round((bounds().width() - 12) / 2F);
-		var y = bounds().y() + Math.round((bounds().height() - 12) / 2F);
-		if (glyph == Glyph.CLOSE) for (var i = 0; i < 12; i += 2) {
-			painter.rect(x + i, y + i, 2, 2, UiTheme.WINDOW_EDGE);
-			painter.rect(x + 10 - i, y + i, 2, 2, UiTheme.WINDOW_EDGE);
+		if (glyph == Glyph.CLOSE) {
+			var text = "✕";
+			var x = bounds().x() + Math.round((bounds().width() - painter.textWidth(text)) / 2F);
+			var y = bounds().y() + Math.round((bounds().height() - painter.lineHeight()) / 2F);
+			painter.text(text, x, y, UiTheme.WINDOW_EDGE);
 		}
 		showTooltip(ctx);
 	}

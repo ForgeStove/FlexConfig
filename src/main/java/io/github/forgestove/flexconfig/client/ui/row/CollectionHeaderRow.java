@@ -10,7 +10,6 @@ public class CollectionHeaderRow extends ValueRow {
 	public CollectionHeaderRow(RowContext ctx, ValueConfigNode<?, ?> node) {
 		super(ctx, node);
 		add = new UiButton(Component.literal("+"), Style.PRIMARY, () -> CollectionRows.add(ctx, node));
-		add.tooltip(Component.literal("+"));
 		actionBar.add(add, UiTheme.ACTION_SIZE);
 	}
 	@Override

@@ -527,7 +527,12 @@ public final class ConfigShell<C, V> {
 			var count = Component.translatable("flexconfig.search.results", searchResults.size());
 			painter.text(count, layout.pageHeader.x() + painter.textWidth(headerText) + 8, layout.pageHeader.y() + 4, UiTheme.TEXT_3);
 		}
-		closeButton.setBounds(new UiBounds(layout.header.right() - 19, layout.header.y() + (layout.header.height() - 3 - 16) / 2, 16, 16));
+		closeButton.setBounds(new UiBounds(
+			layout.header.right() - 19,
+			layout.header.y() + Math.round((layout.header.height() - 3 - 16) / 2F),
+			16,
+			16
+		));
 		closeButton.render(ui);
 		var undoWidth = 110;
 		undoButton.setBounds(new UiBounds(closeButton.bounds().x() - 4 - undoWidth, layout.header.y() + 4, undoWidth, 14));
@@ -682,7 +687,6 @@ public final class ConfigShell<C, V> {
 			}
 			return true;
 		}
-		ui.clearTooltip();
 		if (capture != null) {
 			capture.captureMouse(button);
 			return true;

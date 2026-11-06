@@ -12,13 +12,21 @@ public class GroupHeaderRow extends ConfigRow {
 	private final String path;
 	private final Object identity;
 	private final @Nullable UiButton delete;
-	public GroupHeaderRow(RowContext ctx, Object identity, String path, Component label, int depth, boolean canDelete, @Nullable Runnable onDelete) {
+	public GroupHeaderRow(
+		RowContext ctx,
+		Object identity,
+		String path,
+		Component label,
+		int depth,
+		boolean canDelete,
+		@Nullable Runnable onDelete
+	) {
 		super(ctx);
 		this.identity = identity;
 		this.path = path;
 		this.label = label;
 		this.depth = depth;
-		delete = onDelete == null ? null : new UiButton(Component.literal("x"), Style.DANGER, onDelete);
+		delete = onDelete == null ? null : new UiButton(Component.literal("-"), Style.DANGER, onDelete);
 		if (delete != null) {
 			delete.setEnabled(canDelete);
 			delete.setVisible(true);
@@ -28,7 +36,12 @@ public class GroupHeaderRow extends ConfigRow {
 	public void layout() {
 		if (delete != null) {
 			var height = Math.min(bounds().height(), UiTheme.CONTROL_HEIGHT);
-			delete.setBounds(new UiBounds(bounds().right() - UiTheme.PADDING - UiTheme.ACTION_SIZE, bounds().y() + (bounds().height() - height) / 2, UiTheme.ACTION_SIZE, height));
+			delete.setBounds(new UiBounds(
+				bounds().right() - UiTheme.PADDING - UiTheme.ACTION_SIZE,
+				bounds().y() + (bounds().height() - height) / 2,
+				UiTheme.ACTION_SIZE,
+				height
+			));
 		}
 	}
 	@Override
