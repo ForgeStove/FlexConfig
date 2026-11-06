@@ -34,7 +34,13 @@ public class UiToggle extends UiControl {
 		painter.rect(track, outline);
 		painter.rect(tx + 1, ty + 1, Math.max(0, knobX - tx - 1), TRACK_HEIGHT - 2, onFill);
 		painter.rect(knobX + knobWidth, ty + 1, Math.max(0, tx + TRACK_WIDTH - 1 - knobX - knobWidth), TRACK_HEIGHT - 2, offFill);
-		if (knobX > tx) painter.rect(tx + 1, ty + 1, knobX - tx - 1, 1, enabled ? UiTheme.fadeToward(accent.light(), onFill, (float) onShare) : offFill);
+		if (knobX > tx) painter.rect(
+			tx + 1,
+			ty + 1,
+			knobX - tx - 1,
+			1,
+			enabled ? UiTheme.fadeToward(accent.light(), onFill, (float) onShare) : offFill
+		);
 		if (knobX > tx + 7) painter.rect(tx + 7, ty + 4, 1, 6, enabled ? 0xFFFFFFFF : 0xFF6D6D6D);
 		if (knobX < tx + 18) {
 			var ox = tx + 20;

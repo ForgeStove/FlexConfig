@@ -12,8 +12,6 @@
 	"flexconfig.config.enum.Theme.Default": "默认",
 	"flexconfig.config.enum.Theme.Light": "浅色",
 	"flexconfig.config.file.client": "客户端配置",
-	"flexconfig.config.menu.toggle": "启用",
-	"flexconfig.config.menu.toggle.tooltip": "打开或关闭这份配置的功能。",
 	"flexconfig.config.file.common": "通用配置",
 	"flexconfig.config.file.server": "服务器配置",
 	"flexconfig.config.option.gameplay.announceDeaths": "播报死亡",

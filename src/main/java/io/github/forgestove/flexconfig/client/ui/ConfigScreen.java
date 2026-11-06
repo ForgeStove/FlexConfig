@@ -2,7 +2,6 @@ package io.github.forgestove.flexconfig.client.ui;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import io.github.forgestove.flexconfig.*;
 import io.github.forgestove.flexconfig.api.*;
-import io.github.forgestove.flexconfig.api.MenuOptions.Toggle;
 import io.github.forgestove.flexconfig.client.*;
 import io.github.forgestove.flexconfig.client.ui.core.*;
 import io.github.forgestove.flexconfig.client.ui.core.UiFocus.Target;
@@ -47,10 +46,8 @@ public class ConfigScreen<C, V> extends Screen {
 	private ConfigUiModel model;
 	private SidebarView sidebar;
 	private ShowcaseView showcase;
-	private Toggle menuToggle;
-	private UiToggle globalToggle;
 	private FooterView footer;
-	private UiScrollbar scrollbar;
+	private UiScrollPane contentPane;
 	private UiButton doneButton, undoButton;
 	private UiGlyphButton closeButton;
 	private @Nullable UiControl pressedControl;
@@ -78,7 +75,6 @@ public class ConfigScreen<C, V> extends Screen {
 	private boolean changedOnly;
 	private String searchQuery = "";
 	private List<ConfigRow> searchResults = List.of();
-	private double searchScroll;
 	private int lastWidth, lastHeight;
 	private @Nullable CaptureTarget capture;
 	private @Nullable ConfigRow removingRow;
@@ -121,23 +117,17 @@ public class ConfigScreen<C, V> extends Screen {
 	private void updateSearch(String query) {
 		searchQuery = query.trim();
 		SearchIndex.clearHighlights(model);
-		searchResults = searchQuery.isEmpty() && !changedOnly
-			? List.of()
-			: SearchIndex.search(rowContext, model, searchQuery, changedOnly);
-		searchScroll = 0;
-		if (scrollbar != null) scrollbar.setScroll(0);
+		searchResults = searchQuery.isEmpty() && !changedOnly ? List.of() : SearchIndex.search(rowContext, model, searchQuery,
+			changedOnly);
+		var tab = model.activeTab();
+		contentPane.setScroll(searchQuery.isEmpty() && !changedOnly && tab != null ? tab.scroll : 0);
 		pageIn.start(0, 1, UiMotion.TAB_ROWS_IN);
 		revealRows(searchResults);
 	}
 	private void openPageMenu() {
 		var items = new ArrayList<Item>();
 		var tab = model.activeTab();
-		items.add(new Item(
-			Component.translatable("flexconfig.page.reset"),
-			tab != null && tab.changedCount > 0,
-			false,
-			this::resetPage
-		));
+		items.add(new Item(Component.translatable("flexconfig.page.reset"), tab != null && tab.changedCount > 0, false, this::resetPage));
 		var menu = new UiPopupMenu(items, index -> items.get(index).action().run());
 		menu.place(layout.panel, pageMenuButton.bounds().x(), pageMenuButton.bounds().bottom() + 2);
 		openPopup(menu);
@@ -183,22 +173,21 @@ public class ConfigScreen<C, V> extends Screen {
 		var currentTab = model.activeTab();
 		if (currentTab != null && searchQuery.isEmpty()) {
 			outgoingRows = currentTab.rows;
-			outgoingScroll = scrollbar.scroll();
+			outgoingScroll = contentPane.scroll();
 			pageOut.start(1, 0, UiMotion.TAB_ROWS_IN);
 			pageIn.start(0, 1, UiMotion.TAB_ROWS_IN);
 		}
 		if (searchField != null) searchField.setValue("");
 		searchQuery = "";
 		searchResults = List.of();
-		searchScroll = 0;
 		var current = model.activeTab();
-		if (current != null && searchQuery.isEmpty()) current.scroll = scrollbar.scroll();
+		if (current != null && searchQuery.isEmpty()) current.scroll = contentPane.scroll();
 		model.setActive(index);
 		var next = model.activeTab();
 		if (next != null) {
 			lastSelectedCategory = next.node;
 			next.clampScroll(layout.content.height(), layout.content.width());
-			scrollbar.setScroll(next.scroll);
+			contentPane.setScroll(next.scroll);
 			revealRows(next.rows);
 		}
 		ui.focus.clear();
@@ -267,38 +256,23 @@ public class ConfigScreen<C, V> extends Screen {
 		painter.rect(layout.sidebar.right(), layout.sidebar.y(), 1, layout.sidebar.height(), UiTheme.WINDOW_EDGE);
 		renderHeader(ui);
 		showcase.render(ui, layout.showcase);
-		if (globalToggle != null) {
-			var label = menuToggle.label().getString();
-			ui.painter.rect(layout.showcase.x() + 1, layout.showcase.bottom() - 21, layout.showcase.width() - 2, 20, 0xCC1E1E1F);
-			ui.painter.text(
-				ui.painter.trim(label, layout.showcase.width() - 52),
-				layout.showcase.x() + 6,
-				layout.showcase.bottom() - 20,
-				UiTheme.TEXT_2
-			);
-			globalToggle.setBounds(new UiBounds(layout.showcase.right() - 6 - 30, layout.showcase.bottom() - 6 - 14, 30, 14));
-			globalToggle.render(ui);
-		}
 		sidebar.render(ui);
 		var tab = model.activeTab();
 		var searching = !searchQuery.isEmpty() || changedOnly;
 		var rows = searching ? searchResults : tab == null ? List.<ConfigRow>of() : tab.rows;
 		var height = 0;
 		for (var row : rows) height += row.displayHeight(layout.content.width());
-		scrollbar.metrics(height, layout.content.height());
-		scrollbar.update(seconds, mouseX, mouseY);
-		if (searching) searchScroll = scrollbar.scroll();
-		else if (tab != null) tab.scroll = scrollbar.scroll();
+		contentPane.setContentHeight(height);
 		pageOut.update(seconds);
 		pageIn.update(seconds);
 		if (!pageOut.done() && !outgoingRows.isEmpty()) renderOutgoing(ui, outgoingRows, outgoingScroll);
 		ui.painter.pushAlpha(pageIn.value());
 		ui.painter.pushTranslate((1F - pageIn.value()) * UiMotion.PAGE_SLIDE, 0);
-		renderRows(ui, rows, searching ? searchScroll : tab == null ? 0 : tab.scroll);
+		contentPane.render(ui);
 		ui.painter.popTranslate();
 		ui.painter.popAlpha();
+		if (!searching && tab != null) tab.scroll = contentPane.scroll();
 		footer.render(ui);
-		scrollbar.render(ui);
 		renderFocusRing(ui);
 		if (openMenu != null && openMenu.closing()) {
 			fadingMenu = openMenu;
@@ -361,7 +335,6 @@ public class ConfigScreen<C, V> extends Screen {
 		if (searchField != null && searchField.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
 		if (changedChip.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
 		if (pageMenuButton.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
-		if (globalToggle != null && globalToggle.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
 		if (undoButton.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
 		switch (keyCode) {
 			case GLFW.GLFW_KEY_UP, GLFW.GLFW_KEY_DOWN, GLFW.GLFW_KEY_HOME, GLFW.GLFW_KEY_END -> {
@@ -371,7 +344,7 @@ public class ConfigScreen<C, V> extends Screen {
 		}
 		if (keyCode == GLFW.GLFW_KEY_PAGE_UP || keyCode == GLFW.GLFW_KEY_PAGE_DOWN) {
 			var delta = keyCode == GLFW.GLFW_KEY_PAGE_UP ? -layout.content.height() : layout.content.height();
-			scrollbar.setScroll(scrollbar.scroll() + delta);
+			contentPane.scrollBy(delta);
 			return true;
 		}
 		if (closeButton.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
@@ -422,7 +395,7 @@ public class ConfigScreen<C, V> extends Screen {
 			riseAnim.snap(0);
 		}
 		recomputeZoom();
-		layout = new ScreenLayout(logicalWidth, logicalHeight);
+		layout = new ScreenLayout(logicalWidth, logicalHeight, handler.getMenuOptions().icon() != null);
 		lastWidth = width;
 		lastHeight = height;
 		buildKeybindCategory();
@@ -434,41 +407,36 @@ public class ConfigScreen<C, V> extends Screen {
 		closeButton = new UiGlyphButton(Glyph.CLOSE, this::onClose);
 		undoButton = new UiButton(Component.empty(), Style.SECONDARY, this::undoAll);
 		undoButton.setVisible(false);
-		dialogConfirm = new UiButton(Translation.QUIT_CONFIRM_LABEL.copy().withStyle(ChatFormatting.BOLD), Style.PRIMARY, this::confirmDialog);
+		dialogConfirm = new UiButton(
+			Translation.QUIT_CONFIRM_LABEL.copy().withStyle(ChatFormatting.BOLD),
+			Style.PRIMARY,
+			this::confirmDialog
+		);
 		dialogCancel = new UiButton(Translation.CANCEL_LABEL, Style.SECONDARY, this::cancelDialog);
 		sidebar = new SidebarView(model, this::selectTab);
-		var menuOptions = handler.getMenuOptions();
-		showcase = new ShowcaseView(menuOptions.icon());
-		menuToggle = menuOptions.toggle();
-		globalToggle = menuToggle == null ? null : new UiToggle(
-			menuToggle.state(), value -> {
-			menuToggle.setter().accept(value);
-			var node = root.getValueNode(menuToggle.fieldPath());
-			if (node != null) node.resetToActive(config);
-			handler.save(config);
-			refresh();
-		}
-		);
-		if (globalToggle != null) globalToggle.tooltip(menuToggle.tooltip());
+		showcase = new ShowcaseView(handler.getMenuOptions().icon());
 		sidebar.setBounds(layout.tabs);
-		footer = new FooterView(doneButton, this::statusText);
+		footer = new FooterView(doneButton);
 		footer.setBounds(layout.footer);
-		scrollbar = new UiScrollbar();
-		scrollbar.setBounds(layout.scrollbar);
+		contentPane = new UiScrollPane();
+		contentPane.setBounds(contentPaneBounds());
+		contentPane.setPitch(UiTheme.ROW_HEIGHT + UiTheme.ROW_GAP);
+		contentPane.content(this::renderRows);
 		searchField = new UiTextField("");
 		searchField.setLeadingSearch(true);
 		searchField.setPlaceholder(Component.translatable("flexconfig.search.placeholder"));
 		searchField.setResponder(this::updateSearch);
-		changedChip = new UiChip(Component.empty(), () -> {
+		changedChip = new UiChip(
+			Component.empty(), () -> {
 			changedOnly = !changedOnly;
 			changedChip.setSelected(changedOnly);
 			updateSearch(searchField.value());
-		});
+		}
+		);
 		pageMenuButton = new UiButton(Component.literal("..."), Style.SECONDARY, this::openPageMenu);
 		pageMenuButton.tooltip(Component.translatable("flexconfig.search.menu"));
 		searchQuery = "";
 		searchResults = List.of();
-		searchScroll = 0;
 		refresh();
 		var activeTab = model.activeTab();
 		revealRows(activeTab == null ? List.of() : activeTab.rows);
@@ -477,17 +445,21 @@ public class ConfigScreen<C, V> extends Screen {
 	protected void repositionElements() {
 		if (model == null) return;
 		recomputeZoom();
-		layout = new ScreenLayout(logicalWidth, logicalHeight);
+		layout = new ScreenLayout(logicalWidth, logicalHeight, handler.getMenuOptions().icon() != null);
 		lastWidth = width;
 		lastHeight = height;
 		sidebar.setBounds(layout.tabs);
 		footer.setBounds(layout.footer);
-		scrollbar.setBounds(layout.scrollbar);
+		contentPane.setBounds(contentPaneBounds());
 		var tab = model.activeTab();
 		if (tab != null) {
 			tab.clampScroll(layout.content.height(), layout.content.width());
-			scrollbar.setScroll(tab.scroll);
+			contentPane.setScroll(tab.scroll);
 		}
+	}
+	private UiBounds contentPaneBounds() {
+		var content = layout.content;
+		return new UiBounds(content.x(), content.y(), layout.scrollbar.right() - content.x(), content.height());
 	}
 	private void renderDialog(UiContext ui) {
 		var painter = ui.painter;
@@ -576,10 +548,11 @@ public class ConfigScreen<C, V> extends Screen {
 		ui.painter.popTranslate();
 		ui.painter.popAlpha();
 	}
-	private void renderRows(UiContext ui, List<ConfigRow> rows, double scroll) {
-		var y = layout.content.y() - (int) Math.round(scroll);
-		var focusables = new ArrayList<Target>();
+	private void renderRows(UiContext ui) {
+		var rows = activeRows();
 		var content = layout.content;
+		var y = content.y() - (int) Math.round(contentPane.scroll());
+		var focusables = new ArrayList<Target>();
 		for (var row : rows) {
 			var height = row.heightFor(content.width());
 			var shown = row.displayHeight(content.width());
@@ -597,13 +570,11 @@ public class ConfigScreen<C, V> extends Screen {
 		if (searchField != null) focusables.add(searchField);
 		focusables.add(changedChip);
 		if (pageMenuButton.focusable()) focusables.add(pageMenuButton);
-		if (globalToggle != null) focusables.add(globalToggle);
 		if (undoButton.visible()) focusables.add(undoButton);
 		focusables.add(closeButton);
 		for (var control : footer.controls()) if (control.focusable()) focusables.add(control);
 		if (openDropdown != null) focusables.add(openDropdown.filterField());
 		ui.focus.setOrder(focusables);
-		ui.painter.scissorOn(content);
 		for (var row : rows)
 			if (row.bounds().intersects(content)) {
 				var reveal = row.revealValue();
@@ -621,12 +592,6 @@ public class ConfigScreen<C, V> extends Screen {
 				}
 				if (reveal < 1) ui.painter.popAlpha();
 			}
-		ui.painter.scissorOff();
-		var total = 0;
-		for (var row : rows) total += row.displayHeight(content.width());
-		if (scroll > 0) ui.painter.gradient(new UiBounds(content.x(), content.y(), content.width(), 6), UiTheme.SHADOW, 0x00000000);
-		if (scroll < Math.max(0, total - content.height()))
-			ui.painter.gradient(new UiBounds(content.x(), content.bottom() - 6, content.width(), 6), 0x00000000, UiTheme.SHADOW);
 	}
 	private void renderFocusRing(UiContext ui) {
 		var current = ui.focus.current();
@@ -664,12 +629,6 @@ public class ConfigScreen<C, V> extends Screen {
 		ui.painter.border(x - 1, y - 1, width + 2, height + 2, 0x80000000);
 		ui.painter.border(x, y, width, height, ui.accent().light());
 		ui.painter.popAlpha();
-	}
-	private Component statusText() {
-		if (!isEditable()) return Translation.SAVE_UNAVAILABLE_READ_ONLY;
-		var count = model == null ? 0 : model.changedCount();
-		if (model != null && model.hasError()) return Translation.SAVE_UNAVAILABLE_INVALID;
-		return count == 0 ? null : Component.translatable("flexconfig.status.changed", count);
 	}
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -722,10 +681,6 @@ public class ConfigScreen<C, V> extends Screen {
 			pressedControl = pageMenuButton;
 			return true;
 		}
-		if (globalToggle != null && globalToggle.mouseClicked(ui, mouseX, mouseY, button)) {
-			pressedControl = globalToggle;
-			return true;
-		}
 		if (undoButton.mouseClicked(ui, mouseX, mouseY, button)) {
 			pressedControl = undoButton;
 			return true;
@@ -743,7 +698,7 @@ public class ConfigScreen<C, V> extends Screen {
 			pressedControl = downControl(footer.controls());
 			return true;
 		}
-		if (scrollbar.mouseClicked(ui, mouseX, mouseY, button)) return true;
+		if (contentPane.mouseClicked(ui, mouseX, mouseY, button)) return true;
 		if (layout.content.contains(mouseX, mouseY)) {
 			var row = rowAt(activeRows(), activeScroll(), mouseY);
 			if (row != null && row.mouseClicked(ui, mouseX, mouseY, button)) {
@@ -784,7 +739,7 @@ public class ConfigScreen<C, V> extends Screen {
 		if (ui.dragOwner() instanceof UiControl control) handled = control.mouseReleased(ui, mouseX, mouseY, button);
 		var popup = activePopup();
 		if (!handled && popup != null) handled = popup.popupMouseReleased(ui, mouseX, mouseY, button);
-		if (!handled) handled = scrollbar.mouseReleased(ui, mouseX, mouseY, button);
+		if (!handled) handled = contentPane.mouseReleased(ui, mouseX, mouseY, button);
 		if (handled) ui.setDragOwner(null);
 		return handled;
 	}
@@ -794,7 +749,8 @@ public class ConfigScreen<C, V> extends Screen {
 		mouseY /= zoom;
 		ui.pointer(mouseX, mouseY);
 		if (ui.dragOwner() instanceof UiControl control) return control.mouseDragged(ui, mouseX, mouseY, button, dragX, dragY);
-		return scrollbar.shown() && scrollbar.mouseDragged(ui, mouseX, mouseY, button, dragX, dragY);
+		if (sidebar.mouseDragged(ui, mouseX, mouseY, button, dragX, dragY)) return true;
+		return contentPane.mouseDragged(ui, mouseX, mouseY, button, dragX, dragY);
 	}
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
@@ -807,8 +763,7 @@ public class ConfigScreen<C, V> extends Screen {
 			sidebar.wheel(scrollY);
 			return true;
 		}
-		scrollbar.wheel(scrollY, UiTheme.ROW_HEIGHT + UiTheme.ROW_GAP);
-		return true;
+		return contentPane.mouseScrolled(ui, mouseX, mouseY, scrollY);
 	}
 	@Override
 	public boolean charTyped(char codePoint, int modifiers) {
@@ -848,13 +803,14 @@ public class ConfigScreen<C, V> extends Screen {
 	}
 	private void ensureRowVisible(List<ConfigRow> rows, UiControl target) {
 		var y = layout.content.y() - (int) Math.round(activeScroll());
+		var content = layout.content;
 		for (var row : rows) {
-			var height = row.displayHeight(layout.content.width());
+			var height = row.displayHeight(content.width());
 			for (var control : row.controls())
 				if (control == target) {
 					var bottom = y + height;
-					if (y < layout.content.y()) scrollbar.setScroll(scrollbar.scroll() - (layout.content.y() - y));
-					else if (bottom > layout.content.bottom()) scrollbar.setScroll(scrollbar.scroll() + (bottom - layout.content.bottom()));
+					if (y < content.y()) contentPane.scrollBy(y - content.y());
+					else if (bottom > content.bottom()) contentPane.scrollBy(bottom - content.bottom());
 					return;
 				}
 			y += height;
@@ -866,16 +822,15 @@ public class ConfigScreen<C, V> extends Screen {
 		return tab == null ? List.of() : tab.rows;
 	}
 	private double activeScroll() {
-		if (!searchQuery.isEmpty() || changedOnly) return searchScroll;
-		var tab = model.activeTab();
-		return tab == null ? 0 : tab.scroll;
+		return contentPane.scroll();
 	}
 	private @Nullable ConfigRow rowAt(List<ConfigRow> rows, double scroll, double mouseY) {
 		var y = layout.content.y() - (int) Math.round(scroll);
+		var content = layout.content;
 		for (var row : rows) {
-			var height = row.heightFor(layout.content.width());
-			var shown = row.displayHeight(layout.content.width());
-			var bounds = new UiBounds(layout.content.x(), y, layout.content.width(), height);
+			var height = row.heightFor(content.width());
+			var shown = row.displayHeight(content.width());
+			var bounds = new UiBounds(content.x(), y, content.width(), height);
 			if (mouseY >= y && mouseY < y + shown) {
 				row.setBounds(bounds);
 				row.prepare(ui);
@@ -1008,10 +963,11 @@ public class ConfigScreen<C, V> extends Screen {
 				if (id != null) newIds.add(id);
 			}
 			var removed = false;
-			for (var id : oldIds) if (!newIds.contains(id)) {
-				removed = true;
-				break;
-			}
+			for (var id : oldIds)
+				if (!newIds.contains(id)) {
+					removed = true;
+					break;
+				}
 			for (var row : newRows) {
 				var id = row.identity();
 				if (id == null) continue;
@@ -1023,7 +979,7 @@ public class ConfigScreen<C, V> extends Screen {
 			}
 			if (removed && !suppressRebuildFx) pageIn.start(0.5F, 1, UiMotion.TAB_ROWS_IN);
 			tab.clampScroll(layout.content.height(), layout.content.width());
-			scrollbar.setScroll(tab.scroll);
+			contentPane.setScroll(tab.scroll);
 		}
 		refresh();
 	}

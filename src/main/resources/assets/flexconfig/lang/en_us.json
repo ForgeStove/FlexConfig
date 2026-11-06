@@ -12,8 +12,6 @@
 	"flexconfig.config.enum.Theme.Default": "Default",
 	"flexconfig.config.enum.Theme.Light": "Light",
 	"flexconfig.config.file.client": "Client Config",
-	"flexconfig.config.menu.toggle": "Enabled",
-	"flexconfig.config.menu.toggle.tooltip": "Turns this config's features on or off.",
 	"flexconfig.config.file.common": "Common Config",
 	"flexconfig.config.file.server": "Server Config",
 	"flexconfig.config.option.gameplay.announceDeaths": "Announce Deaths",

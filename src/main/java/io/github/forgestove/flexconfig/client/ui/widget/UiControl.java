@@ -59,6 +59,9 @@ public abstract class UiControl implements Target {
 	public boolean keyPressed(UiContext ctx, int keyCode, int scanCode, int modifiers) {
 		return false;
 	}
+	public boolean mouseScrolled(UiContext ctx, double mouseX, double mouseY, double amount) {
+		return false;
+	}
 	public boolean charTyped(UiContext ctx, char codePoint) {
 		return false;
 	}

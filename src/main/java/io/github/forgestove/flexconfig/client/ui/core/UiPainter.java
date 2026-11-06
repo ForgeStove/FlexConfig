@@ -71,19 +71,21 @@ public class UiPainter {
 	private static final Map<ResourceLocation, Optional<int[]>> TEXTURE_SIZES = new HashMap<>();
 	public void texture(ResourceLocation texture, UiBounds bounds) {
 		if (texture == null || bounds.width() <= 0 || bounds.height() <= 0 || alpha <= 0.004F) return;
-		var size = TEXTURE_SIZES.computeIfAbsent(texture, id -> {
-			var resource = ClientUtil.mc.getResourceManager().getResource(id);
-			if (resource.isEmpty()) {
-				LOGGER.warn("Missing texture {}", id);
-				return Optional.empty();
+		var size = TEXTURE_SIZES.computeIfAbsent(
+			texture, id -> {
+				var resource = ClientUtil.mc.getResourceManager().getResource(id);
+				if (resource.isEmpty()) {
+					LOGGER.warn("Missing texture {}", id);
+					return Optional.empty();
+				}
+				try (var image = NativeImage.read(resource.get().open())) {
+					return Optional.of(new int[]{image.getWidth(), image.getHeight()});
+				} catch (Exception e) {
+					LOGGER.warn("Failed to read texture {}", id, e);
+					return Optional.empty();
+				}
 			}
-			try (var image = NativeImage.read(resource.get().open())) {
-				return Optional.of(new int[]{image.getWidth(), image.getHeight()});
-			} catch (Exception e) {
-				LOGGER.warn("Failed to read texture {}", id, e);
-				return Optional.empty();
-			}
-		});
+		);
 		if (size.isEmpty()) return;
 		var dims = size.get();
 		gui.blit(texture, bounds.x(), bounds.y(), 0F, 0F, bounds.width(), bounds.height(), dims[0], dims[1]);
@@ -103,16 +105,7 @@ public class UiPainter {
 		rect(x + width - 1, y + 1, 1, height - 2, color);
 	}
 	/** 立体边：外描边、顶部/左右高光、底部亮线、面和底部厚边；返回面矩形，按下时整体下沉。 */
-	public UiBounds bevel(
-		UiBounds bounds,
-		int outline,
-		int face,
-		int highlight,
-		int shine,
-		int depthColor,
-		int depth,
-		boolean pressed
-	) {
+	public UiBounds bevel(UiBounds bounds, int outline, int face, int highlight, int shine, int depthColor, int depth, boolean pressed) {
 		var top = pressed ? bounds.y() + depth : bounds.y();
 		border(bounds.x(), top, bounds.width(), bounds.bottom() - top, outline);
 		var fx0 = bounds.x() + 1;
@@ -200,12 +193,14 @@ public class UiPainter {
 			(color & 0xFF) / 255F,
 			(color >>> 24 & 0xFF) / 255F
 		);
-		texture(icon.texture, new UiBounds(
-			bounds.x() + (bounds.width() - icon.width()) / 2,
-			bounds.y() + (bounds.height() - icon.height()) / 2,
-			icon.width(),
-			icon.height()
-		));
+		texture(
+			icon.texture, new UiBounds(
+				bounds.x() + (bounds.width() - icon.width()) / 2,
+				bounds.y() + (bounds.height() - icon.height()) / 2,
+				icon.width(),
+				icon.height()
+			)
+		);
 		RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
 	}
 	public void scissorOn(UiBounds bounds) {

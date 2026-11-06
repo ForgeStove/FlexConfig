@@ -15,6 +15,7 @@ public class UiMotion {
 	public static final SpringSpec INDICATOR_TRAIL = new SpringSpec(0.24F, 1F);
 	public static final SpringSpec THUMB = new SpringSpec(0.12F, 1F);
 	public static final SpringSpec SEARCH_WIDTH = new SpringSpec(0.2F, 1F);
+	public static final SpringSpec SCROLL = new SpringSpec(0.16F, 1F);
 	public static final TweenSpec ENTER = new TweenSpec(220F, UiEasing.ENTER);
 	public static final TweenSpec EXIT = new TweenSpec(110F, UiEasing.EXIT);
 	public static final TweenSpec BACKDROP_IN = new TweenSpec(160F, UiEasing.ENTER);
@@ -28,7 +29,6 @@ public class UiMotion {
 	public static final TweenSpec DOT = new TweenSpec(120F, UiEasing.ENTER);
 	public static final float RISE = 6F;
 	public static final float CLOSE_DROP = 4F;
-	public static final float ROW_RISE = 4F;
 	public static final float CONTENT_ROWS_DELAY = 80F;
 	public static final float ROW_STAGGER = 14F;
 	public static final int ROW_STAGGER_MAX = 9;

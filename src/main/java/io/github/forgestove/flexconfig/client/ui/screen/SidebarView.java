@@ -1,41 +1,45 @@
 package io.github.forgestove.flexconfig.client.ui.screen;
 import io.github.forgestove.flexconfig.client.ui.core.*;
 import io.github.forgestove.flexconfig.client.ui.model.ConfigUiModel;
+import io.github.forgestove.flexconfig.client.ui.widget.UiScrollPane;
 
 import java.util.*;
 import java.util.function.IntConsumer;
 public class SidebarView {
 	private final ConfigUiModel model;
 	private final IntConsumer onSelect;
+	private final UiScrollPane pane = new UiScrollPane();
 	private UiBounds bounds = UiBounds.EMPTY;
 	private int pressedIndex = -1;
 	private final UiAnim indicatorTop = new UiAnim(0, UiMotion.INDICATOR_LEAD);
 	private final UiAnim indicatorBottom = new UiAnim(UiTheme.TAB_PITCH, UiMotion.INDICATOR_LEAD);
 	private int lastActive = -1;
-	private double scroll, targetScroll;
 	private final List<UiAnim> hovers = new ArrayList<>();
 	private boolean indicatorInit;
 	public SidebarView(ConfigUiModel model, IntConsumer onSelect) {
 		this.model = model;
 		this.onSelect = onSelect;
+		pane.setPitch(UiTheme.TAB_PITCH);
+		pane.content(this::renderTabs);
 	}
 	public void setBounds(UiBounds bounds) {
 		this.bounds = bounds;
+		pane.setBounds(bounds);
 	}
 	public UiBounds tabBounds(int index) {
-		return new UiBounds(bounds.x(), bounds.y() + index * UiTheme.TAB_PITCH - (int) Math.round(scroll), bounds.width(), UiTheme.TAB_PITCH);
-	}
-	private int maxScroll() {
-		return Math.max(0, model.tabs().size() * UiTheme.TAB_PITCH - bounds.height());
+		var width = bounds.width() - (pane.shown() ? UiTheme.SCROLLBAR_WIDTH + 2 : 0);
+		return new UiBounds(bounds.x(), bounds.y() + index * UiTheme.TAB_PITCH - (int) Math.round(pane.scroll()), width,
+			UiTheme.TAB_PITCH);
 	}
 	public void wheel(double amount) {
-		targetScroll = UiMath.clamp(targetScroll - amount * UiTheme.TAB_PITCH, 0, maxScroll());
+		pane.wheel(amount);
 	}
 	public void render(UiContext ui) {
+		pane.setContentHeight(model.tabs().size() * UiTheme.TAB_PITCH);
+		pane.render(ui);
+	}
+	private void renderTabs(UiContext ui) {
 		var tabs = model.tabs();
-		scroll = UiMath.smooth(scroll, targetScroll, 27.7, ui.delta);
-		if (Math.abs(targetScroll - scroll) < 0.5) scroll = targetScroll;
-		ui.painter.scissorOn(bounds);
 		while (hovers.size() < tabs.size()) hovers.add(new UiAnim(0, UiMotion.HOVER_IN));
 		for (var i = 0; i < tabs.size(); i++) {
 			var tab = tabs.get(i);
@@ -55,7 +59,12 @@ public class SidebarView {
 			var glyph = new UiBounds(item.x() + 7, item.y() + (item.height() - 7) / 2, 7, 7);
 			drawGlyph(ui.painter, i, glyph, active ? ui.accent().base() : UiTheme.TEXT_3);
 			var label = ui.painter.trim(tab.title.getString(), item.width() - 34);
-			ui.painter.text(label, item.x() + 18 + (active ? 0 : (int) (hover.get() * 1)), item.y() + (item.height() - ui.painter.lineHeight()) / 2, active || hover.get() > 0.5 ? UiTheme.TEXT : UiTheme.TEXT_2);
+			ui.painter.text(
+				label,
+				item.x() + 18 + (active ? 0 : (int) (hover.get() * 1)),
+				item.y() + (item.height() - ui.painter.lineHeight()) / 2,
+				active || hover.get() > 0.5 ? UiTheme.TEXT : UiTheme.TEXT_2
+			);
 			var dotY = item.y() + item.height() / 2 - 1;
 			if (tab.hasError) ui.painter.rect(item.right() - 9, dotY, 2, 2, UiTheme.DANGER);
 			else if (tab.changedCount > 0) ui.painter.rect(item.right() - 9, dotY, 2, 2, ui.accent().base());
@@ -81,9 +90,7 @@ public class SidebarView {
 			var bottom = (int) Math.round(indicatorBottom.get());
 			ui.painter.rect(bounds.x(), top, 3, Math.max(1, bottom - top), ui.accent().base());
 		}
-		ui.painter.scissorOff();
 	}
-	@SuppressWarnings("unused")
 	private static void drawGlyph(UiPainter painter, int index, UiBounds b, int color) {
 		switch (index % 8) {
 			case 0 -> {
@@ -139,16 +146,21 @@ public class SidebarView {
 	@SuppressWarnings("unused")
 	public boolean mouseClicked(UiContext ui, double mouseX, double mouseY, int button) {
 		if (button != 0 || !bounds.contains(mouseX, mouseY)) return false;
+		if (pane.mouseClicked(ui, mouseX, mouseY, button)) return true;
 		var tabs = model.tabs();
-		var index = (int) ((mouseY - bounds.y() + scroll) / UiTheme.TAB_PITCH);
+		var index = (int) ((mouseY - bounds.y() + pane.scroll()) / UiTheme.TAB_PITCH);
 		if (index >= 0 && index < tabs.size()) {
 			pressedIndex = index;
 			return true;
 		}
 		return true;
 	}
+	public boolean mouseDragged(UiContext ui, double mouseX, double mouseY, int button, double dragX, double dragY) {
+		return pane.mouseDragged(ui, mouseX, mouseY, button, dragX, dragY);
+	}
 	@SuppressWarnings("unused")
 	public boolean mouseReleased(UiContext ui, double mouseX, double mouseY, int button) {
+		pane.mouseReleased(ui, mouseX, mouseY, button);
 		if (pressedIndex < 0) return false;
 		var index = pressedIndex;
 		pressedIndex = -1;
