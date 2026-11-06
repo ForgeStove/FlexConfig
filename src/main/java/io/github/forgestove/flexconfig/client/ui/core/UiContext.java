@@ -5,6 +5,7 @@ import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
+import java.util.function.Supplier;
 /** 跨帧保留的界面上下文：焦点、拖拽 owner、提示延迟和淡入都由界面复用同一个实例。 */
 public class UiContext {
 	public GuiGraphics graphics;
@@ -14,14 +15,12 @@ public class UiContext {
 	public double mouseY;
 	public final UiFocus focus = new UiFocus();
 	private final UiTween tooltipFade = new UiTween(0);
-	private @Nullable Component candidate;
-	private @Nullable Component shown;
+	private @Nullable Object hoveredOwner, focusedOwner, shownFor;
+	private @Nullable Supplier<Component> hoveredContent, focusedContent, shownContent;
+	private UiBounds hoveredAnchor = UiBounds.EMPTY, focusedAnchor = UiBounds.EMPTY, shownAnchor = UiBounds.EMPTY;
+	private @Nullable Object candidateOwner;
 	private long candidateSince;
-	private boolean requestedThisFrame;
-	private boolean focusTooltip;
-	private UiBounds tooltipAnchor = UiBounds.EMPTY;
-	private int tooltipX;
-	private int tooltipY;
+	private boolean candidateByFocus;
 	private long lastClosedAt = -1_000_000;
 	private int viewportWidth, viewportHeight;
 	private Object dragOwner;
@@ -39,7 +38,8 @@ public class UiContext {
 		painter = new UiPainter(graphics);
 		this.delta = delta;
 		pointer(mouseX, mouseY);
-		requestedThisFrame = false;
+		hoveredOwner = null;
+		focusedOwner = null;
 	}
 	public void viewport(int width, int height) {
 		viewportWidth = width;
@@ -49,37 +49,25 @@ public class UiContext {
 		this.mouseX = mouseX;
 		this.mouseY = mouseY;
 	}
-	public void tooltip(Component text) {
-		tooltip(text, UiBounds.EMPTY);
+	public void hover(Object owner, Supplier<Component> content, UiBounds anchor) {
+		if (hoveredOwner != null && hoveredOwner != owner) return;
+		hoveredOwner = owner;
+		hoveredContent = content;
+		hoveredAnchor = anchor;
 	}
-	public void tooltip(Component text, UiBounds anchor) {
-		requestTooltip(text, false, anchor);
-	}
-	public void tooltipFocused(Component text, UiBounds anchor) {
-		requestTooltip(text, true, anchor);
-	}
-	private void requestTooltip(Component text, boolean focus, UiBounds anchor) {
-		if (!text.equals(candidate) || focus != focusTooltip) {
-			if (shown != null) lastClosedAt = Util.getMillis();
-			candidate = text;
-			candidateSince = Util.getMillis();
-			shown = null;
-			tooltipFade.snap(0);
-		}
-		requestedThisFrame = true;
-		focusTooltip = focus;
-		tooltipAnchor = anchor;
-		tooltipX = (int) mouseX;
-		tooltipY = (int) mouseY;
+	public void focusTarget(Object owner, Supplier<Component> content, UiBounds anchor) {
+		focusedOwner = owner;
+		focusedContent = content;
+		focusedAnchor = anchor;
 	}
 	/** 鼠标移开或点击时调用，清掉候选提示，已显示的提示淡出。 */
 	public void clearTooltip() {
-		if (shown != null) lastClosedAt = Util.getMillis();
-		candidate = null;
-		requestedThisFrame = false;
-	}
-	public @Nullable Component tooltip() {
-		return requestedThisFrame ? candidate : shown;
+		if (shownFor != null) lastClosedAt = Util.getMillis();
+		hoveredOwner = null;
+		focusedOwner = null;
+		candidateOwner = null;
+		shownFor = null;
+		shownContent = null;
 	}
 	public boolean focusVisible() {
 		return focusVisible;
@@ -101,28 +89,60 @@ public class UiContext {
 	}
 	public void renderTooltip() {
 		var now = Util.getMillis();
-		if (requestedThisFrame && candidate != null && (shown != candidate || tooltipFade.target() < 0.5F)) {
-			var delay = now - lastClosedAt < 300 ? 0F : focusTooltip ? UiMotion.TOOLTIP_FOCUS_DELAY : UiMotion.TOOLTIP_HOVER_DELAY;
-			if (now - candidateSince >= (long) delay) {
-				shown = candidate;
-				tooltipFade.start(tooltipFade.value(), 1, UiMotion.TOOLTIP_FADE);
+		var byFocus = hoveredOwner == null;
+		var owner = byFocus ? focusedOwner : hoveredOwner;
+		var content = byFocus ? focusedContent : hoveredContent;
+		var anchor = byFocus ? focusedAnchor : hoveredAnchor;
+		if (owner == null || content == null) {
+			candidateOwner = null;
+			if (shownFor != null) {
+				shownFor = null;
+				shownContent = null;
+				lastClosedAt = now;
+				tooltipFade.start(tooltipFade.value(), 0, UiMotion.TOOLTIP_FADE);
 			}
-		} else if (!requestedThisFrame) {
-			tooltipFade.start(tooltipFade.value(), 0, UiMotion.TOOLTIP_FADE);
-			if (tooltipFade.done()) shown = null;
+		} else {
+			if (owner != candidateOwner) {
+				if (shownFor != null) lastClosedAt = now;
+				candidateOwner = owner;
+				candidateSince = now;
+				candidateByFocus = byFocus;
+				shownFor = null;
+				shownContent = null;
+				tooltipFade.snap(0);
+			}
+			if (shownFor == owner) {
+				shownContent = content;
+				shownAnchor = anchor;
+			} else {
+				var delay = now - lastClosedAt < 300 ? 0F : byFocus ? UiMotion.TOOLTIP_FOCUS_DELAY : UiMotion.TOOLTIP_HOVER_DELAY;
+				var text = now - candidateSince >= (long) delay ? content.get() : null;
+				if (text != null) {
+					shownFor = owner;
+					shownContent = content;
+					shownAnchor = anchor;
+					tooltipFade.start(tooltipFade.value(), 1, UiMotion.TOOLTIP_FADE);
+				}
+			}
 		}
 		tooltipFade.update(delta);
-		if (shown == null || tooltipFade.value() <= 0.01F || painter == null) return;
+		var text = shownContent == null ? null : shownContent.get();
+		if (text == null) {
+			if (shownFor != null && tooltipFade.target() > 0) tooltipFade.start(tooltipFade.value(), 0, UiMotion.TOOLTIP_FADE);
+			shownFor = null;
+			return;
+		}
+		if (tooltipFade.value() <= 0.01F || painter == null) return;
 		painter.pushAlpha(tooltipFade.value());
 		UiTooltipRenderer.render(
 			painter,
-			shown,
-			tooltipAnchor,
-			tooltipX,
-			tooltipY,
+			text,
+			shownAnchor,
+			(int) mouseX,
+			(int) mouseY,
 			viewportWidth > 0 ? viewportWidth : ClientUtil.mc.getWindow().getGuiScaledWidth(),
 			viewportHeight > 0 ? viewportHeight : ClientUtil.mc.getWindow().getGuiScaledHeight(),
-			!focusTooltip
+			!candidateByFocus
 		);
 		painter.popAlpha();
 	}

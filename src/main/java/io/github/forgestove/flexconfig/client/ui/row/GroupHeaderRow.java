@@ -9,9 +9,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 public class GroupHeaderRow extends ConfigRow {
 	private final Component label;
+	private final String path;
+	private final Object identity;
 	private final @Nullable UiButton delete;
-	public GroupHeaderRow(RowContext ctx, Component label, int depth, boolean canDelete, @Nullable Runnable onDelete) {
+	public GroupHeaderRow(RowContext ctx, Object identity, String path, Component label, int depth, boolean canDelete, @Nullable Runnable onDelete) {
 		super(ctx);
+		this.identity = identity;
+		this.path = path;
 		this.label = label;
 		this.depth = depth;
 		delete = onDelete == null ? null : new UiButton(Component.literal("x"), Style.DANGER, onDelete);
@@ -40,6 +44,26 @@ public class GroupHeaderRow extends ConfigRow {
 		var ruleX = bounds().x() + UiTheme.INDENT + depth * UiTheme.INDENT + painter.textWidth(text) + 4;
 		if (ruleX < bounds().right() - UiTheme.PADDING - 18) painter.groove(ruleX, bounds().right() - UiTheme.PADDING - 18, ty + 4);
 		if (delete != null) delete.render(ui);
+	}
+	@Override
+	public void onEnter() {
+		expand();
+	}
+	@Override
+	public void onExit() {
+		collapse();
+	}
+	@Override
+	public boolean exited() {
+		return exiting() && heightSettled();
+	}
+	@Override
+	public String configPath() {
+		return path;
+	}
+	@Override
+	public Object identity() {
+		return identity;
 	}
 	@Override
 	public List<UiControl> controls() {

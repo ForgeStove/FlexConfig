@@ -18,6 +18,7 @@ public class UiTheme {
 	public static final int TITLEBAR = 0xFFE4E6E6;
 	public static final int TITLEBAR_EDGE = 0xFFB1B2B5;
 	public static final int TITLE_INK = 0xFF1E1E1F;
+	public static final int ICON_INK = 0xFF5A5C60;
 	public static final int PANEL = 0xFF48494A;
 	public static final int SIDEBAR = 0xFF313233;
 	public static final int BORDER = 0xFF1E1E1F;
@@ -40,7 +41,6 @@ public class UiTheme {
 	public static final int FIELD = 0xFF262728;
 	public static final int FIELD_SHADOW = 0xFF161718;
 	public static final int TRACK_LIGHT = 0xFF3A3B3C;
-	public static final int OFF_FILL = 0xFF2B2C2D;
 	public static final int KNOB = 0xFFD0D1D4;
 	public static final int KNOB_HI = 0xFFE3E4E6;
 	public static final int KNOB_LO = 0xFF8E8F92;
@@ -50,8 +50,6 @@ public class UiTheme {
 	public static final int SECONDARY_LIP = 0xFF58585A;
 	public static final int SECONDARY_HOVER = 0xFFDFE0E2;
 	public static final int SECONDARY_PRESSED = 0xFFBDBEC1;
-	public static final int SCROLL_THUMB = 0xFFB9BABD;
-	public static final int SCROLL_THUMB_HOVER = 0xFFD0D1D4;
 	public static final int ROW_HEIGHT = 34;
 	public static final int ROW_GAP = 0;
 	public static final int SECTION_HEIGHT = 22;
@@ -63,7 +61,7 @@ public class UiTheme {
 	public static final int INDENT = 8;
 	public static final int PADDING = 6;
 	public static final int HEADER_HEIGHT = 22;
-	public static final int SCROLLBAR_WIDTH = 5;
+	public static final int SCROLLBAR_WIDTH = 8;
 	public static final int MIN_PANEL_WIDTH = 400;
 	public static final int MIN_PANEL_HEIGHT = 240;
 	public static final int MAX_PANEL_WIDTH = 640;

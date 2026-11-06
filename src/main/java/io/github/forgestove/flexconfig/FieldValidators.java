@@ -70,18 +70,31 @@ public class FieldValidators {
 	 */
 	public static @Nullable SliderRange sliderRange(Field field) {
 		var intRange = field.getAnnotation(IntRange.class);
-		if (intRange != null && intRange.slider())
-			return bounds(field, intRange.min() != Integer.MIN_VALUE, intRange.max() != Integer.MAX_VALUE, intRange.min(), intRange.max());
+		if (intRange != null && intRange.slider()) return bounds(
+			field,
+			intRange.min() != Integer.MIN_VALUE,
+			intRange.max() != Integer.MAX_VALUE,
+			intRange.min(),
+			intRange.max(),
+			intRange.step()
+		);
 		var longRange = field.getAnnotation(LongRange.class);
-		if (longRange != null && longRange.slider())
-			return bounds(field, longRange.min() != Long.MIN_VALUE, longRange.max() != Long.MAX_VALUE, longRange.min(), longRange.max());
+		if (longRange != null && longRange.slider()) return bounds(
+			field,
+			longRange.min() != Long.MIN_VALUE,
+			longRange.max() != Long.MAX_VALUE,
+			longRange.min(),
+			longRange.max(),
+			longRange.step()
+		);
 		var floatRange = field.getAnnotation(FloatRange.class);
 		if (floatRange != null && floatRange.slider()) return bounds(
 			field,
 			floatRange.min() != -Float.MAX_VALUE,
 			floatRange.max() != Float.MAX_VALUE,
 			floatRange.min(),
-			floatRange.max()
+			floatRange.max(),
+			floatRange.step()
 		);
 		var doubleRange = field.getAnnotation(DoubleRange.class);
 		if (doubleRange != null && doubleRange.slider()) return bounds(
@@ -89,15 +102,17 @@ public class FieldValidators {
 			doubleRange.min() != -Double.MAX_VALUE,
 			doubleRange.max() != Double.MAX_VALUE,
 			doubleRange.min(),
-			doubleRange.max()
+			doubleRange.max(),
+			doubleRange.step()
 		);
 		return null;
 	}
-	private static SliderRange bounds(Field field, boolean hasMin, boolean hasMax, double min, double max) {
+	private static SliderRange bounds(Field field, boolean hasMin, boolean hasMax, double min, double max, double step) {
 		if (!hasMin || !hasMax)
 			throw new IllegalArgumentException("Option '%s' sets slider = true, so its range must spell out both min and max".formatted(
 				field.getName()));
-		return new SliderRange(min, max);
+		if (step < 0) throw new IllegalArgumentException("Option '%s' has a negative slider step".formatted(field.getName()));
+		return new SliderRange(min, max, step);
 	}
 	// ========== 加载期校正 ==========
 	public static int correct(Field field, int value) {

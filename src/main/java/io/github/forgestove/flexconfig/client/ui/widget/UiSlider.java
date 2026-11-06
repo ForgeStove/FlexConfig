@@ -1,45 +1,57 @@
 package io.github.forgestove.flexconfig.client.ui.widget;
 import io.github.forgestove.flexconfig.client.ui.core.*;
 import net.minecraft.Util;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.function.*;
 public class UiSlider extends UiControl {
 	private final double min, max, step;
+	private final int decimals;
 	private final DoubleSupplier value;
 	private final DoubleConsumer onDrag;
 	private final Runnable onCommit;
 	private final DoubleFunction<String> format;
+	private @Nullable DoubleSupplier defaultValue;
+	private @Nullable UiBounds valueCell;
 	private final UiAnim hover = new UiAnim(0);
 	private final UiAnim thumb = new UiAnim(0, UiMotion.THUMB);
+	private final UiTween changedTint = new UiTween(0);
 	private boolean dragging, thumbInit;
-	private double dragStart;
+	private double dragStart, virtualX, lastPointerX;
 	private long lastClickMs;
 	@Nullable private UiTextField editor;
-	public UiSlider(double min, double max, DoubleSupplier value, DoubleConsumer onDrag, Runnable onCommit, DoubleFunction<String> format) {
-		this(min, max, Math.max(0.01, (max - min) / 100), value, onDrag, onCommit, format);
-	}
 	public UiSlider(double min, double max, double step, DoubleSupplier value, DoubleConsumer onDrag, Runnable onCommit, DoubleFunction<String> format) {
 		this.min = min;
 		this.max = max;
 		this.step = step <= 0 ? 1 : step;
+		decimals = UiMath.clamp(Math.max(decimalPlaces(this.step), decimalPlaces(min)), 0, 8);
 		this.value = value;
 		this.onDrag = onDrag;
 		this.onCommit = onCommit;
 		this.format = format;
+	}
+	public void defaultValue(DoubleSupplier defaultValue) {
+		this.defaultValue = defaultValue;
 	}
 	@Override
 	public void render(UiContext ctx) {
 		if (!visible) return;
 		hover.target(focusable() && hovered(ctx) ? 1 : 0);
 		hover.update(ctx.delta);
+		var tintTarget = isDefault() ? 0F : 1F;
+		if (changedTint.target() != tintTarget) changedTint.start(tintTarget, UiMotion.TOOLTIP_FADE);
+		changedTint.update(ctx.delta);
 		var painter = ctx.painter;
 		var accent = ctx.accent();
 		var track = trackBounds();
 		var progress = progress(value.getAsDouble());
+		var valueX = track.x() + 1 + (int) Math.round((track.width() - 2) * progress);
+		var fillX = dragging ? (int) Math.round(thumb.get()) : valueX;
 		painter.rect(track, UiTheme.WINDOW_EDGE);
-		var fillX = track.x() + 1 + (int) Math.round((track.width() - 2) * progress);
 		trackPart(painter, track.x() + 1, fillX, track.y(),
 			enabled ? accent.light() : 0xFFA3A3A6,
 			enabled ? accent.base() : 0xFF8C8D90,
@@ -51,16 +63,19 @@ public class UiSlider extends UiControl {
 			var tickX = track.x() + 1 + Math.round((track.width() - 2) * (float) i / tickSteps);
 			painter.rect(tickX, track.y() + 2, 1, 3, tickX < fillX ? accent.darkest() : UiTheme.GROOVE_LIGHT);
 		}
-		thumb.target(fillX);
-		if (dragging) thumb.snap(fillX);
-		else if (!thumbInit) {
-			thumb.jumpTo(fillX);
+		if (defaultValue != null) {
+			var dx = track.x() + 1 + (int) Math.round((track.width() - 2) * progress(UiMath.clamp(defaultValue.getAsDouble(), min, max)));
+			painter.rect(dx, track.y() - 4, 1, 3, accent.base());
+		}
+		thumb.target(valueX);
+		if (!dragging && !thumbInit) {
+			thumb.jumpTo(valueX);
 			thumbInit = true;
-		} else thumb.update(ctx.delta);
+		} else if (!dragging) thumb.update(ctx.delta);
 		var knobX = (int) Math.round(thumb.get()) - 5;
 		var knobFace = !enabled ? 0xFFD0D1D4 : dragging ? 0xFFB1B2B5 : hover.get() > 0.5 ? 0xFFF4F6F9 : 0xFFD0D1D4;
 		painter.bevel(
-			new UiBounds(knobX, bounds().y() + (bounds().height() - 12) / 2, 10, 12),
+			new UiBounds(knobX, bounds().y() + (bounds().height() - 12) / 2 - 1, 10, 12),
 			enabled ? UiTheme.WINDOW_EDGE : 0xFF8C8D90,
 			knobFace,
 			0xFFECECED,
@@ -69,14 +84,15 @@ public class UiSlider extends UiControl {
 			2,
 			dragging
 		);
-		var valueCell = new UiBounds(bounds().right() - 46, bounds().y() + (bounds().height() - UiTheme.CONTROL_HEIGHT) / 2, 46, UiTheme.CONTROL_HEIGHT);
+		var valueCell = valueCell();
 		if (editor != null) {
-			editor.setBounds(valueCell);
+			editor.setBounds(new UiBounds(valueCell.x() - 4, valueCell.y() - 4, valueCell.width() + 8, 16));
 			editor.render(ctx);
 		} else {
-			var text = painter.trim(format.apply(value.getAsDouble()), 44);
-			var color = !enabled ? UiTheme.DISABLED : dragging ? accent.light() : UiTheme.TEXT_2;
-			painter.textRight(Component.literal(text), bounds().right(), bounds().y() + (bounds().height() - painter.lineHeight()) / 2, color);
+			var text = painter.trim(format.apply(value.getAsDouble()), valueCell.width() - 2);
+			var idle = hover.get() > 0.5 ? UiTheme.TEXT : UiTheme.TEXT_2;
+			var color = !enabled ? UiTheme.DISABLED : dragging ? accent.light() : UiTheme.fadeToward(idle, accent.light(), changedTint.value());
+			painter.textRight(Component.literal(text), valueCell.right(), valueCell.y(), color);
 		}
 		if (dragging) {
 			var text = format.apply(value.getAsDouble());
@@ -88,14 +104,18 @@ public class UiSlider extends UiControl {
 			painter.rect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, UiTheme.SIDEBAR);
 			painter.text(text, boxX + 4, boxY + 3, UiTheme.TEXT);
 		}
+		showTooltip(ctx);
 	}
 	private UiBounds trackBounds() {
-		var width = Math.max(1, bounds().width() - 46);
+		var width = Math.max(1, bounds().width() - (valueCell == null ? 46 : 0));
 		return new UiBounds(bounds().x(), bounds().y() + (bounds().height() - 6) / 2, width, 6);
 	}
 	private double progress(double raw) {
 		var span = max - min;
 		return span <= 0 ? 0 : UiMath.clamp((raw - min) / span, 0, 1);
+	}
+	private boolean isDefault() {
+		return defaultValue == null || Math.abs(value.getAsDouble() - defaultValue.getAsDouble()) < step / 1000.0;
 	}
 	@Override
 	public boolean mouseClicked(UiContext ctx, double mouseX, double mouseY, int button) {
@@ -117,12 +137,19 @@ public class UiSlider extends UiControl {
 		ctx.focus.set(this);
 		dragging = true;
 		dragStart = value.getAsDouble();
+		lastPointerX = mouseX;
+		var track = trackBounds();
+		var thumbX = thumb.get();
+		virtualX = Math.abs(mouseX - thumbX) <= 6 ? thumbX : UiMath.clamp(mouseX, track.x() + 1, track.right() - 1);
+		applyDrag();
 		ctx.setDragOwner(this);
-		dragTo(mouseX);
 		return true;
 	}
+	public void setValueCell(@Nullable UiBounds cell) {
+		valueCell = cell;
+	}
 	private UiBounds valueCell() {
-		return new UiBounds(bounds().right() - 46, bounds().y() + (bounds().height() - UiTheme.CONTROL_HEIGHT) / 2, 46, UiTheme.CONTROL_HEIGHT);
+		return valueCell != null ? valueCell : new UiBounds(bounds().right() - 46, bounds().y() + (bounds().height() - UiTheme.CONTROL_HEIGHT) / 2, 46, UiTheme.CONTROL_HEIGHT);
 	}
 	private void openEditor() {
 		editor = new UiTextField(format.apply(value.getAsDouble()).replace("%", ""));
@@ -135,7 +162,7 @@ public class UiSlider extends UiControl {
 		if (field == null) return;
 		try {
 			var parsed = Double.parseDouble(field.value().trim());
-			onDrag.accept(UiMath.clamp(parsed, min, max));
+			onDrag.accept(snap(parsed));
 			onCommit.run();
 			UiSound.click(1.6F);
 		} catch (NumberFormatException ignored) {}
@@ -164,7 +191,10 @@ public class UiSlider extends UiControl {
 	@Override
 	public boolean mouseDragged(UiContext ctx, double mouseX, double mouseY, int button, double dragX, double dragY) {
 		if (!dragging || button != 0) return false;
-		dragTo(mouseX);
+		var delta = mouseX - lastPointerX;
+		virtualX += Screen.hasShiftDown() ? delta / 10D : delta;
+		lastPointerX = mouseX;
+		applyDrag();
 		return true;
 	}
 	@Override
@@ -189,7 +219,6 @@ public class UiSlider extends UiControl {
 	public boolean keyPressed(UiContext ctx, int keyCode, int scanCode, int modifiers) {
 		if (editor != null) return editorKeyPressed(ctx, keyCode, scanCode, modifiers);
 		if (!focusable() || !ctx.focus.is(this)) return false;
-		var step = (max - min) / 100;
 		if (keyCode == 263) {   // left
 			onDrag.accept(UiMath.clamp(value.getAsDouble() - step, min, max));
 			onCommit.run();
@@ -208,10 +237,28 @@ public class UiSlider extends UiControl {
 		painter.rect(from, ty + 2, width, 2, face);
 		painter.rect(from, ty + 4, width, 1, bottom);
 	}
-	private void dragTo(double mouseX) {
+	private void applyDrag() {
 		var track = trackBounds();
+		var clamped = UiMath.clamp(virtualX, track.x() + 1, track.right() - 1);
 		var usable = Math.max(1, track.width() - 2);
-		var progress = UiMath.clamp((mouseX - track.x() - 1) / usable, 0, 1);
-		onDrag.accept(min + (max - min) * progress);
+		var raw = snap(min + (max - min) * ((clamped - track.x() - 1) / usable));
+		if (defaultValue != null) {
+			var fallback = UiMath.clamp(defaultValue.getAsDouble(), min, max);
+			if (Math.abs(clamped - xFor(fallback)) <= 2) raw = fallback;
+		}
+		thumb.snap(clamped);
+		if (raw != value.getAsDouble()) onDrag.accept(raw);
+	}
+	private double snap(double raw) {
+		var clamped = UiMath.clamp(raw, min, max);
+		var n = Math.round((clamped - min) / step);
+		return UiMath.clamp(BigDecimal.valueOf(min + n * step).setScale(decimals, RoundingMode.HALF_UP).doubleValue(), min, max);
+	}
+	private static int decimalPlaces(double value) {
+		return Math.max(0, BigDecimal.valueOf(value).stripTrailingZeros().scale());
+	}
+	private double xFor(double raw) {
+		var track = trackBounds();
+		return track.x() + 1 + (track.width() - 2) * progress(raw);
 	}
 }

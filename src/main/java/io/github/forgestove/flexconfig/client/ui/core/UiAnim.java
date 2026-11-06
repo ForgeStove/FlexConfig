@@ -15,6 +15,9 @@ public class UiAnim {
 	public double target() {
 		return spring.target();
 	}
+	public double velocity() {
+		return spring.velocity();
+	}
 	public void target(double newTarget) {
 		spring.setTarget((float) newTarget);
 	}

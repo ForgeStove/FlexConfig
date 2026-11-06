@@ -10,6 +10,7 @@ import java.util.*;
 public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	private String name;
 	private String path;
+	private @Nullable Object identity;
 	private Component title;
 	private Component tooltip;
 	private Class<? extends V> valueType;
@@ -129,6 +130,9 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public String getPath() {
 		return path;
 	}
+	public Object getIdentity() {
+		return identity == null ? path : identity;
+	}
 	public void setEditingValue(V value) {
 		if (writeThrough) {
 			valueWriter.write(null, value);
@@ -181,7 +185,11 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public interface ConfigChangeCallback {
 		void onChange(Object oldValue, Object newValue);
 	}
-	public record SliderRange(double min, double max) {}
+	public record SliderRange(double min, double max, double step) {
+		public double stepOrAuto() {
+			return step > 0 ? step : Math.max(0.01, (max - min) / 100);
+		}
+	}
 	public static class Builder<C, V> {
 		private ValueConfigNode<C, V> node;
 		private Builder() {
@@ -205,6 +213,10 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 		}
 		public Builder<C, V> path(String path) {
 			node.path = path;
+			return this;
+		}
+		public Builder<C, V> identity(@Nullable Object identity) {
+			node.identity = identity;
 			return this;
 		}
 		public Builder<C, V> title(Component title) {

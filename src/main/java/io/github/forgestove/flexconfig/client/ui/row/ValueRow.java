@@ -15,6 +15,7 @@ public abstract class ValueRow extends ConfigRow {
 	protected final ValueConfigNode<Object, Object> node;
 	protected final ValueRowState state = new ValueRowState();
 	protected final UiActionBar actionBar = new UiActionBar();
+	protected final UiActionBar buttons = new UiActionBar();
 	protected final UiIconButton reset, lock;
 	private final Component label;
 	private final @Nullable Component tooltip;
@@ -33,7 +34,7 @@ public abstract class ValueRow extends ConfigRow {
 		reset = new UiIconButton(FlexGuiTextures.ICON_RESET, this::resetToDefault);
 		reset.tooltip(Translation.RESET_TOOLTIP);
 		lock = new UiIconButton(FlexGuiTextures.ICON_UNLOCK, this::toggleLock);
-		actionBar.add(lock, UiTheme.ACTION_SIZE).add(reset, UiTheme.ACTION_SIZE);
+		buttons.add(lock, UiTheme.ACTION_SIZE).add(reset, UiTheme.ACTION_SIZE);
 	}
 	protected Object value() {
 		return node.getEditingValue(ctx.config());
@@ -66,8 +67,20 @@ public abstract class ValueRow extends ConfigRow {
 		if (dot.target() != dotTarget) dot.start(dotTarget, UiMotion.DOT);
 		dot.update(ui.delta);
 		wash.update(ui.delta);
-		reset.setVisible(hot && isChanged() && !state.readOnly);
+		reset.setVisible(isChanged() && !state.readOnly);
 		lock.setVisible(hot && state.showLock && allowLock());
+	}
+	@Override
+	public void onEnter() {
+		expand();
+	}
+	@Override
+	public void onExit() {
+		collapse();
+	}
+	@Override
+	public boolean exited() {
+		return exiting() && heightSettled();
 	}
 	public void wash() {
 		wash.start(0, 1, UiMotion.RESET_WASH.durationMs(), UiMotion.RESET_WASH.easing(), 0);
@@ -83,7 +96,7 @@ public abstract class ValueRow extends ConfigRow {
 		return !state.readOnly && !node.isDefaultValue(ctx.config());
 	}
 	public Component resetLabel() {
-		return Component.translatableWithFallback("flexconfig.row.reset_to", "Reset to default (%s)", defaultText());
+		return Component.translatable("flexconfig.row.reset_to", defaultText());
 	}
 	private boolean focusedWithin(UiContext ui) {
 		var current = ui.focus.current();
@@ -98,12 +111,24 @@ public abstract class ValueRow extends ConfigRow {
 		return true;
 	}
 	protected int titleTop() {
-		return controlBelow ? bounds().y() + 5 : bounds().y() + (bounds().height() - 20) / 2 + 1;
+		if (controlBelow) return bounds().y() + 5;
+		return bounds().y() + (bounds().height() - 20 - descriptionExtra(bounds().width())) / 2 + 1;
+	}
+	protected int titleRightInset() {
+		return buttons.usedWidth() + UiTheme.GAP;
+	}
+	protected int descriptionLineCount(int width) {
+		if (node.getTooltip() == null || !showDescription()) return 0;
+		var available = Math.max(20, width - UiTheme.INDENT - depth * UiTheme.INDENT - titleRightInset() - UiTheme.PADDING * 2);
+		return ClientUtil.mc.font.split(node.getTooltip(), available).size();
+	}
+	protected int descriptionExtra(int width) {
+		return Math.max(0, descriptionLineCount(width) - 1) * 12;
 	}
 	@Override
 	public int heightFor(int width) {
 		controlBelow = needsControlBelow(width);
-		return UiTheme.ROW_HEIGHT + (controlBelow ? UiTheme.CONTROL_HEIGHT + 6 : 0);
+		return UiTheme.ROW_HEIGHT + (controlBelow ? UiTheme.CONTROL_HEIGHT + 6 : 0) + descriptionExtra(width);
 	}
 	private boolean needsControlBelow(int width) {
 		var used = actionBar.usedWidth();
@@ -112,8 +137,15 @@ public abstract class ValueRow extends ConfigRow {
 	}
 	@Override
 	public void layout() {
-		if (controlBelow) actionBar.layout(bounds().right() - UiTheme.PADDING, bounds().bottom() - UiTheme.CONTROL_HEIGHT - 4, UiTheme.CONTROL_HEIGHT);
-		else actionBar.layout(bounds().right() - UiTheme.PADDING, bounds().y(), bounds().height());
+		var right = bounds().right() - UiTheme.PADDING;
+		if (controlBelow) actionBar.layout(right, bounds().bottom() - UiTheme.CONTROL_HEIGHT - 4, UiTheme.CONTROL_HEIGHT);
+		else actionBar.layout(right, bounds().y(), bounds().height());
+		var controlsOnTitle = !controlBelow && !actionBar.controls().isEmpty();
+		buttons.layout(
+			controlsOnTitle ? right - actionBar.usedWidth() - UiTheme.GAP : right,
+			bounds().y() + (bounds().height() - UiTheme.CONTROL_HEIGHT) / 2,
+			UiTheme.CONTROL_HEIGHT
+		);
 	}
 	@Override
 	public void render(UiContext ui) {
@@ -122,7 +154,13 @@ public abstract class ValueRow extends ConfigRow {
 		if (hoverValue > 0.01F) painter.rect(bounds(), UiTheme.mulAlpha(UiTheme.ROW_HOVER, hoverValue));
 		if (!wash.done()) {
 			var t = wash.value();
-			painter.rect(bounds().x(), bounds().y(), Math.round(bounds().width() * t), bounds().height(), UiTheme.mulAlpha(ui.accent().wash(), 1F - t));
+			painter.rect(
+				bounds().x(),
+				bounds().y(),
+				Math.round(bounds().width() * t),
+				bounds().height(),
+				UiTheme.mulAlpha(ui.accent().wash(), 1F - t)
+			);
 		}
 		painter.groove(bounds().x(), bounds().right(), bounds().bottom() - 2);
 		var left = bounds().x() + UiTheme.INDENT + depth * UiTheme.INDENT;
@@ -131,7 +169,10 @@ public abstract class ValueRow extends ConfigRow {
 			painter.rect(left, titleTop() + 3, dotSize, dotSize, ui.accent().base());
 			left += 6;
 		}
-		var available = Math.max(20, bounds().width() - (left - bounds().x()) - (controlBelow ? 0 : actionBar.usedWidth()) - UiTheme.PADDING * 2);
+		var available = Math.max(
+			20,
+			bounds().width() - (left - bounds().x()) - (controlBelow ? 0 : actionBar.usedWidth()) - titleRightInset() - UiTheme.PADDING * 2
+		);
 		var title = painter.trim(label.getString(), available);
 		var titleY = titleTop();
 		painter.text(title, left, titleY, titleColor());
@@ -147,13 +188,16 @@ public abstract class ValueRow extends ConfigRow {
 				from = at + highlightQuery.length();
 			}
 		}
-		var description = tooltip == null || !showDescription() ? "" : tooltip.getString().replace('\n', ' ');
-		if (!description.isEmpty()) painter.text(painter.trim(description, available), left, titleY + 11, UiTheme.TEXT_2);
-		actionBar.render(ui);
-		if (ui.tooltip() == null && hovered(ui)) {
-			var text = tooltip();
-			if (text != null) ui.tooltip(text, bounds());
+		if (tooltip != null && showDescription()) {
+			var lineY = titleY + 11;
+			for (var line : ClientUtil.mc.font.split(tooltip, available)) {
+				painter.text(line, left, lineY, UiTheme.TEXT_2);
+				lineY += 12;
+			}
 		}
+		actionBar.render(ui);
+		buttons.render(ui);
+		if (!exiting() && hovered(ui)) ui.hover(this, this::tooltip, bounds());
 	}
 	private int titleColor() {
 		if (state.locked) return UiTheme.LOCKED;
@@ -170,11 +214,11 @@ public abstract class ValueRow extends ConfigRow {
 		}
 		var defaultValue = defaultText();
 		if (!defaultValue.isEmpty()) {
-			var hint = Component.translatableWithFallback("flexconfig.tooltip.default", "Default: %s", defaultValue).withStyle(ChatFormatting.GRAY);
+			var hint = Component.translatable("flexconfig.tooltip.default", defaultValue).withStyle(ChatFormatting.GRAY);
 			out.append(Component.literal("\n")).append(hint);
 			hasBody = true;
-			if (!node.isDefaultValue(ctx.config()))
-				out.append(Component.literal("\n")).append(Component.translatableWithFallback("flexconfig.tooltip.changed", "Changed from default").withStyle(ChatFormatting.GRAY));
+			if (!node.isDefaultValue(ctx.config())) out.append(Component.literal("\n"))
+				.append(Component.translatable("flexconfig.tooltip.changed").withStyle(ChatFormatting.GRAY));
 		}
 		if (state.validationError != null) {
 			out.append(Component.literal("\n")).append(state.validationError.copy().withStyle(ChatFormatting.RED));
@@ -190,7 +234,9 @@ public abstract class ValueRow extends ConfigRow {
 	}
 	@Override
 	public List<UiControl> controls() {
-		return actionBar.controls();
+		var controls = new ArrayList<>(actionBar.controls());
+		controls.addAll(buttons.controls());
+		return controls;
 	}
 	@Override
 	public void refresh() {
@@ -223,5 +269,13 @@ public abstract class ValueRow extends ConfigRow {
 	@Override
 	public boolean isChanged() {
 		return state.changed;
+	}
+	@Override
+	public String configPath() {
+		return node.getPath();
+	}
+	@Override
+	public Object identity() {
+		return node.getIdentity();
 	}
 }

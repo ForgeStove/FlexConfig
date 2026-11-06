@@ -75,11 +75,14 @@ public class CollectionRows {
 		if (isReadOnly(ctx, node)) return;
 		var list = values(node, ctx);
 		if (index < 0 || index >= list.size()) return;
-		ctx.handler().shiftElementKeybinds(node.getPath(), index);
-		list.remove(index);
-		//noinspection rawtypes
-		((ValueConfigNode) node).setEditingValue(list);
-		ctx.rebuildTab();
+		var element = list.get(index);
+		ctx.screen().exitRow(element, () -> {
+			ctx.handler().shiftElementKeybinds(node.getPath(), index);
+			list.remove(index);
+			//noinspection rawtypes
+			((ValueConfigNode) node).setEditingValue(list);
+			ctx.rebuildTab();
+		});
 	}
 	private static boolean isReadOnly(RowContext ctx, ValueConfigNode<?, ?> node) {
 		if (!ctx.editable()) return true;
@@ -93,6 +96,7 @@ public class CollectionRows {
 			.valueType(FieldAccess.boxed(elementType))
 			.name("%s[%d]".formatted(node.getName(), index))
 			.path("%s[%d]".formatted(node.getPath(), index))
+			.identity(index < list.size() ? list.get(index) : null)
 			.title(node.getTitle().copy().append(" #" + (index + 1)))
 			.defaultValue(defaultElement(node, index))
 			.valueReader(ignored -> index < list.size() ? list.get(index) : null)
@@ -119,15 +123,19 @@ public class CollectionRows {
 			var holder = new WriteBackList[1];
 			var cached = new WriteBackList(
 				FieldAccess.arrayToList(list.get(index)),
-				() -> list.set(index, FieldAccess.listToArray(componentType, holder[0]))
+				() -> {
+					if (index < list.size()) list.set(index, FieldAccess.listToArray(componentType, holder[0]));
+				}
 			);
 			holder[0] = cached;
 			reader = ignored -> cached;
 			writer = (ignored, value) -> cached.replaceContents(value instanceof List<?> values ? values : List.of());
 			baseline = FieldAccess.deepCopy(cached);
 		} else {
-			reader = ignored -> list.get(index);
-			writer = (ignored, value) -> list.set(index, value);
+			reader = ignored -> index < list.size() ? list.get(index) : null;
+			writer = (ignored, value) -> {
+				if (index < list.size()) list.set(index, value);
+			};
 			baseline = FieldAccess.deepCopy(list.get(index));
 		}
 		if (defaultValue == null) defaultValue = new ArrayList<>();
@@ -135,6 +143,7 @@ public class CollectionRows {
 			.valueType(List.class)
 			.name("%s[%d]".formatted(node.getName(), index))
 			.path("%s[%d]".formatted(node.getPath(), index))
+			.identity(index < list.size() ? list.get(index) : null)
 			.title(node.getTitle().copy().append(" #" + (index + 1)))
 			.defaultValue(defaultValue)
 			.elementType(shape.element())

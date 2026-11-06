@@ -1,6 +1,7 @@
 package io.github.forgestove.flexconfig.client.ui.core;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.client.ClientUtil;
 import io.github.forgestove.flexconfig.client.ui.FlexGuiTextures;
 import net.minecraft.ChatFormatting;
@@ -9,10 +10,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 
 import java.util.*;
 /** 唯一绘制入口：新界面只允许通过这里画东西，跨版本差异和渲染顺序集中管理。 */
 public class UiPainter {
+	private static final Logger LOGGER = LogUtils.getLogger();
 	private final GuiGraphics gui;
 	private final ArrayDeque<Float> alphaStack = new ArrayDeque<>();
 	private float alpha = 1F;
@@ -65,20 +68,25 @@ public class UiPainter {
 		if (width <= 0 || height <= 0 || alpha <= 0.004F) return;
 		gui.fill(x, y, x + width, y + height, col(color));
 	}
-	private static final Map<ResourceLocation, int[]> TEXTURE_SIZES = new HashMap<>();
+	private static final Map<ResourceLocation, Optional<int[]>> TEXTURE_SIZES = new HashMap<>();
 	public void texture(ResourceLocation texture, UiBounds bounds) {
 		if (texture == null || bounds.width() <= 0 || bounds.height() <= 0 || alpha <= 0.004F) return;
 		var size = TEXTURE_SIZES.computeIfAbsent(texture, id -> {
-			var optional = ClientUtil.mc.getResourceManager().getResource(id);
-			if (optional.isEmpty()) return null;
-			try (var image = NativeImage.read(optional.get().open())) {
-				return new int[]{image.getWidth(), image.getHeight()};
+			var resource = ClientUtil.mc.getResourceManager().getResource(id);
+			if (resource.isEmpty()) {
+				LOGGER.warn("Missing texture {}", id);
+				return Optional.empty();
+			}
+			try (var image = NativeImage.read(resource.get().open())) {
+				return Optional.of(new int[]{image.getWidth(), image.getHeight()});
 			} catch (Exception e) {
-				return null;
+				LOGGER.warn("Failed to read texture {}", id, e);
+				return Optional.empty();
 			}
 		});
-		if (size == null) return;
-		gui.blit(texture, bounds.x(), bounds.y(), 0F, 0F, bounds.width(), bounds.height(), size[0], size[1]);
+		if (size.isEmpty()) return;
+		var dims = size.get();
+		gui.blit(texture, bounds.x(), bounds.y(), 0F, 0F, bounds.width(), bounds.height(), dims[0], dims[1]);
 	}
 	public void gradient(UiBounds bounds, int top, int bottom) {
 		if (bounds.width() <= 0 || bounds.height() <= 0 || alpha <= 0.004F) return;
@@ -134,28 +142,6 @@ public class UiPainter {
 		rect(inner.x(), inner.y() + 1, 1, inner.height() - 1, UiTheme.FIELD_SHADOW);
 		rect(inner.x() + 1, inner.y() + 1, Math.max(0, inner.width() - 1), Math.max(0, inner.height() - 1), UiTheme.FIELD);
 	}
-	public void disc(int x, int y, int diameter, int argb) {
-		var r = diameter / 2.0;
-		var runStart = 0;
-		var runLeft = -1;
-		var runRight = -1;
-		for (var row = 0; row <= diameter; row++) {
-			var left = -1;
-			var right = -1;
-			if (row < diameter) {
-				var dy = row + 0.5 - r;
-				var half = Math.sqrt(Math.max(0, r * r - dy * dy));
-				left = (int) Math.ceil(r - 0.5 - half - 1.0E-9);
-				right = (int) Math.floor(r - 0.5 + half + 1.0E-9) + 1;
-			}
-			if (left != runLeft || right != runRight) {
-				if (runRight > runLeft) rect(x + runLeft, y + runStart, runRight - runLeft, row - runStart, argb);
-				runStart = row;
-				runLeft = left;
-				runRight = right;
-			}
-		}
-	}
 	/** 7×4 的下拉箭头，像素画法。 */
 	public void chevron(int x, int y, int argb) {
 		for (var i = 0; i < 4; i++) {
@@ -205,8 +191,7 @@ public class UiPainter {
 	public String trim(String text, int maxWidth) {
 		return ClientUtil.mc.font.plainSubstrByWidth(text, maxWidth);
 	}
-	/** 图标统一走 {@link FlexGuiTextures}；染色通过 shader color，由本方法负责复位。 */
-	public void icon(FlexGuiTextures icon, int x, int y, int argb) {
+	public void icon(FlexGuiTextures icon, UiBounds bounds, int argb) {
 		if (icon == null || alpha <= 0.004F) return;
 		var color = col(argb);
 		RenderSystem.setShaderColor(
@@ -215,12 +200,13 @@ public class UiPainter {
 			(color & 0xFF) / 255F,
 			(color >>> 24 & 0xFF) / 255F
 		);
-		icon.render(gui, x, y);
+		texture(icon.texture, new UiBounds(
+			bounds.x() + (bounds.width() - icon.width()) / 2,
+			bounds.y() + (bounds.height() - icon.height()) / 2,
+			icon.width(),
+			icon.height()
+		));
 		RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-	}
-	public void iconCentered(FlexGuiTextures icon, UiBounds bounds, int argb) {
-		if (icon == null) return;
-		icon(icon, bounds.x() + (bounds.width() - icon.width()) / 2, bounds.y() + (bounds.height() - icon.height()) / 2, argb);
 	}
 	public void scissorOn(UiBounds bounds) {
 		flush();

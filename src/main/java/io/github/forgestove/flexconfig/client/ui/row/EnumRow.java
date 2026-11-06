@@ -10,11 +10,13 @@ import io.github.forgestove.flexconfig.client.ui.widget.UiDropdown.Option;
 import io.github.forgestove.flexconfig.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 public class EnumRow extends ValueRow implements KeybindConflictAware {
 	private final TriggerKeybindSupport keybind;
 	private final UiButton trigger;
+	private final @Nullable UiSegmented segmented;
 	private final Object[] constants;
 	private KeybindState keyState = KeybindState.BOUND;
 	private List<Component> conflictUsages = List.of();
@@ -31,9 +33,10 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 		}
 		trigger = new UiButton(Component.empty(), Style.SECONDARY, keybind::beginCapture);
 		if (constants.length <= 4) {
-			var segmented = new UiSegmented(labels, () -> ((Enum<?>) value()).ordinal(), index -> setValue(constants[index]));
+			segmented = new UiSegmented(labels, () -> ((Enum<?>) value()).ordinal(), index -> setValue(constants[index]));
 			actionBar.add(segmented, UiMath.clamp(constants.length * 50, 64, 150)).add(trigger, 96);
 		} else {
+			segmented = null;
 			var dropdown = new UiDropdown(options, this::value, this::setValue, d -> ctx.screen().openDropdown(d));
 			actionBar.add(dropdown, UiTheme.CONTROL_WIDTH).add(trigger, 96);
 		}
@@ -47,7 +50,11 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 		});
 	}
 	private Component label(Enum<?> value) {
-		return ConfigTranslation.translatable("%s.config.enum.%s.%s".formatted(ctx.screen().root.modId(), value.getDeclaringClass().getSimpleName(), value.name()));
+		return ConfigTranslation.translatable("%s.config.enum.%s.%s".formatted(
+			ctx.screen().root.modId(),
+			value.getDeclaringClass().getSimpleName(),
+			value.name()
+		));
 	}
 	private Enum<?> nextValue() {
 		var current = (Enum<?>) value();
@@ -61,6 +68,7 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 	@Override
 	public void refresh() {
 		super.refresh();
+		if (segmented != null) segmented.show(((Enum<?>) value()).ordinal(), true);
 		trigger.setEnabled(!state.readOnly);
 		var keyText = keybind.current().getDisplayName().copy().withStyle(keyState.color());
 		trigger.setLabel(keybind.capturing() ? Component.literal("> ").append(keyText).append(" <") : keyText);

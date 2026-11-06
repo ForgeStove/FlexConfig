@@ -53,4 +53,7 @@ public class UiSpring {
 	public float target() {
 		return target;
 	}
+	public float velocity() {
+		return velocity;
+	}
 }

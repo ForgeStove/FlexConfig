@@ -34,9 +34,10 @@ public class UiButton extends UiControl {
 		if (style == Style.GHOST || style == Style.TITLE) {
 			if (hover.get() > 0.01 || down) painter.rect(bounds(), style == Style.TITLE ? 0x33000000 : UiTheme.ROW_HOVER);
 			var color = !enabled ? UiTheme.DISABLED : style == Style.TITLE ? UiTheme.TITLE_INK : UiTheme.TEXT_2;
-			var text = trimmedLabel(painter);
-			var x = bounds().x() + (bounds().width() - painter.textWidth(text)) / 2;
-			painter.text(text, x, bounds().y() + (bounds().height() - painter.lineHeight()) / 2 + 1, color);
+			var text = displayLabel(painter);
+			var width = painter.textWidth(text);
+			var x = bounds().x() + Math.round((bounds().width() - width) / 2F);
+			painter.text(text, x, bounds().y() + Math.round((bounds().height() - painter.lineHeight()) / 2F) + 1, color);
 			showTooltip(ctx);
 			return;
 		}
@@ -62,20 +63,21 @@ public class UiButton extends UiControl {
 		}
 		showTooltip(ctx);
 	}
-	private String trimmedLabel(UiPainter painter) {
-		var label = style == Style.PRIMARY ? this.label.getString().toUpperCase(Locale.ROOT) : this.label.getString();
-		return painter.trim(label, bounds().width() - 8);
+	private Component displayLabel(UiPainter painter) {
+		var component = style == Style.PRIMARY
+			? Component.literal(label.getString().toUpperCase(Locale.ROOT)).withStyle(label.getStyle())
+			: label;
+		var max = bounds().width() - 8;
+		if (painter.textWidth(component) <= max) return component;
+		return Component.literal(painter.trim(component.getString(), max)).withStyle(component.getStyle());
 	}
 	private void drawLabel(UiContext ctx, int color, UiBounds face) {
 		var painter = ctx.painter;
-		var text = trimmedLabel(painter);
-		var primary = style == Style.PRIMARY;
-		var width = primary ? painter.textWidthEmphasis(text) : painter.textWidth(text);
-		var x = bounds().x() + (bounds().width() - width) / 2;
-		var capH = primary ? 10 : 7;
-		var y = face.y() + (face.height() - capH) / 2;
-		if (primary) painter.textEmphasis(text, x, y, color);
-		else painter.text(text, x, y, color);
+		var text = displayLabel(painter);
+		var width = painter.textWidth(text);
+		var x = bounds().x() + Math.round((bounds().width() - width) / 2F);
+		var y = face.y() + Math.round((face.height() - 8) / 2F);
+		painter.text(text, x, y, color);
 	}
 	private int fade(int color) {
 		return enabled ? color : UiTheme.fadeToward(color, UiTheme.PANEL, 0.4F);

@@ -22,6 +22,6 @@ public class SectionRow extends ConfigRow {
 		painter.textEmphasis(text, textX, ty, UiTheme.TEXT);
 		var ruleX = textX + painter.textWidthEmphasis(text) + 4;
 		if (ruleX < bounds().right() - UiTheme.PADDING) painter.groove(ruleX, bounds().right() - UiTheme.PADDING, ty + 4);
-		if (ui.tooltip() == null && hovered(ui) && category.getTooltip() != null) ui.tooltip(category.getTooltip(), bounds());
+		if (hovered(ui)) ui.hover(this, category::getTooltip, bounds());
 	}
 }

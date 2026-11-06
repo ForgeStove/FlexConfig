@@ -38,6 +38,7 @@ public class ConfigScreen<C, V> extends Screen {
 	private final UiAnim ringY = new UiAnim(0, UiMotion.INDICATOR_LEAD);
 	private final UiAnim ringW = new UiAnim(0, UiMotion.INDICATOR_LEAD);
 	private final UiAnim ringH = new UiAnim(0, UiMotion.INDICATOR_LEAD);
+	private final UiTween ringAlpha = new UiTween(0);
 	private final ToastLayer toast = new ToastLayer();
 	private final UiAnim searchWidth = new UiAnim(90, UiMotion.SEARCH_WIDTH);
 	private final UiTween pageOut = new UiTween(1);
@@ -80,6 +81,9 @@ public class ConfigScreen<C, V> extends Screen {
 	private double searchScroll;
 	private int lastWidth, lastHeight;
 	private @Nullable CaptureTarget capture;
+	private @Nullable ConfigRow removingRow;
+	private @Nullable Runnable removeAction;
+	private boolean suppressRebuildFx;
 	private CategoryConfigNode<C> keybindCategory;
 	private Map<String, String> savedTriggerKeybinds = Map.of();
 	/** 首次打开才重置编辑值；从子界面返回时保留未保存的修改。 */
@@ -129,7 +133,7 @@ public class ConfigScreen<C, V> extends Screen {
 		var items = new ArrayList<Item>();
 		var tab = model.activeTab();
 		items.add(new Item(
-			Component.translatableWithFallback("flexconfig.page.reset", "Reset this page"),
+			Component.translatable("flexconfig.page.reset"),
 			tab != null && tab.changedCount > 0,
 			false,
 			this::resetPage
@@ -152,12 +156,12 @@ public class ConfigScreen<C, V> extends Screen {
 		if (restores.isEmpty()) return;
 		refresh();
 		toast.info(
-			Component.translatableWithFallback("flexconfig.toast.page_reset", "%s settings reset", restores.size()),
-			Component.translatableWithFallback("flexconfig.undo.tooltip", "Undo"),
+			Component.translatable("flexconfig.toast.page_reset", restores.size()),
+			Component.translatable("flexconfig.undo.tooltip"),
 			() -> {
 				for (var restore : restores) restore.run();
 				refresh();
-				toast.info(Component.translatableWithFallback("flexconfig.toast.undone", "Changes undone"));
+				toast.info(Component.translatable("flexconfig.toast.undone"));
 			}
 		);
 	}
@@ -165,7 +169,7 @@ public class ConfigScreen<C, V> extends Screen {
 		var items = new ArrayList<Item>();
 		items.add(new Item(row.resetLabel(), row.canReset(), false, row::resetToDefault));
 		items.add(new Item(
-			Component.translatableWithFallback("flexconfig.row.copy", "Copy value"),
+			Component.translatable("flexconfig.row.copy"),
 			true,
 			false,
 			() -> ClientUtil.mc.keyboardHandler.setClipboard(row.valueText())
@@ -216,6 +220,14 @@ public class ConfigScreen<C, V> extends Screen {
 		windowAnim.update(seconds);
 		riseAnim.update(seconds);
 		closeAnim.update(seconds);
+		if (removingRow != null && removingRow.exited()) {
+			var action = removeAction;
+			removingRow = null;
+			removeAction = null;
+			suppressRebuildFx = true;
+			if (action != null) action.run();
+			suppressRebuildFx = false;
+		}
 		if (closing && closeAnim.done()) {
 			var action = closeAction;
 			closing = false;
@@ -272,7 +284,7 @@ public class ConfigScreen<C, V> extends Screen {
 		var searching = !searchQuery.isEmpty() || changedOnly;
 		var rows = searching ? searchResults : tab == null ? List.<ConfigRow>of() : tab.rows;
 		var height = 0;
-		for (var row : rows) height += row.heightFor(layout.content.width());
+		for (var row : rows) height += row.displayHeight(layout.content.width());
 		scrollbar.metrics(height, layout.content.height());
 		scrollbar.update(seconds, mouseX, mouseY);
 		if (searching) searchScroll = scrollbar.scroll();
@@ -418,11 +430,11 @@ public class ConfigScreen<C, V> extends Screen {
 		model = new ConfigUiModel(rowContext);
 		model.build(categories());
 		selectRememberedTab();
-		doneButton = new UiButton(Component.translatableWithFallback("flexconfig.done", "Done"), Style.PRIMARY, this::done);
+		doneButton = new UiButton(Component.translatable("flexconfig.done").withStyle(ChatFormatting.BOLD), Style.PRIMARY, this::done);
 		closeButton = new UiGlyphButton(Glyph.CLOSE, this::onClose);
 		undoButton = new UiButton(Component.empty(), Style.SECONDARY, this::undoAll);
 		undoButton.setVisible(false);
-		dialogConfirm = new UiButton(Translation.QUIT_CONFIRM_LABEL, Style.PRIMARY, this::confirmDialog);
+		dialogConfirm = new UiButton(Translation.QUIT_CONFIRM_LABEL.copy().withStyle(ChatFormatting.BOLD), Style.PRIMARY, this::confirmDialog);
 		dialogCancel = new UiButton(Translation.CANCEL_LABEL, Style.SECONDARY, this::cancelDialog);
 		sidebar = new SidebarView(model, this::selectTab);
 		var menuOptions = handler.getMenuOptions();
@@ -445,7 +457,7 @@ public class ConfigScreen<C, V> extends Screen {
 		scrollbar.setBounds(layout.scrollbar);
 		searchField = new UiTextField("");
 		searchField.setLeadingSearch(true);
-		searchField.setPlaceholder(Component.translatableWithFallback("flexconfig.search.placeholder", "Search settings"));
+		searchField.setPlaceholder(Component.translatable("flexconfig.search.placeholder"));
 		searchField.setResponder(this::updateSearch);
 		changedChip = new UiChip(Component.empty(), () -> {
 			changedOnly = !changedOnly;
@@ -453,7 +465,7 @@ public class ConfigScreen<C, V> extends Screen {
 			updateSearch(searchField.value());
 		});
 		pageMenuButton = new UiButton(Component.literal("..."), Style.SECONDARY, this::openPageMenu);
-		pageMenuButton.tooltip(Component.translatableWithFallback("flexconfig.search.menu", "Page options"));
+		pageMenuButton.tooltip(Component.translatable("flexconfig.search.menu"));
 		searchQuery = "";
 		searchResults = List.of();
 		searchScroll = 0;
@@ -516,7 +528,7 @@ public class ConfigScreen<C, V> extends Screen {
 			headerText = headerText.copy().append("  ·  ").append(Translation.RESTART_REQUIRED_TITLE.copy().withStyle(ChatFormatting.RED));
 		painter.text(headerText, layout.pageHeader.x(), layout.pageHeader.y() + 4, UiTheme.TEXT_3);
 		if (!searchQuery.isEmpty() || changedOnly) {
-			var count = Component.translatableWithFallback("flexconfig.search.results", "%s results", searchResults.size());
+			var count = Component.translatable("flexconfig.search.results", searchResults.size());
 			painter.text(count, layout.pageHeader.x() + painter.textWidth(headerText) + 8, layout.pageHeader.y() + 4, UiTheme.TEXT_3);
 		}
 		closeButton.setBounds(new UiBounds(layout.header.right() - 19, layout.header.y() + (layout.header.height() - 3 - 16) / 2, 16, 16));
@@ -570,6 +582,7 @@ public class ConfigScreen<C, V> extends Screen {
 		var content = layout.content;
 		for (var row : rows) {
 			var height = row.heightFor(content.width());
+			var shown = row.displayHeight(content.width());
 			var bounds = new UiBounds(content.x(), y, content.width(), height);
 			row.setBounds(bounds);
 			row.updateReveal(ui.delta);
@@ -577,7 +590,7 @@ public class ConfigScreen<C, V> extends Screen {
 				row.prepare(ui);
 				row.layout();
 			}
-			y += height;
+			y += shown;
 		}
 		for (var row : rows)
 			if (row.bounds().intersects(content)) for (var control : row.controls()) if (control.focusable()) focusables.add(control);
@@ -594,27 +607,37 @@ public class ConfigScreen<C, V> extends Screen {
 		for (var row : rows)
 			if (row.bounds().intersects(content)) {
 				var reveal = row.revealValue();
-				if (reveal < 1) {
-					ui.painter.pushAlpha(reveal);
-					ui.painter.pushTranslate(0, (1F - reveal) * UiMotion.ROW_RISE);
-					row.render(ui);
-					ui.painter.popTranslate();
+				var scale = row.heightScale();
+				var shrink = scale < 0.999F;
+				if (reveal < 1) ui.painter.pushAlpha(reveal);
+				if (shrink) {
+					ui.painter.pushAlpha(Math.max(0.01F, scale));
+					ui.painter.scissorOn(new UiBounds(content.x(), row.bounds().y(), content.width(), row.displayHeight(content.width())));
+				}
+				row.render(ui);
+				if (shrink) {
+					ui.painter.scissorOff();
 					ui.painter.popAlpha();
-				} else row.render(ui);
+				}
+				if (reveal < 1) ui.painter.popAlpha();
 			}
 		ui.painter.scissorOff();
 		var total = 0;
-		for (var row : rows) total += row.heightFor(content.width());
+		for (var row : rows) total += row.displayHeight(content.width());
 		if (scroll > 0) ui.painter.gradient(new UiBounds(content.x(), content.y(), content.width(), 6), UiTheme.SHADOW, 0x00000000);
 		if (scroll < Math.max(0, total - content.height()))
 			ui.painter.gradient(new UiBounds(content.x(), content.bottom() - 6, content.width(), 6), 0x00000000, UiTheme.SHADOW);
 	}
 	private void renderFocusRing(UiContext ui) {
 		var current = ui.focus.current();
-		if (current == null || !ui.focusVisible() || current instanceof UiTextField) {
+		if (current == null || !ui.focusVisible()) {
 			ringInit = false;
+			ringAlpha.start(ringAlpha.value(), 0, UiMotion.TOOLTIP_FADE);
+			ringAlpha.update(ui.delta);
 			return;
 		}
+		if (ringAlpha.target() < 1) ringAlpha.start(ringAlpha.value(), 1, UiMotion.TOOLTIP_FADE);
+		ringAlpha.update(ui.delta);
 		var bounds = current.focusBounds().inset(-1);
 		if (!ringInit) {
 			ringX.jumpTo(bounds.x());
@@ -632,19 +655,21 @@ public class ConfigScreen<C, V> extends Screen {
 			ringW.update(ui.delta);
 			ringH.update(ui.delta);
 		}
-		ui.painter.border(
-			(int) Math.round(ringX.get()),
-			(int) Math.round(ringY.get()),
-			(int) Math.round(ringW.get()),
-			Math.max(1, (int) Math.round(ringH.get())),
-			ui.accent().light()
-		);
+		if (ringAlpha.value() <= 0.01F) return;
+		ui.painter.pushAlpha(ringAlpha.value());
+		var x = (int) Math.round(ringX.get());
+		var y = (int) Math.round(ringY.get());
+		var width = (int) Math.round(ringW.get());
+		var height = Math.max(1, (int) Math.round(ringH.get()));
+		ui.painter.border(x - 1, y - 1, width + 2, height + 2, 0x80000000);
+		ui.painter.border(x, y, width, height, ui.accent().light());
+		ui.painter.popAlpha();
 	}
 	private Component statusText() {
 		if (!isEditable()) return Translation.SAVE_UNAVAILABLE_READ_ONLY;
 		var count = model == null ? 0 : model.changedCount();
 		if (model != null && model.hasError()) return Translation.SAVE_UNAVAILABLE_INVALID;
-		return count == 0 ? null : Component.translatableWithFallback("flexconfig.status.changed", "%s changed", count);
+		return count == 0 ? null : Component.translatable("flexconfig.status.changed", count);
 	}
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -824,7 +849,7 @@ public class ConfigScreen<C, V> extends Screen {
 	private void ensureRowVisible(List<ConfigRow> rows, UiControl target) {
 		var y = layout.content.y() - (int) Math.round(activeScroll());
 		for (var row : rows) {
-			var height = row.heightFor(layout.content.width());
+			var height = row.displayHeight(layout.content.width());
 			for (var control : row.controls())
 				if (control == target) {
 					var bottom = y + height;
@@ -849,8 +874,9 @@ public class ConfigScreen<C, V> extends Screen {
 		var y = layout.content.y() - (int) Math.round(scroll);
 		for (var row : rows) {
 			var height = row.heightFor(layout.content.width());
+			var shown = row.displayHeight(layout.content.width());
 			var bounds = new UiBounds(layout.content.x(), y, layout.content.width(), height);
-			if (bounds.contains(layout.content.x() + 1, mouseY)) {
+			if (mouseY >= y && mouseY < y + shown) {
 				row.setBounds(bounds);
 				row.prepare(ui);
 				row.layout();
@@ -932,8 +958,8 @@ public class ConfigScreen<C, V> extends Screen {
 		doneButton.tooltip(doneBlockedReason());
 		var changed = model.changedCount();
 		undoButton.setVisible(changed > 0 && isEditable());
-		undoButton.setLabel(Component.translatableWithFallback("flexconfig.undo_changes", "Undo changes (%s)", changed));
-		changedChip.setLabel(Component.translatableWithFallback("flexconfig.search.changed", "Changed (%s)", changed));
+		undoButton.setLabel(Component.translatable("flexconfig.undo_changes", changed));
+		changedChip.setLabel(Component.translatable("flexconfig.search.changed", changed));
 		changedChip.setSelected(changedOnly);
 	}
 	public void undoAll() {
@@ -943,17 +969,61 @@ public class ConfigScreen<C, V> extends Screen {
 		ClientLockManager.clearPendingLocks();
 		refresh();
 		for (var tab : model.tabs()) for (var row : tab.rows) if (row instanceof ValueRow valueRow) valueRow.wash();
-		toast.info(Component.translatableWithFallback("flexconfig.toast.undone", "Changes undone"));
+		toast.info(Component.translatable("flexconfig.toast.undone"));
+	}
+	public void exitRow(Object identity, Runnable action) {
+		ConfigRow target = null;
+		if (removingRow == null) for (var row : activeRows())
+			if (row.identity() == identity) {
+				target = row;
+				break;
+			}
+		if (target == null) {
+			action.run();
+			return;
+		}
+		removingRow = target;
+		removeAction = action;
+		target.onExit();
 	}
 	public void rebuildActiveTab() {
 		if (model == null) return;
 		closeDropdown();
-		model.rebuildActive();
 		var tab = model.activeTab();
+		var oldRows = tab == null ? List.<ConfigRow>of() : List.copyOf(tab.rows);
+		var oldIds = new HashSet<>();
+		var expanding = new HashMap<Object, Float>();
+		for (var row : oldRows) {
+			var id = row.identity();
+			if (id == null) continue;
+			oldIds.add(id);
+			if (row.heightScale() < 1) expanding.put(id, row.heightScale());
+		}
+		model.rebuildActive();
 		if (tab != null) {
+			var newRows = tab.rows;
+			var newIds = new HashSet<>();
+			for (var row : newRows) {
+				var id = row.identity();
+				if (id != null) newIds.add(id);
+			}
+			var removed = false;
+			for (var id : oldIds) if (!newIds.contains(id)) {
+				removed = true;
+				break;
+			}
+			for (var row : newRows) {
+				var id = row.identity();
+				if (id == null) continue;
+				if (!oldIds.contains(id)) row.onEnter();
+				else {
+					var scale = expanding.get(id);
+					if (scale != null) row.expandFrom(scale);
+				}
+			}
+			if (removed && !suppressRebuildFx) pageIn.start(0.5F, 1, UiMotion.TAB_ROWS_IN);
 			tab.clampScroll(layout.content.height(), layout.content.width());
 			scrollbar.setScroll(tab.scroll);
-			revealRows(tab.rows);
 		}
 		refresh();
 	}

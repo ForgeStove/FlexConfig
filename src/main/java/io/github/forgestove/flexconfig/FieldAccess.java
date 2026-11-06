@@ -1,11 +1,16 @@
 package io.github.forgestove.flexconfig;
+import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.Order;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import java.lang.invoke.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 public class FieldAccess {
+	private static final Logger LOGGER = LogUtils.getLogger();
+	private static final Set<Field> WARNED_FIELDS = ConcurrentHashMap.newKeySet();
 	/**
 	 * 按 {@link Order @Order} 值排序，同值者保持声明顺序，无注解者视为 0。
 	 * 配置树与序列化器须共用本方法，否则会出现「GUI 能看到但永不落盘」一类不一致。
@@ -184,7 +189,9 @@ public class FieldAccess {
 		seen.put(value, copy);
 		for (var field : collectOrderedFields(type)) try {
 			writeFieldDirectly(field, copy, deepCopy(getFieldValue(field, value), seen));
-		} catch (RuntimeException ignored) {}
+		} catch (RuntimeException e) {
+			LOGGER.warn("Failed to copy field '{}' of {}", field.getName(), type.getName(), e);
+		}
 		return copy;
 	}
 	/** 结构相等：集合逐元素、对象逐字段比较，避免深拷贝后 identity 比较误判为「已修改」。 */
@@ -232,7 +239,10 @@ public class FieldAccess {
 			return first.equals(second);
 		for (var field : collectOrderedFields(first.getClass())) try {
 			if (!deepEquals(getFieldValue(field, first), getFieldValue(field, second))) return false;
-		} catch (RuntimeException ignored) {}
+		} catch (RuntimeException e) {
+			if (WARNED_FIELDS.add(field)) LOGGER.warn("Cannot compare field '{}', treating values as different", field.getName(), e);
+			return false;
+		}
 		return true;
 	}
 	private static boolean isImmutable(Class<?> type) {

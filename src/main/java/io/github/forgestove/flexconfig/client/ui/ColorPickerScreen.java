@@ -5,6 +5,7 @@ import io.github.forgestove.flexconfig.client.ui.core.*;
 import io.github.forgestove.flexconfig.client.ui.core.UiFocus.Target;
 import io.github.forgestove.flexconfig.client.ui.widget.*;
 import io.github.forgestove.flexconfig.client.ui.widget.UiButton.Style;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -43,7 +44,7 @@ public class ColorPickerScreen extends Screen {
 		hex.setMaxLength(hasAlpha ? 8 : 6);
 		hex.setFilter(s -> HEX_PATTERN.matcher(s).matches());
 		hex.setResponder(this::onHexInput);
-		ok = new UiButton(Component.translatable("gui.ok"), Style.PRIMARY, () -> {
+		ok = new UiButton(Component.translatable("gui.ok").withStyle(ChatFormatting.BOLD), Style.PRIMARY, () -> {
 			onColorSelected.accept(colorFromHSB());
 			ClientUtil.mc.setScreen(parent);
 		});

@@ -65,7 +65,7 @@ public abstract class UiControl implements Target {
 	/** 悬停时把提示交给界面统一绘制。 */
 	protected void showTooltip(UiContext ctx) {
 		if (tooltip == null) return;
-		if (hovered(ctx)) ctx.tooltip(tooltip, focusBounds());
-		else if (ctx.focus.is(this)) ctx.tooltipFocused(tooltip, focusBounds());
+		if (hovered(ctx)) ctx.hover(this, this::tooltip, focusBounds());
+		else if (ctx.focus.is(this)) ctx.focusTarget(this, this::tooltip, focusBounds());
 	}
 }

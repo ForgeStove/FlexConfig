@@ -1,13 +1,9 @@
 package io.github.forgestove.flexconfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-/** 配置键的显示：没有翻译时退化为键的末段，tooltip 键保留 "名字.tooltip"，不显示整条键。 */
+/** 配置键的显示；缺少翻译时直接显示键名，避免掩盖漏翻。 */
 public class ConfigTranslation {
 	public static MutableComponent translatable(String key) {
-		return Component.translatableWithFallback(key, fallback(key));
-	}
-	private static String fallback(String key) {
-		var end = key.endsWith(".tooltip") ? key.length() - ".tooltip".length() : key.length();
-		return key.substring(key.lastIndexOf('.', end - 1) + 1);
+		return Component.translatable(key);
 	}
 }

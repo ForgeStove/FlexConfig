@@ -5,6 +5,7 @@ import io.github.forgestove.flexconfig.client.ui.core.*;
 import io.github.forgestove.flexconfig.client.ui.core.UiFocus.Target;
 import io.github.forgestove.flexconfig.client.ui.widget.*;
 import io.github.forgestove.flexconfig.client.ui.widget.UiButton.Style;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -47,7 +48,7 @@ public class ConfigFileScreen extends Screen {
 			if (!available) button.tooltip(Translation.tooltip(Translation.SERVER_CONFIG_UNAVAILABLE, Translation.SERVER_CONFIG_UNAVAILABLE_TOOLTIP));
 			fileButtons.add(button);
 		}
-		doneButton = new UiButton(Component.translatableWithFallback("flexconfig.done", "Done"), Style.PRIMARY, this::onClose);
+		doneButton = new UiButton(Component.translatable("flexconfig.done").withStyle(ChatFormatting.BOLD), Style.PRIMARY, this::onClose);
 		if (!opened) {
 			opened = true;
 			backdropAnim.start(0, 1, UiMotion.BACKDROP_IN);

@@ -22,10 +22,22 @@ public class UiIconButton extends UiControl {
 		if (!visible) return;
 		hover.target(focusable() && (hovered(ctx) || down) ? 1 : 0);
 		hover.update(ctx.delta);
-		if (hover.get() > 0.01) ctx.painter.disc(bounds().x(), bounds().y(), Math.min(bounds().width(), bounds().height()), UiTheme.ROW_PRESS);
-		var color = !enabled ? UiTheme.DISABLED : hover.get() > 0.5 ? UiTheme.TEXT : UiTheme.TEXT_2;
-		ctx.painter.iconCentered(icon, down ? bounds().offset(0, 1) : bounds(), color);
+		var painter = ctx.painter;
+		painter.bevel(
+			bounds(),
+			UiTheme.WINDOW_EDGE,
+			fade(down ? UiTheme.SECONDARY_PRESSED : hover.get() > 0.5 ? UiTheme.SECONDARY_HOVER : UiTheme.SECONDARY_FACE),
+			fade(UiTheme.SECONDARY_TOP),
+			fade(UiTheme.SECONDARY_SHINE),
+			fade(UiTheme.SECONDARY_LIP),
+			2,
+			down
+		);
+		painter.icon(icon, bounds().offset(0, down ? 1 : -1), enabled ? UiTheme.ICON_INK : UiTheme.DISABLED);
 		showTooltip(ctx);
+	}
+	private int fade(int color) {
+		return enabled ? color : UiTheme.fadeToward(color, UiTheme.PANEL, 0.4F);
 	}
 	@Override
 	public boolean mouseClicked(UiContext ctx, double mouseX, double mouseY, int button) {

@@ -12,9 +12,10 @@ public enum FlexGuiTextures {
 	ICON_UNDO("icon/undo"),
 	ICON_LOCK("icon/lock"),
 	ICON_UNLOCK("icon/unlock");
-	public final ResourceLocation id;
+	public final ResourceLocation id, texture;
 	FlexGuiTextures(String path) {
 		id = FlexConfig.getFlexRes(path);
+		texture = FlexConfig.getFlexRes("textures/gui/sprites/" + path + ".png");
 	}
 	private @NotNull SpriteContents getContents() {
 		return ClientUtil.mc.getGuiSprites().getSprite(id).contents();

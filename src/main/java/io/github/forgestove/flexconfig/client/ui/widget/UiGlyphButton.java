@@ -12,7 +12,7 @@ public class UiGlyphButton extends UiControl {
 	public UiGlyphButton(Glyph glyph, Runnable action) {
 		this.glyph = glyph;
 		this.action = action;
-		tooltip(glyph == Glyph.CLOSE ? Component.translatableWithFallback("flexconfig.close", "Close") : Component.empty());
+		tooltip(glyph == Glyph.CLOSE ? Component.translatable("flexconfig.close") : Component.empty());
 	}
 	@Override
 	public void render(UiContext ctx) {

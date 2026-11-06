@@ -14,8 +14,9 @@ public class UiDropdown extends UiControl implements UiPopup {
 	private final Consumer<Object> onSelect;
 	private final Consumer<UiDropdown> opener;
 	private final UiTextField filter = new UiTextField();
-	private boolean open, closing;
+	private boolean open, closing, above;
 	private final UiTween openAnim = new UiTween(0);
+	private final UiAnim highlightAnim = new UiAnim(0, UiMotion.SELECT);
 	private int highlight;
 	private int pressedOption = -1;
 	private UiBounds popup = UiBounds.EMPTY;
@@ -38,8 +39,9 @@ public class UiDropdown extends UiControl implements UiPopup {
 			closing = false;
 			filter.setValue("");
 			openAnim.start(0, 1, UiMotion.POPUP_IN);
+			highlight = Math.max(0, filtered().indexOf(currentOption()));
+			highlightAnim.snap(highlight * (double) ROW_HEIGHT);
 		} else openAnim.snap(0);
-		highlight = Math.max(0, filtered().indexOf(currentOption()));
 	}
 	@Override
 	public void close() {
@@ -72,7 +74,9 @@ public class UiDropdown extends UiControl implements UiPopup {
 	public void render(UiContext ctx) {
 		if (!visible) return;
 		var pressed = open || down;
-		var face = !enabled ? 0xFF6E6A5C : pressed ? UiTheme.SECONDARY_PRESSED : hovered(ctx) ? UiTheme.SECONDARY_HOVER : UiTheme.SECONDARY_FACE;
+		var face = !enabled
+			? 0xFF6E6A5C
+			: pressed ? UiTheme.SECONDARY_PRESSED : hovered(ctx) ? UiTheme.SECONDARY_HOVER : UiTheme.SECONDARY_FACE;
 		var inner = ctx.painter.bevel(
 			bounds(),
 			open ? UiTheme.OUTLINE : UiTheme.WINDOW_EDGE,
@@ -107,13 +111,21 @@ public class UiDropdown extends UiControl implements UiPopup {
 		return true;
 	}
 	private void layoutPopup() {
-		var list = filtered();
-		var rows = UiMath.clamp(list.size(), 1, MAX_ROWS);
+		var rows = UiMath.clamp(filtered().size(), 1, MAX_ROWS);
 		var width = Math.max(bounds().width(), 140);
 		var height = FILTER_HEIGHT + PAD * 2 + rows * ROW_HEIGHT + PAD;
-		var below = viewport.bottom() - bounds().bottom();
-		var y = below >= height ? bounds().bottom() + 1 : Math.max(viewport.y(), bounds().y() - height - 1);
+		above = viewport.bottom() - bounds().bottom() < height;
+		var y = above ? Math.max(viewport.y(), bounds().y() - height - 1) : bounds().bottom() + 1;
 		popup = new UiBounds(bounds().x(), y, width, height);
+	}
+	private int visibleRows(int size) {
+		return UiMath.clamp(size, 1, MAX_ROWS);
+	}
+	private int scrollStart(int size, int visible) {
+		return UiMath.clamp(highlight - visible + 1, 0, Math.max(0, size - visible));
+	}
+	private int listTop() {
+		return popup.y() + PAD + FILTER_HEIGHT + PAD;
 	}
 	@Override
 	public void renderPopup(UiContext ctx) {
@@ -124,24 +136,36 @@ public class UiDropdown extends UiControl implements UiPopup {
 			closing = false;
 			return;
 		}
+		var list = filtered();
+		var visible = visibleRows(list.size());
+		var start = scrollStart(list.size(), visible);
+		var top = listTop();
+		if (open && popup.contains(ctx.mouseX, ctx.mouseY)) {
+			var row = (int) Math.floor((ctx.mouseY - top) / ROW_HEIGHT);
+			if (row >= 0 && row < visible && start + row < list.size()) highlight = start + row;
+		}
+		highlightAnim.target(highlight * (double) ROW_HEIGHT);
+		highlightAnim.update(ctx.delta);
 		var t = openAnim.value();
-		var drawn = new UiBounds(popup.x(), popup.y() + popup.height() - Math.round(popup.height() * (0.92F + 0.08F * t)), popup.width(), Math.round(popup.height() * (0.92F + 0.08F * t)));
-		filter.setBounds(new UiBounds(drawn.x() + PAD, drawn.y() + PAD, drawn.width() - PAD * 2, FILTER_HEIGHT));
+		if (t <= 0.01F) return;
+		var drawnHeight = Math.round(popup.height() * (0.92F + 0.08F * t));
+		var drawnTop = above ? popup.bottom() - drawnHeight : popup.y();
 		ctx.painter.pushZ(200);
 		ctx.painter.pushAlpha(t);
-		ctx.painter.border(drawn, UiTheme.WINDOW_EDGE);
-		ctx.painter.rect(drawn.x() + 1, drawn.y() + 1, drawn.width() - 2, 1, UiTheme.GROOVE_LIGHT);
-		ctx.painter.rect(drawn.x() + 1, drawn.y() + 2, drawn.width() - 2, drawn.height() - 3, UiTheme.SIDEBAR);
+		ctx.painter.border(new UiBounds(popup.x(), drawnTop, popup.width(), drawnHeight), UiTheme.WINDOW_EDGE);
+		ctx.painter.rect(popup.x() + 1, drawnTop + 1, popup.width() - 2, 1, UiTheme.GROOVE_LIGHT);
+		ctx.painter.rect(popup.x() + 1, drawnTop + 2, popup.width() - 2, Math.max(0, drawnHeight - 3), UiTheme.SIDEBAR);
+		ctx.painter.scissorOn(new UiBounds(popup.x() + 1, drawnTop + 1, popup.width() - 2, Math.max(0, drawnHeight - 2)));
+		filter.setBounds(new UiBounds(popup.x() + PAD, popup.y() + PAD, popup.width() - PAD * 2, FILTER_HEIGHT));
 		filter.render(ctx);
-		var list = filtered();
-		var visible = (drawn.height() - FILTER_HEIGHT - PAD * 3) / ROW_HEIGHT;
-		var start = UiMath.clamp(highlight - visible + 1, 0, Math.max(0, list.size() - visible));
-		var y = drawn.y() + PAD + FILTER_HEIGHT + PAD;
+		var highlightY = top + (int) Math.round(highlightAnim.get()) - start * ROW_HEIGHT;
+		if (highlight >= 0 && highlight < list.size())
+			ctx.painter.rect(new UiBounds(popup.x() + PAD, highlightY, popup.width() - PAD * 2, ROW_HEIGHT), UiTheme.ROW_HOVER);
 		for (var i = 0; i < visible && start + i < list.size(); i++) {
 			var index = start + i;
-			var row = new UiBounds(drawn.x() + PAD, y + i * ROW_HEIGHT, drawn.width() - PAD * 2, ROW_HEIGHT);
-			if (index == highlight) ctx.painter.rect(row, UiTheme.ROW_HOVER);
-			if (Objects.equals(list.get(index).value(), selected.get())) ctx.painter.rect(row.x(), row.y() + 2, 2, ROW_HEIGHT - 4, ctx.accent().base());
+			var row = new UiBounds(popup.x() + PAD, top + i * ROW_HEIGHT, popup.width() - PAD * 2, ROW_HEIGHT);
+			if (Objects.equals(list.get(index).value(), selected.get()))
+				ctx.painter.rect(row.x(), row.y() + 2, 2, ROW_HEIGHT - 4, ctx.accent().base());
 			ctx.painter.text(
 				ctx.painter.trim(list.get(index).label().getString(), row.width() - 10),
 				row.x() + 6,
@@ -149,6 +173,7 @@ public class UiDropdown extends UiControl implements UiPopup {
 				index == highlight ? UiTheme.TEXT : UiTheme.TEXT_2
 			);
 		}
+		ctx.painter.scissorOff();
 		ctx.painter.popAlpha();
 		ctx.painter.popZ();
 	}
@@ -162,10 +187,9 @@ public class UiDropdown extends UiControl implements UiPopup {
 		if (button != 0) return true;
 		if (filter.bounds().contains(mouseX, mouseY)) return filter.mouseClicked(ctx, mouseX, mouseY, button);
 		var list = filtered();
-		var visible = (popup.height() - FILTER_HEIGHT - PAD * 3) / ROW_HEIGHT;
-		var start = UiMath.clamp(highlight - visible + 1, 0, Math.max(0, list.size() - visible));
-		var startY = popup.y() + PAD + FILTER_HEIGHT + PAD;
-		var index = (int) ((mouseY - startY) / ROW_HEIGHT);
+		var visible = visibleRows(list.size());
+		var start = scrollStart(list.size(), visible);
+		var index = (int) Math.floor((mouseY - listTop()) / ROW_HEIGHT);
 		pressedOption = index >= 0 && index < visible && start + index < list.size() ? start + index : -1;
 		return true;
 	}
