@@ -2,6 +2,7 @@ package io.github.forgestove.flexconfig.platform;
 import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.platform.services.NetworkService;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 public class NeoForgeNetworkService implements NetworkService {
@@ -10,7 +11,7 @@ public class NeoForgeNetworkService implements NetworkService {
 		PacketDistributor.sendToPlayer(player, payload);
 	}
 	@Override
-	public void sendToAllPlayers(NetworkPayload payload) {
+	public void sendToAllPlayers(MinecraftServer server, NetworkPayload payload) {
 		PacketDistributor.sendToAllPlayers(payload);
 	}
 	@Override

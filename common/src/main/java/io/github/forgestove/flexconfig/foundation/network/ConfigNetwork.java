@@ -1,13 +1,13 @@
 package io.github.forgestove.flexconfig.foundation.network;
 import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
-import io.github.forgestove.flexconfig.foundation.ConfigStore;
 import io.github.forgestove.flexconfig.foundation.*;
 import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.server.*;
 import io.github.forgestove.flexconfig.foundation.ui.ConfigScreen;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import io.github.forgestove.flexconfig.platform.services.*;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -37,6 +37,10 @@ public class ConfigNetwork {
 			ConfigNetwork::handleServerConfigClient
 		);
 	}
+	public static void registerClientReceivers(ClientPayloadReceiver receiver) {
+		receiver.serverToClient(ConfigSyncPayload.CHANNEL, ConfigSyncPayload.class, ConfigNetwork::handleConfigSyncClient);
+		receiver.serverToClient(ServerConfigPayload.CHANNEL, ServerConfigPayload.class, ConfigNetwork::handleServerConfigClient);
+	}
 	// -- 数据包处理器 --
 	private static void handleConfigLockServer(ConfigLockPayload payload, PayloadContext context) {
 		var player = context.player();
@@ -54,7 +58,7 @@ public class ConfigNetwork {
 			lockStore.lockEntry(payload.configId(), typed);
 		}
 		ServerLockApplier.applyAll(key, lockStore);
-		broadcastLocks();
+		broadcastLocks(player.server);
 	}
 	private static void handleConfigSyncClient(ConfigSyncPayload payload, PayloadContext context) {
 		ClientLockManager.setLocks(payload.modId(), payload.fileName(), payload.tomlContent());
@@ -63,11 +67,11 @@ public class ConfigNetwork {
 	private static void handleServerConfigClient(ServerConfigPayload payload, PayloadContext context) {
 		ClientServerConfigCache.accept(payload.modId(), payload.fileName(), payload.tomlContent());
 	}
-	private static void broadcastLocks() {
+	private static void broadcastLocks(MinecraftServer server) {
 		if (lockStores.isEmpty()) return;
 		lockStores.forEach((key, value) -> {
 			var payload = new ConfigSyncPayload(key.modId(), key.fileName(), value.toTomlString());
-			FlexConfigServices.NETWORK.sendToAllPlayers(payload);
+			FlexConfigServices.NETWORK.sendToAllPlayers(server, payload);
 		});
 	}
 	public static void setLockStore(FileKey key, ServerConfigLockStore store) {

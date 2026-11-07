@@ -10,20 +10,12 @@
 	"license": "${modLicense}",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			"io.github.forgestove.flexconfig.FabricEvents"
-		],
-		"client": [
-			"io.github.forgestove.flexconfig.client.FabricClientEvents"
-		],
-		"modmenu": [
-			"io.github.forgestove.flexconfig.client.FlexConfigModMenu"
-		]
+		"main": ["io.github.forgestove.flexconfig.FabricEvents"],
+		"client": ["io.github.forgestove.flexconfig.client.FabricClientEvents"],
+		"modmenu": ["io.github.forgestove.flexconfig.client.FlexConfigModMenu"]
 	},
 	"depends": {
-		"fabricloader": "*",
-		"fabric-api": "*",
-		"minecraft": "~1.21.1"
+		"fabricloader": "*", "fabric-api": "*", "minecraft": "~1.21.1"
 	},
 	"suggests": {
 		"modmenu": "*"
