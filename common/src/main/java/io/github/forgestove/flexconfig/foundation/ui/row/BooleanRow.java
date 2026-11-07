@@ -17,7 +17,7 @@ public class BooleanRow extends ValueRow implements KeybindConflictAware {
 	public BooleanRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx, node);
 		keybind = new TriggerKeybindSupport(node, ctx);
-		trigger = new UiButton(Component.empty(), Style.SECONDARY, keybind::beginCapture);
+		trigger = new UiButton(Component.empty(), Style.KEYBIND, keybind::beginCapture);
 		var toggle = new UiToggle(this::booleanValue, this::setValue);
 		actionBar.add(toggle, 34).add(trigger, 96);
 		keybind.register(() -> {
@@ -43,8 +43,8 @@ public class BooleanRow extends ValueRow implements KeybindConflictAware {
 	public void refresh() {
 		super.refresh();
 		trigger.setEnabled(!state.readOnly);
-		var keyText = keybind.current().getDisplayName().copy().withStyle(keyState.color());
-		trigger.setLabel(keybind.capturing() ? Component.literal("> ").append(keyText).append(" <") : keyText);
+		trigger.setLabel(keybind.current().getDisplayName());
+		trigger.setActive(keybind.capturing());
 		if (keyState == KeybindState.CONFLICT && !conflictUsages.isEmpty()) trigger.tooltip(conflictTooltip(conflictUsages));
 		else trigger.tooltip(null);
 		if (keybind.changed() && !state.readOnly) state.changed = true;

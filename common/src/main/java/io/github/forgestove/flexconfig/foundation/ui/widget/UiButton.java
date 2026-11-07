@@ -11,10 +11,12 @@ public class UiButton extends UiControl {
 		SECONDARY,
 		DANGER,
 		GHOST,
-		TITLE
+		TITLE,
+		KEYBIND
 	}
 	private final UiAnim hover = new UiAnim(0);
 	private Component label;
+	private boolean active;
 	private static final Palette PRIMARY_DISABLED = new Palette(0xFF6E6A5C, 0xFF6E6A5C, 0xFF6E6A5C, 0xFF58585A, 0xFF6E6A5C, 0xFF6E6A5C);
 	private final Style style;
 	private final Runnable action;
@@ -26,12 +28,21 @@ public class UiButton extends UiControl {
 	public void setLabel(Component label) {
 		this.label = label;
 	}
+	/** 仅按键绑定样式使用：捕获中时把凹槽描边换成主题色。 */
+	public void setActive(boolean active) {
+		this.active = active;
+	}
 	@Override
 	public void render(UiContext ctx) {
 		if (!visible) return;
 		hover.target(focusable() && (hovered(ctx) || down) ? 1 : 0);
 		hover.update(ctx.delta);
 		var painter = ctx.painter;
+		if (style == Style.KEYBIND) {
+			drawKeybind(ctx);
+			showTooltip(ctx);
+			return;
+		}
 		if (style == Style.GHOST || style == Style.TITLE) {
 			if (hover.get() > 0.01 || down) painter.rect(bounds(), style == Style.TITLE ? 0x33000000 : UiTheme.ROW_HOVER);
 			var color = !enabled ? UiTheme.DISABLED : style == Style.TITLE ? UiTheme.TITLE_INK : UiTheme.TEXT_2;
@@ -71,6 +82,17 @@ public class UiButton extends UiControl {
 		var max = bounds().width() - 8;
 		if (painter.textWidth(component) <= max) return component;
 		return Component.literal(painter.trim(component.getString(), max)).withStyle(component.getStyle());
+	}
+	/** 按键绑定：输入框式凹槽里居中显示键名，捕获中把描边换成主题色。 */
+	private void drawKeybind(UiContext ctx) {
+		var painter = ctx.painter;
+		var b = bounds();
+		painter.well(b, active ? ctx.accent().base() : UiTheme.WINDOW_EDGE, 0.3F * (float) hover.get());
+		var text = displayLabel(painter).getString();
+		var width = painter.textWidth(text);
+		var x = b.x() + Math.round((b.width() - width) / 2F);
+		var y = b.y() + Math.round((b.height() - 8) / 2F);
+		painter.text(text, x, y, enabled ? UiTheme.TEXT : UiTheme.DISABLED);
 	}
 	private void drawLabel(UiContext ctx, int color, UiBounds face) {
 		var painter = ctx.painter;

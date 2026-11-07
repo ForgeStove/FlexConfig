@@ -17,7 +17,7 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 	private List<Component> conflicts = List.of();
 	public KeybindRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx, node);
-		button = new UiButton(Component.empty(), Style.SECONDARY, this::beginCapture);
+		button = new UiButton(Component.empty(), Style.KEYBIND, this::beginCapture);
 		actionBar.add(button, UiTheme.CONTROL_WIDTH);
 	}
 	private Key key() {
@@ -55,8 +55,8 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 	public void refresh() {
 		super.refresh();
 		button.setEnabled(!state.readOnly);
-		var text = key().getDisplayName().copy().withStyle(keyState.color());
-		button.setLabel(capturing ? Component.literal("> ").append(text).append(" <") : text);
+		button.setLabel(key().getDisplayName());
+		button.setActive(capturing);
 		if (keyState == KeybindState.CONFLICT && !conflicts.isEmpty()) {
 			var used = Component.empty();
 			for (var i = 0; i < conflicts.size(); i++) {

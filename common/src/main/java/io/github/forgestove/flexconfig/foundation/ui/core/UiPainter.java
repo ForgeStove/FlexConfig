@@ -126,14 +126,17 @@ public class UiPainter {
 		rect(x1, y, x2 - x1, 1, UiTheme.SEP);
 		rect(x1, y + 1, x2 - x1, 1, UiTheme.GROOVE_LIGHT);
 	}
-	public void field(UiBounds bounds, boolean focused, boolean hovered, int focusColor) {
-		var border = focused ? focusColor : hovered ? 0xFFC8C8CE : UiTheme.WINDOW_EDGE;
-		border(bounds, border);
-		var inner = bounds.inset(1, 1);
-		if (inner.width() <= 0 || inner.height() <= 0) return;
-		rect(inner.x(), inner.y(), inner.width(), 1, UiTheme.FIELD_SHADOW);
-		rect(inner.x(), inner.y() + 1, 1, inner.height() - 1, UiTheme.FIELD_SHADOW);
-		rect(inner.x() + 1, inner.y() + 1, Math.max(0, inner.width() - 1), Math.max(0, inner.height() - 1), UiTheme.FIELD);
+	/** 凹槽背景：1px 描边、深色底和顶部内阴影，输入框与按键槽共用；light 是悬停提亮比例。 */
+	public void well(UiBounds bounds, int borderColor, float light) {
+		rect(bounds, borderColor);
+		rect(
+			bounds.x() + 1,
+			bounds.y() + 1,
+			bounds.width() - 2,
+			bounds.height() - 2,
+			UiTheme.fadeToward(UiTheme.PANEL, UiTheme.SIDEBAR, light)
+		);
+		rect(bounds.x() + 1, bounds.y() + 1, bounds.width() - 2, 1, 0xFF242425);
 	}
 	/** 7×4 的下拉箭头，像素画法。 */
 	public void chevron(int x, int y, int argb) {

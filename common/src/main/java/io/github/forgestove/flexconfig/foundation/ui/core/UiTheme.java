@@ -41,8 +41,6 @@ public class UiTheme {
 	public static final int LOCKED = 0xFF7E7F80;
 	public static final int ROW_HOVER = 0xFF505152;
 	public static final int ROW_PRESS = 0xFF3C3D3E;
-	public static final int FIELD = 0xFF262728;
-	public static final int FIELD_SHADOW = 0xFF161718;
 	public static final int TRACK_LIGHT = 0xFF3A3B3C;
 	public static final int SECONDARY_FACE = 0xFFD0D1D4;
 	public static final int SECONDARY_TOP = 0xFFE3E4E6;

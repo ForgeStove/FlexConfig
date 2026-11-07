@@ -83,10 +83,7 @@ public class UiTextField extends UiControl {
 		if (focused && !focusedLast) caretShownAt = Util.getMillis();   // 聚焦后光标从可见相开始闪
 		focusedLast = focused;
 		var painter = ctx.painter;
-		if (error) {
-			painter.rect(bounds(), UiTheme.DANGER);
-			painter.rect(bounds().inset(1, 1), UiTheme.FIELD);
-		} else painter.field(bounds(), isFocused(ctx), hovered(ctx), ctx.accent().base());
+		painter.well(bounds(), error ? UiTheme.DANGER : focused ? ctx.accent().base() : UiTheme.WINDOW_EDGE, hovered(ctx) ? 0.3F : 0F);
 		var inner = bounds().inset(1, 1);
 		if (leadingSearch) {
 			var lx = inner.x() + 3;

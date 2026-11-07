@@ -32,7 +32,7 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 			options.add(new Option(constant, component));
 			labels.add(component);
 		}
-		trigger = new UiButton(Component.empty(), Style.SECONDARY, keybind::beginCapture);
+		trigger = new UiButton(Component.empty(), Style.KEYBIND, keybind::beginCapture);
 		if (constants.length <= 4) {
 			segmented = new UiSegmented(labels, () -> ((Enum<?>) value()).ordinal(), index -> setValue(constants[index]));
 			actionBar.add(segmented, Mth.clamp(constants.length * 50, 64, 150)).add(trigger, 96);
@@ -71,8 +71,8 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 		super.refresh();
 		if (segmented != null) segmented.show(((Enum<?>) value()).ordinal(), true);
 		trigger.setEnabled(!state.readOnly);
-		var keyText = keybind.current().getDisplayName().copy().withStyle(keyState.color());
-		trigger.setLabel(keybind.capturing() ? Component.literal("> ").append(keyText).append(" <") : keyText);
+		trigger.setLabel(keybind.current().getDisplayName());
+		trigger.setActive(keybind.capturing());
 		if (keyState == KeybindState.CONFLICT && !conflictUsages.isEmpty()) trigger.tooltip(conflictTooltip(conflictUsages));
 		else trigger.tooltip(null);
 		if (keybind.changed() && !state.readOnly) state.changed = true;
