@@ -51,11 +51,20 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 	protected boolean allowLock() {
 		return false;
 	}
+	/** 按键名的翻译由原版懒加载缓存提供，损坏时退回原始键名，避免一行拖垮整个界面构建。 */
+	private Component displayName() {
+		var key = key();
+		try {
+			return key.getDisplayName();
+		} catch (RuntimeException ignored) {
+			return Component.translatable(key.getName());
+		}
+	}
 	@Override
 	public void refresh() {
 		super.refresh();
 		button.setEnabled(!state.readOnly);
-		button.setLabel(key().getDisplayName());
+		button.setLabel(displayName());
 		button.setActive(capturing);
 		if (keyState == KeybindState.CONFLICT && !conflicts.isEmpty()) {
 			var used = Component.empty();

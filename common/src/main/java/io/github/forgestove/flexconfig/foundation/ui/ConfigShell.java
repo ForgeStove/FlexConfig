@@ -90,6 +90,8 @@ public final class ConfigShell<C, V> {
 	private Map<String, String> savedTriggerKeybinds = Map.of();
 	/** 首次打开才重置编辑值；从子界面返回时保留未保存的修改。 */
 	private boolean initialized;
+	/** init 完整走完才允许渲染；中途抛异常时界面控件还没建齐，继续画会 NPE。 */
+	private boolean ready;
 	private boolean closed;
 	public ConfigShell(ConfigHost host, ConfigHandler<C, V> handler) {
 		this.host = host;
@@ -215,6 +217,7 @@ public final class ConfigShell<C, V> {
 	}
 	@SuppressWarnings("unused")
 	public void frame(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+		if (!ready) return;
 		var seconds = ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F;
 		ui.onRefresh(this::refresh);
 		var virtualX = mouseX / (double) zoom;
@@ -477,6 +480,7 @@ public final class ConfigShell<C, V> {
 		if (changedOnly) updateSearch("");
 		var activeTab = model.activeTab();
 		revealRows(activeTab == null ? List.of() : activeTab.rows);
+		ready = true;
 	}
 	public void resize() {
 		if (model == null) return;
@@ -696,6 +700,11 @@ public final class ConfigShell<C, V> {
 		ui.painter.popAlpha();
 	}
 	public boolean input(ConfigInput event) {
+		// 初始化失败时控件不完整，只放行 Esc 退回上一屏
+		if (!ready) {
+			if (event instanceof ConfigInput.Key key && key.keyCode() == GLFW.GLFW_KEY_ESCAPE) host.setScreen(host.parentScreen());
+			return true;
+		}
 		return switch (event) {
 			case MouseDown e -> mouseDown(e.x(), e.y(), e.button());
 			case MouseUp e -> mouseUp(e.x(), e.y(), e.button());
