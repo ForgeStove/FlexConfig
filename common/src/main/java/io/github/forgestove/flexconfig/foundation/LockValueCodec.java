@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Point;
 import java.util.*;
 public class LockValueCodec {
-	public static String format(ValueConfigNode<?, ?> node, Object value) {
+	public static String format(ValueConfigNode node, Object value) {
 		if (node.isColorValue()) return String.format(node.colorHasAlpha() ? "0x%08X" : "0x%06X", value);
 		if (value instanceof Enum<?> anEnum) return anEnum.name();
 		if (value instanceof Point point) return point.x + ", " + point.y;
@@ -18,7 +18,7 @@ public class LockValueCodec {
 		return String.join(", ", parts);
 	}
 	/** 空串、类型不支持或字面量解析失败时返回 {@code null}，调用方按「这条锁无效」处理。 */
-	public static @Nullable Object toToml(ValueConfigNode<?, ?> node, String raw) {
+	public static @Nullable Object toToml(ValueConfigNode node, String raw) {
 		if (raw.isEmpty()) return null;
 		var type = node.getValueType();
 		if (node.isColorValue()) return toInt(raw);

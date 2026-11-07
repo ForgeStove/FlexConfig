@@ -14,7 +14,7 @@ public class BooleanRow extends ValueRow implements KeybindConflictAware {
 	private final UiButton trigger;
 	private KeybindState keyState = KeybindState.BOUND;
 	private List<Component> conflictUsages = List.of();
-	public BooleanRow(RowContext ctx, ValueConfigNode<?, ?> node) {
+	public BooleanRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx, node);
 		keybind = new TriggerKeybindSupport(node, ctx);
 		trigger = new UiButton(Component.empty(), Style.SECONDARY, keybind::beginCapture);

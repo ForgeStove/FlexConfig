@@ -6,15 +6,14 @@ import net.minecraft.util.Mth;
 
 import java.util.*;
 public class ConfigTabModel {
-	public final CategoryConfigNode<Object> node;
+	public final CategoryConfigNode node;
 	public final Component title;
 	public final List<ConfigRow> rows = new ArrayList<>();
 	public double scroll;
 	public boolean hasError;
 	public int changedCount;
-	@SuppressWarnings("unchecked")
-	public ConfigTabModel(CategoryConfigNode<?> node) {
-		this.node = (CategoryConfigNode<Object>) node;
+	public ConfigTabModel(CategoryConfigNode node) {
+		this.node = node;
 		title = node.getTitle();
 	}
 	public void build(RowContext ctx) {

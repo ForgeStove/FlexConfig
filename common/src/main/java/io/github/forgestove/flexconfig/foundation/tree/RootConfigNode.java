@@ -14,12 +14,11 @@ import org.jetbrains.annotations.*;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.util.*;
-public record RootConfigNode<C, V>(
-	String modId, String fileName, ImmutableList<CategoryConfigNode<C>> categories, ImmutableList<String> translationKeys
-) implements ConfigNode<C> {
-	@SuppressWarnings("unchecked")
-	public static <C, V> @NotNull RootConfigNode<C, V> create(C defaultConfig, String modId, String fileName, ConfigType type) {
-		return (RootConfigNode<C, V>) new Builder<>(defaultConfig, modId, fileName, type).build();
+public record RootConfigNode(
+	String modId, String fileName, ImmutableList<CategoryConfigNode> categories, ImmutableList<String> translationKeys
+) implements ConfigNode {
+	public static @NotNull RootConfigNode create(Object defaultConfig, String modId, String fileName, ConfigType type) {
+		return new Builder(defaultConfig, modId, fileName, type).build();
 	}
 	public @NotNull Component getTitle() {
 		return Component.empty();
@@ -33,12 +32,12 @@ public record RootConfigNode<C, V>(
 		categories.forEach(ConfigNode::resetToDefault);
 	}
 	@Override
-	public void resetToActive(C config) {
+	public void resetToActive(Object config) {
 		categories.forEach(category -> category.resetToActive(config));
 	}
 	@Nullable
 	@Override
-	public RestartType restartType(C config) {
+	public RestartType restartType(Object config) {
 		RestartType worst = null;
 		for (var category : categories) {
 			var type = category.restartType(config);
@@ -48,15 +47,15 @@ public record RootConfigNode<C, V>(
 		return worst;
 	}
 	@Override
-	public boolean isDefaultValue(C config) {
+	public boolean isDefaultValue(Object config) {
 		return categories.stream().allMatch(node -> node.isDefaultValue(config));
 	}
 	@Override
-	public boolean isActiveValue(C config) {
+	public boolean isActiveValue(Object config) {
 		return categories.stream().allMatch(node -> node.isActiveValue(config));
 	}
 	@Override
-	public @Nullable Component validate(C config) {
+	public @Nullable Component validate(Object config) {
 		Component error = null;
 		for (var node : categories) {
 			var result = node.validate(config);
@@ -67,19 +66,19 @@ public record RootConfigNode<C, V>(
 		return error;
 	}
 	@Override
-	public void copy(C from, C to) {
+	public void copy(Object from, Object to) {
 		categories.forEach(node -> node.copy(from, to));
 	}
 	@Override
-	public void copyForRuntime(C from, C to) {
+	public void copyForRuntime(Object from, Object to) {
 		categories.forEach(node -> node.copyForRuntime(from, to));
 	}
 	@Override
-	public void flushPending(C to) {
+	public void flushPending(Object to) {
 		categories.forEach(node -> node.flushPending(to));
 	}
 	@Override
-	public void applyRestart(C saved, C active, RestartType restartType) {
+	public void applyRestart(Object saved, Object active, RestartType restartType) {
 		ConfigChangeDispatcher.begin();
 		try {
 			categories.forEach(node -> node.applyRestart(saved, active, restartType));
@@ -88,7 +87,7 @@ public record RootConfigNode<C, V>(
 		}
 	}
 	@Override
-	public void writeEditingToConfig(C config) {
+	public void writeEditingToConfig(Object config) {
 		ConfigChangeDispatcher.begin();
 		try {
 			categories.forEach(node -> node.writeEditingToConfig(config));
@@ -98,11 +97,11 @@ public record RootConfigNode<C, V>(
 	}
 	@Override
 	@NotNull
-	public ImmutableList<CategoryConfigNode<C>> categories() {
+	public ImmutableList<CategoryConfigNode> categories() {
 		return categories;
 	}
 	@Nullable
-	public ValueConfigNode<C, V> getValueNode(String path) {
+	public ValueConfigNode getValueNode(String path) {
 		for (var category : categories) {
 			var result = findValueNode(category, path);
 			if (result != null) return result;
@@ -110,23 +109,22 @@ public record RootConfigNode<C, V>(
 		return null;
 	}
 	@Nullable
-	@SuppressWarnings("unchecked")
-	private ValueConfigNode<C, V> findValueNode(ConfigNode<C> node, String path) {
-		if (node instanceof ValueConfigNode<C, ?> valueNode && valueNode.getPath().equals(path)) return (ValueConfigNode<C, V>) valueNode;
-		if (node instanceof CategoryConfigNode<C> categoryNode) for (var child : categoryNode.getChildren()) {
+	private ValueConfigNode findValueNode(ConfigNode node, String path) {
+		if (node instanceof ValueConfigNode valueNode && valueNode.getPath().equals(path)) return valueNode;
+		if (node instanceof CategoryConfigNode categoryNode) for (var child : categoryNode.getChildren()) {
 			var result = findValueNode(child, path);
 			if (result != null) return result;
 		}
 		return null;
 	}
-	private static class Builder<C> {
+	private static class Builder {
 		private final String modId;
 		private final String fileName;
 		private final ConfigType type;
 		/** 构建期收集的翻译键，供开发期检查缺失。 */
 		private final ImmutableList.Builder<String> translationKeys = ImmutableList.builder();
-		private C defaultConfig;
-		private Builder(C defaultConfig, String modId, String fileName, ConfigType type) {
+		private Object defaultConfig;
+		private Builder(Object defaultConfig, String modId, String fileName, ConfigType type) {
 			this.defaultConfig = defaultConfig;
 			this.modId = modId;
 			this.fileName = fileName;
@@ -138,20 +136,20 @@ public record RootConfigNode<C, V>(
 			return true;
 		}
 		@NotNull
-		public RootConfigNode<C, ?> build() {
+		public RootConfigNode build() {
 			var categories = Arrays.stream(FieldAccess.collectOrderedFields(defaultConfig.getClass()))
 				.filter(field -> field.isAnnotationPresent(Category.class))
 				.filter(ConfigCondition::evaluate)
 				.map(this::createCategoryNode)
 				.collect(ImmutableList.toImmutableList());
 			defaultConfig = null;
-			return new RootConfigNode<>(modId, fileName, categories, translationKeys.build());
+			return new RootConfigNode(modId, fileName, categories, translationKeys.build());
 		}
-		private CategoryConfigNode<C> createCategoryNode(Field categoryField) {
+		private CategoryConfigNode createCategoryNode(Field categoryField) {
 			var defaultCategory = FieldAccess.getFieldValue(categoryField, defaultConfig);
 			var categoryKey = modId + ".config.category." + categoryField.getName();
 			translationKeys.add(categoryKey);
-			var categoryBuilder = CategoryConfigNode.<C>builder().title(ConfigTranslation.translatable(categoryKey));
+			var categoryBuilder = CategoryConfigNode.builder().title(ConfigTranslation.translatable(categoryKey));
 			for (var valueField : FieldAccess.collectOrderedFields(categoryField.getType()))
 				if (valueField.isAnnotationPresent(Category.class)) {
 					if (!ConfigCondition.evaluate(valueField)) continue;
@@ -160,7 +158,7 @@ public record RootConfigNode<C, V>(
 				} else addValueNode(defaultCategory, List.of(categoryField), valueField, categoryBuilder);
 			return categoryBuilder.build();
 		}
-		private CategoryConfigNode.Builder<C> createSubCategoryNode(List<Field> parentPath, Field subCategoryField) {
+		private CategoryConfigNode.Builder createSubCategoryNode(List<Field> parentPath, Field subCategoryField) {
 			var path = new ArrayList<>(parentPath);
 			path.add(subCategoryField);
 			Object defaultParent = defaultConfig;
@@ -169,7 +167,7 @@ public record RootConfigNode<C, V>(
 			var pathKey = buildPathKey(path);
 			var categoryKey = modId + ".config.category." + pathKey;
 			translationKeys.add(categoryKey);
-			var builder = CategoryConfigNode.<C>builder().title(ConfigTranslation.translatable(categoryKey));
+			var builder = CategoryConfigNode.builder().title(ConfigTranslation.translatable(categoryKey));
 			for (var valueField : FieldAccess.collectOrderedFields(subCategoryField.getType()))
 				if (valueField.isAnnotationPresent(Category.class)) {
 					if (!ConfigCondition.evaluate(valueField)) continue;
@@ -188,12 +186,7 @@ public record RootConfigNode<C, V>(
 			}
 			return sb.toString();
 		}
-		private void addValueNode(
-			Object defaultCategory,
-			List<Field> path,
-			Field valueField,
-			CategoryConfigNode.Builder<C> categoryBuilder
-		) {
+		private void addValueNode(Object defaultCategory, List<Field> path, Field valueField, CategoryConfigNode.Builder categoryBuilder) {
 			if (!ConfigCondition.evaluate(valueField)) return;
 			if (!evaluatePathCondition(path)) return;
 			var rawType = valueField.getType();
@@ -260,7 +253,7 @@ public record RootConfigNode<C, V>(
 			var type = annotation.value();
 			return (oldValue, newValue) -> ConfigChangeDispatcher.record(type, path, oldValue, newValue);
 		}
-		private @NotNull <V> ValueReader<C, V> makePathValueReader(Class<? extends V> type, @NotNull List<Field> path, Field valueField) {
+		private @NotNull ValueReader makePathValueReader(Class<?> type, @NotNull List<Field> path, Field valueField) {
 			var pathHandles = path.stream().map(FieldAccess::varHandle).toArray(VarHandle[]::new);
 			var valueHandle = FieldAccess.varHandle(valueField);
 			var isArray = valueField.getType().isArray();
@@ -272,7 +265,7 @@ public record RootConfigNode<C, V>(
 				return type.cast(value);
 			};
 		}
-		private @NotNull <V> ValueWriter<C, V> makePathValueWriter(Class<? extends V> type, @NotNull List<Field> path, Field valueField) {
+		private @NotNull ValueWriter makePathValueWriter(Class<?> type, @NotNull List<Field> path, Field valueField) {
 			var pathHandles = path.stream().map(FieldAccess::varHandle).toArray(VarHandle[]::new);
 			var valueHandle = FieldAccess.varHandle(valueField);
 			var elementType = valueField.getType().isArray() ? valueField.getType().getComponentType() : null;

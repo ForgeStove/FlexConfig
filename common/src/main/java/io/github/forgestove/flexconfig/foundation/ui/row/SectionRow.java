@@ -3,8 +3,8 @@ import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
 import io.github.forgestove.flexconfig.foundation.tree.CategoryConfigNode;
 public class SectionRow extends ConfigRow {
-	private final CategoryConfigNode<?> category;
-	public SectionRow(RowContext ctx, CategoryConfigNode<?> category, int depth) {
+	private final CategoryConfigNode category;
+	public SectionRow(RowContext ctx, CategoryConfigNode category, int depth) {
 		super(ctx);
 		this.category = category;
 		this.depth = depth;

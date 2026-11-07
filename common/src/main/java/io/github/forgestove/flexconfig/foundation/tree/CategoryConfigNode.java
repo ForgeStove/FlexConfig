@@ -7,12 +7,12 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 
 import java.util.function.UnaryOperator;
-public class CategoryConfigNode<C> implements ConfigNode<C> {
+public class CategoryConfigNode implements ConfigNode {
 	private Component title;
 	private Component tooltip;
-	private ImmutableList<ConfigNode<C>> children;
-	public static <C> Builder<C> builder() {
-		return new Builder<>();
+	private ImmutableList<ConfigNode> children;
+	public static Builder builder() {
+		return new Builder();
 	}
 	@NotNull
 	public Component getTitle() {
@@ -28,12 +28,12 @@ public class CategoryConfigNode<C> implements ConfigNode<C> {
 		children.forEach(ConfigNode::resetToDefault);
 	}
 	@Override
-	public void resetToActive(C config) {
+	public void resetToActive(Object config) {
 		children.forEach(child -> child.resetToActive(config));
 	}
 	@Nullable
 	@Override
-	public RestartType restartType(C config) {
+	public RestartType restartType(Object config) {
 		RestartType worst = null;
 		for (var node : children) {
 			var type = node.restartType(config);
@@ -43,18 +43,18 @@ public class CategoryConfigNode<C> implements ConfigNode<C> {
 		return worst;
 	}
 	@Override
-	public boolean isDefaultValue(C config) {
+	public boolean isDefaultValue(Object config) {
 		for (var node : children) if (!node.isDefaultValue(config)) return false;
 		return true;
 	}
 	@Override
-	public boolean isActiveValue(C config) {
+	public boolean isActiveValue(Object config) {
 		for (var node : children) if (!node.isActiveValue(config)) return false;
 		return true;
 	}
 	@Nullable
 	@Override
-	public Component validate(C config) {
+	public Component validate(Object config) {
 		Component error = null;
 		for (var node : children) {
 			var result = node.validate(config);
@@ -65,19 +65,19 @@ public class CategoryConfigNode<C> implements ConfigNode<C> {
 		return error;
 	}
 	@Override
-	public void copy(C from, C to) {
+	public void copy(Object from, Object to) {
 		children.forEach(node -> node.copy(from, to));
 	}
 	@Override
-	public void copyForRuntime(C from, C to) {
+	public void copyForRuntime(Object from, Object to) {
 		children.forEach(node -> node.copyForRuntime(from, to));
 	}
 	@Override
-	public void flushPending(C to) {
+	public void flushPending(Object to) {
 		children.forEach(node -> node.flushPending(to));
 	}
 	@Override
-	public void applyRestart(C saved, C active, RestartType restartType) {
+	public void applyRestart(Object saved, Object active, RestartType restartType) {
 		ConfigChangeDispatcher.begin();
 		try {
 			children.forEach(node -> node.applyRestart(saved, active, restartType));
@@ -86,7 +86,7 @@ public class CategoryConfigNode<C> implements ConfigNode<C> {
 		}
 	}
 	@Override
-	public void writeEditingToConfig(C config) {
+	public void writeEditingToConfig(Object config) {
 		ConfigChangeDispatcher.begin();
 		try {
 			children.forEach(node -> node.writeEditingToConfig(config));
@@ -95,34 +95,34 @@ public class CategoryConfigNode<C> implements ConfigNode<C> {
 		}
 	}
 	@NotNull
-	public ImmutableList<ConfigNode<C>> getChildren() {
+	public ImmutableList<ConfigNode> getChildren() {
 		return children;
 	}
 	@SuppressWarnings("UnusedReturnValue")
-	public static class Builder<C> {
-		private CategoryConfigNode<C> node;
-		private ImmutableList.Builder<ConfigNode<C>> childrenBuilder;
+	public static class Builder {
+		private CategoryConfigNode node;
+		private ImmutableList.Builder<ConfigNode> childrenBuilder;
 		private Builder() {
-			node = new CategoryConfigNode<>();
+			node = new CategoryConfigNode();
 			childrenBuilder = ImmutableList.builder();
 		}
-		public Builder<C> title(Component title) {
+		public Builder title(Component title) {
 			node.title = title;
 			return this;
 		}
-		public Builder<C> tooltip(Component tooltip) {
+		public Builder tooltip(Component tooltip) {
 			node.tooltip = tooltip;
 			return this;
 		}
-		public <V> Builder<C> value(UnaryOperator<ValueConfigNode.Builder<C, V>> valueBuilder) {
+		public Builder value(UnaryOperator<ValueConfigNode.Builder> valueBuilder) {
 			childrenBuilder.add(valueBuilder.apply(ValueConfigNode.builder()).build());
 			return this;
 		}
-		public Builder<C> category(UnaryOperator<Builder<C>> categoryBuilder) {
-			childrenBuilder.add(categoryBuilder.apply(new Builder<>()).build());
+		public Builder category(UnaryOperator<Builder> categoryBuilder) {
+			childrenBuilder.add(categoryBuilder.apply(new Builder()).build());
 			return this;
 		}
-		public CategoryConfigNode<C> build() {
+		public CategoryConfigNode build() {
 			var n = node;
 			n.children = childrenBuilder.build();
 			node = null;

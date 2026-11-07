@@ -11,7 +11,7 @@ import java.util.function.Function;
 /** 任意候选集的下拉行，供自定义类型提供器使用。 */
 @SuppressWarnings("unused")
 public class SelectionRow extends ValueRow {
-	public SelectionRow(RowContext ctx, ValueConfigNode<?, ?> node, List<?> candidates, Function<Object, Component> text) {
+	public SelectionRow(RowContext ctx, ValueConfigNode node, List<?> candidates, Function<Object, Component> text) {
 		super(ctx, node);
 		var options = new ArrayList<Option>();
 		for (var candidate : candidates) options.add(new Option(candidate, text.apply(candidate)));

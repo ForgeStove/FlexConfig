@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 /** 值行基类：标签、状态样式、reset/undo/lock 和行尾控件布局。 */
 public abstract class ValueRow extends ConfigRow {
-	protected final ValueConfigNode<Object, Object> node;
+	protected final ValueConfigNode node;
 	protected final ValueRowState state = new ValueRowState();
 	protected final UiActionBar actionBar = new UiActionBar();
 	protected final UiActionBar buttons = new UiActionBar();
@@ -25,10 +25,9 @@ public abstract class ValueRow extends ConfigRow {
 	private boolean hoverWas;
 	private String highlightQuery = "";
 	private boolean controlBelow;
-	@SuppressWarnings("unchecked")
-	public ValueRow(RowContext ctx, ValueConfigNode<?, ?> node) {
+	public ValueRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx);
-		this.node = (ValueConfigNode<Object, Object>) node;
+		this.node = node;
 		label = node.getTitle().copy();
 		tooltip = node.getTooltip();
 		reset = new UiIconButton(FlexGuiTextures.ICON_RESET, this::resetToDefault);
@@ -51,7 +50,7 @@ public abstract class ValueRow extends ConfigRow {
 	public void addAction(UiControl control, int width) {
 		actionBar.add(control, width);
 	}
-	public ValueConfigNode<Object, Object> node() {
+	public ValueConfigNode node() {
 		return node;
 	}
 	@Override
@@ -118,9 +117,15 @@ public abstract class ValueRow extends ConfigRow {
 		return buttons.usedWidth() + UiTheme.GAP;
 	}
 	protected int descriptionLineCount(int width) {
-		if (node.getTooltip() == null || !showDescription()) return 0;
-		var available = Math.max(20, width - UiTheme.INDENT - depth * UiTheme.INDENT - titleRightInset() - UiTheme.PADDING * 2);
-		return ClientUtil.mc.font.split(node.getTooltip(), available).size();
+		if (tooltip == null || !showDescription()) return 0;
+		return ClientUtil.mc.font.split(tooltip, descriptionWidth(width)).size();
+	}
+	/** 描述文本的可用宽度；高度计算和绘制共用，避免换行行数与实际渲染不一致。 */
+	private int descriptionWidth(int width) {
+		var inset = UiTheme.INDENT + depth * UiTheme.INDENT + titleRightInset() + UiTheme.PADDING * 2;
+		if (dot.value() > 0.01 || isChanged()) inset += 6;
+		if (!controlBelow) inset += actionBar.usedWidth();
+		return Math.max(20, width - inset);
 	}
 	protected int descriptionExtra(int width) {
 		return Math.max(0, descriptionLineCount(width) - 1) * 12;
@@ -169,10 +174,7 @@ public abstract class ValueRow extends ConfigRow {
 			painter.rect(left, titleTop() + 3, dotSize, dotSize, ui.accent().base());
 			left += 6;
 		}
-		var available = Math.max(
-			20,
-			bounds().width() - (left - bounds().x()) - (controlBelow ? 0 : actionBar.usedWidth()) - titleRightInset() - UiTheme.PADDING * 2
-		);
+		var available = descriptionWidth(bounds().width());
 		var title = painter.trim(label.getString(), available);
 		var titleY = titleTop();
 		painter.text(title, left, titleY, titleColor());

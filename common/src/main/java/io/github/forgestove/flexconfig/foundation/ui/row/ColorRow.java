@@ -11,7 +11,7 @@ public class ColorRow extends ValueRow {
 	private static final Pattern HEX = Pattern.compile("[0-9A-Fa-f]*");
 	private final UiTextField field;
 	private final boolean alpha;
-	public ColorRow(RowContext ctx, ValueConfigNode<?, ?> node) {
+	public ColorRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx, node);
 		alpha = node.colorHasAlpha();
 		field = new UiTextField(format(colorValue()));

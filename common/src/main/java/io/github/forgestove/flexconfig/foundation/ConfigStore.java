@@ -97,7 +97,7 @@ public class ConfigStore {
 		return handler;
 	}
 	@Internal
-	public static RootConfigNode<Object, Object> getRootConfigNode(FileKey key) {
+	public static RootConfigNode getRootConfigNode(FileKey key) {
 		return getHandler(key).cast().getConfigTree();
 	}
 	@Internal
@@ -106,7 +106,7 @@ public class ConfigStore {
 	}
 	/** 只改活动配置，不修改 savedConfig，所以不会改动 TOML 文件。 */
 	@Internal
-	public static void applyLockedValue(FileKey key, ValueConfigNode<Object, Object> node, Object parsed) {
+	public static void applyLockedValue(FileKey key, ValueConfigNode node, Object parsed) {
 		node.setActiveValue(getHandler(key).cast().getConfig(), parsed);
 	}
 	/** 退出世界或服务端停止时调用，让各份配置的 WORLD 型延迟改动写入活动配置。 */

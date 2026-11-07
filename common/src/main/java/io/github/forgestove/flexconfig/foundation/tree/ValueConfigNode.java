@@ -7,36 +7,36 @@ import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
-public class ValueConfigNode<C, V> implements ConfigNode<C> {
+public class ValueConfigNode implements ConfigNode {
 	private String name;
 	private String path;
 	private @Nullable Object identity;
 	private Component title;
 	private Component tooltip;
-	private Class<? extends V> valueType;
+	private Class<?> valueType;
 	private Field field;
 	private ElementType elementType;
 	private RestartType requiredRestart;
-	private V pendingValue;
+	private Object pendingValue;
 	private ColorValue colorValue;
 	private SliderRange sliderRange;
-	private ValueReader<C, V> valueReader;
-	private ValueWriter<C, V> valueWriter;
-	private ValueValidator<V> validator;
+	private ValueReader valueReader;
+	private ValueWriter valueWriter;
+	private ValueValidator validator;
 	private ConfigChangeCallback changeCallback;
-	private V defaultValue;
-	private V editingValue;
-	private V baselineValue;
+	private Object defaultValue;
+	private Object editingValue;
+	private Object baselineValue;
 	/** 绑定在集合元素上：值直接读写目标对象，不保存独立编辑副本。 */
 	private boolean writeThrough;
 	/** 集合元素或元素字段：不参与锁定与快捷键绑定。 */
 	private boolean element;
 	private String lockPath;
-	public static <C, V> Builder<C, V> builder() {
-		return new Builder<>();
+	public static Builder builder() {
+		return new Builder();
 	}
 	@NotNull
-	public Class<? extends V> getValueType() {
+	public Class<?> getValueType() {
 		return valueType;
 	}
 	@Nullable
@@ -71,41 +71,41 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 		setEditingValue(copyValue(getDefaultValue()));
 	}
 	@Override
-	public void resetToActive(C config) {
+	public void resetToActive(Object config) {
 		setEditingValue(copyValue(writeThrough ? baselineValue : currentBase(config)));
 	}
 	@Override
-	public @Nullable RestartType restartType(C config) {
+	public @Nullable RestartType restartType(Object config) {
 		return pendingValue != null ? requiredRestart : null;
 	}
 	@Override
-	public boolean isDefaultValue(C config) {
+	public boolean isDefaultValue(Object config) {
 		return FieldAccess.deepEquals(getDefaultValue(), getEditingValue(config));
 	}
 	@Override
-	public boolean isActiveValue(C config) {
+	public boolean isActiveValue(Object config) {
 		return FieldAccess.deepEquals(writeThrough ? baselineValue : currentBase(config), getEditingValue(config));
 	}
 	@Override
-	public @Nullable Component validate(C config) {
+	public @Nullable Component validate(Object config) {
 		return validator == null ? null : validator.validate(getEditingValue(config));
 	}
 	@Override
-	public void copy(C from, C to) {
+	public void copy(Object from, Object to) {
 		setActiveValue(to, getActiveValue(from));
 	}
 	@Override
-	public void copyForRuntime(C from, C to) {
+	public void copyForRuntime(Object from, Object to) {
 		if (pendingValue != null) return;   // 待生效：运行时先保持旧值
 		setActiveValue(to, getActiveValue(from));
 	}
 	@Override
-	public void flushPending(C to) {
+	public void flushPending(Object to) {
 		if (pendingValue == null) return;
 		setActiveValue(to, pendingValue);
 	}
 	@Override
-	public void applyRestart(C saved, C active, RestartType restartType) {
+	public void applyRestart(Object saved, Object active, RestartType restartType) {
 		if (writeThrough || requiredRestart != restartType || pendingValue == null) return;
 		var oldValue = getActiveValue(active);
 		var newValue = getActiveValue(saved);
@@ -115,7 +115,7 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 		if (changeCallback != null) changeCallback.onChange(oldValue, newValue);
 	}
 	@Override
-	public void writeEditingToConfig(C config) {
+	public void writeEditingToConfig(Object config) {
 		if (writeThrough) return;   // 已经直接写进集合元素
 		var oldValue = getActiveValue(config);
 		var newValue = getEditingValue(config);
@@ -133,32 +133,40 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 	public Object getIdentity() {
 		return identity == null ? path : identity;
 	}
-	public void setEditingValue(V value) {
+	public void setEditingValue(Object value) {
 		if (writeThrough) {
 			valueWriter.write(null, value);
 			return;
 		}
 		editingValue = value;
 	}
-	public V getDefaultValue() {
+	public Object getDefaultValue() {
 		return defaultValue;
 	}
-	private V currentBase(C config) {
+	private Object currentBase(Object config) {
 		return pendingValue != null ? pendingValue : getActiveValue(config);
 	}
-	public V getActiveValue(C config) {
+	public Object getActiveValue(Object config) {
 		return valueReader.read(config);
 	}
-	public V getEditingValue(C config) {
+	public Object getEditingValue(Object config) {
 		if (writeThrough) return valueReader.read(config);
 		if (editingValue == null) editingValue = copyValue(currentBase(config));
 		return editingValue;
 	}
-	private V copyValue(V value) {
+	private Object copyValue(Object value) {
 		return FieldAccess.deepCopy(value);
 	}
-	public void setActiveValue(C config, V value) {
+	public void setActiveValue(Object config, Object value) {
 		valueWriter.write(config, value);
+	}
+	/** 集合元素视图：元素类型由 {@link ElementType} 在运行时描述，列表元素只能按 Object 操作。 */
+	@SuppressWarnings("unchecked")
+	public List<Object> getEditingElements(Object config) {
+		return (List<Object>) getEditingValue(config);
+	}
+	public void setEditingElements(List<Object> elements) {
+		setEditingValue(elements);
 	}
 	@Nullable
 	public SliderRange getSliderRange() {
@@ -171,15 +179,15 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 		return colorValue != null;
 	}
 	@FunctionalInterface
-	public interface ValueReader<S, V> {
-		V read(S source);
+	public interface ValueReader {
+		Object read(Object source);
 	}
 	@FunctionalInterface
-	public interface ValueWriter<S, V> {
-		void write(S source, V value);
+	public interface ValueWriter {
+		void write(Object source, Object value);
 	}
-	public interface ValueValidator<V> {
-		@Nullable Component validate(V value);
+	public interface ValueValidator {
+		@Nullable Component validate(Object value);
 	}
 	@FunctionalInterface
 	public interface ConfigChangeCallback {
@@ -190,92 +198,92 @@ public class ValueConfigNode<C, V> implements ConfigNode<C> {
 			return step > 0 ? step : Math.max(0.01, (max - min) / 100);
 		}
 	}
-	public static class Builder<C, V> {
-		private ValueConfigNode<C, V> node;
+	public static class Builder {
+		private ValueConfigNode node;
 		private Builder() {
-			node = new ValueConfigNode<>();
+			node = new ValueConfigNode();
 		}
-		public Builder<C, V> valueType(Class<? extends V> valueType) {
+		public Builder valueType(Class<?> valueType) {
 			node.valueType = valueType;
 			return this;
 		}
-		public Builder<C, V> field(Field field) {
+		public Builder field(Field field) {
 			node.field = field;
 			return this;
 		}
-		public Builder<C, V> elementType(@Nullable ElementType elementType) {
+		public Builder elementType(@Nullable ElementType elementType) {
 			node.elementType = elementType;
 			return this;
 		}
-		public Builder<C, V> name(String name) {
+		public Builder name(String name) {
 			node.name = name;
 			return this;
 		}
-		public Builder<C, V> path(String path) {
+		public Builder path(String path) {
 			node.path = path;
 			return this;
 		}
-		public Builder<C, V> identity(@Nullable Object identity) {
+		public Builder identity(@Nullable Object identity) {
 			node.identity = identity;
 			return this;
 		}
-		public Builder<C, V> title(Component title) {
+		public Builder title(Component title) {
 			node.title = title;
 			return this;
 		}
-		public Builder<C, V> tooltip(Component tooltip) {
+		public Builder tooltip(Component tooltip) {
 			node.tooltip = tooltip;
 			return this;
 		}
-		public Builder<C, V> defaultValue(V defaultValue) {
+		public Builder defaultValue(Object defaultValue) {
 			node.defaultValue = defaultValue;
 			return this;
 		}
-		public Builder<C, V> restartType(@Nullable RestartType requiredRestart) {
+		public Builder restartType(@Nullable RestartType requiredRestart) {
 			node.requiredRestart = requiredRestart;
 			return this;
 		}
-		public Builder<C, V> colorValue(ColorValue colorValue) {
+		public Builder colorValue(ColorValue colorValue) {
 			node.colorValue = colorValue;
 			return this;
 		}
-		public Builder<C, V> valueReader(ValueReader<C, V> valueReader) {
+		public Builder valueReader(ValueReader valueReader) {
 			node.valueReader = valueReader;
 			return this;
 		}
-		public Builder<C, V> valueWriter(ValueWriter<C, V> valueWriter) {
+		public Builder valueWriter(ValueWriter valueWriter) {
 			node.valueWriter = valueWriter;
 			return this;
 		}
-		public Builder<C, V> sliderRange(@Nullable SliderRange sliderRange) {
+		public Builder sliderRange(@Nullable SliderRange sliderRange) {
 			node.sliderRange = sliderRange;
 			return this;
 		}
-		public Builder<C, V> validator(ValueValidator<V> validator) {
+		public Builder validator(ValueValidator validator) {
 			node.validator = validator;
 			return this;
 		}
-		public Builder<C, V> changeCallback(ConfigChangeCallback changeCallback) {
+		public Builder changeCallback(ConfigChangeCallback changeCallback) {
 			node.changeCallback = changeCallback;
 			return this;
 		}
-		public Builder<C, V> writeThrough(boolean writeThrough) {
+		public Builder writeThrough(boolean writeThrough) {
 			node.writeThrough = writeThrough;
 			return this;
 		}
-		public Builder<C, V> element(boolean element) {
+		public Builder element(boolean element) {
 			node.element = element;
 			return this;
 		}
-		public Builder<C, V> lockPath(String lockPath) {
+		public Builder lockPath(String lockPath) {
 			node.lockPath = lockPath;
 			return this;
 		}
-		public Builder<C, V> baselineValue(@Nullable V baselineValue) {
+		public Builder baselineValue(@Nullable Object baselineValue) {
 			node.baselineValue = baselineValue;
 			return this;
 		}
-		public ValueConfigNode<C, V> build() {
+		public ValueConfigNode build() {
 			var n = node;
 			List.of(n.name, n.path, n.valueType, n.title, n.valueReader, n.valueWriter).forEach(Objects::requireNonNull);
 			node = null;

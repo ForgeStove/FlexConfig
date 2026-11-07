@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 public class PointRow extends ValueRow {
 	private static final Pattern INTEGER = Pattern.compile("-?\\d*");
 	private final UiTextField xField, yField;
-	public PointRow(RowContext ctx, ValueConfigNode<?, ?> node) {
+	public PointRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx, node);
 		var width = (UiTheme.CONTROL_WIDTH - UiTheme.GAP) / 2;
 		xField = new UiTextField(String.valueOf(point().x));

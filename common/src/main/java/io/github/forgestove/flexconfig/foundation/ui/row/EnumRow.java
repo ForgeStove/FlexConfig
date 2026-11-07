@@ -21,7 +21,7 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 	private final Object[] constants;
 	private KeybindState keyState = KeybindState.BOUND;
 	private List<Component> conflictUsages = List.of();
-	public EnumRow(RowContext ctx, ValueConfigNode<?, ?> node) {
+	public EnumRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx, node);
 		constants = node.getValueType().getEnumConstants();
 		keybind = new TriggerKeybindSupport(node, ctx);

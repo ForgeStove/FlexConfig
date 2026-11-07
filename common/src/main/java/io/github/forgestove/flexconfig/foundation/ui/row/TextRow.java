@@ -10,10 +10,10 @@ public class TextRow extends ValueRow {
 	private final Function<String, Object> parser;
 	private final Predicate<String> validator;
 	private final Function<Object, String> formatter;
-	public TextRow(RowContext ctx, ValueConfigNode<?, ?> node, Function<String, Object> parser, Predicate<String> validator, Function<Object, String> formatter) {
+	public TextRow(RowContext ctx, ValueConfigNode node, Function<String, Object> parser, Predicate<String> validator, Function<Object, String> formatter) {
 		this(ctx, node, parser, validator, formatter, Integer.MAX_VALUE);
 	}
-	public TextRow(RowContext ctx, ValueConfigNode<?, ?> node, Function<String, Object> parser, Predicate<String> validator, Function<Object, String> formatter, int maxLength) {
+	public TextRow(RowContext ctx, ValueConfigNode node, Function<String, Object> parser, Predicate<String> validator, Function<Object, String> formatter, int maxLength) {
 		super(ctx, node);
 		this.parser = parser;
 		this.validator = validator;

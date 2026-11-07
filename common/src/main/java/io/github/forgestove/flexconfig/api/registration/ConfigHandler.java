@@ -21,7 +21,7 @@ public class ConfigHandler<C, V> {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Map<String, Runnable> triggerActions = new LinkedHashMap<>();
 	private final Class<C> configClass;
-	private final RootConfigNode<C, V> configTree;
+	private final RootConfigNode configTree;
 	private final ConfigSerializer<C> serializer;
 	private final C savedConfig;
 	private final C activeConfig;
@@ -116,7 +116,7 @@ public class ConfigHandler<C, V> {
 		triggerKeybinds.clear();
 	}
 	@Internal
-	public RootConfigNode<C, V> getConfigTree() {
+	public RootConfigNode getConfigTree() {
 		return configTree;
 	}
 	public C getConfig() {

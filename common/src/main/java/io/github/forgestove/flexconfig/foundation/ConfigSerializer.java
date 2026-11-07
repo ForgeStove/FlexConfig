@@ -158,9 +158,9 @@ public class ConfigSerializer<C> {
 		}
 		var elementType = shape.raw();
 		if (elementType.isInstance(element)) return element;
-		if (elementType.isEnum()) {
-			if (element instanceof String name) return enumValue(elementType, name);
-			return warnNull(field, "list element is not an enum name");
+		if (element instanceof String name) {
+			var constant = enumValue(elementType, name);
+			if (constant != null) return constant;
 		}
 		switch (element) {
 			case CommentedConfig pointConfig when elementType == Point.class -> {
@@ -187,10 +187,13 @@ public class ConfigSerializer<C> {
 		}
 		return warnNull(field, "list element does not match " + elementType.getSimpleName());
 	}
-	/** 枚举类型在运行期才能确定，调用前已经用 {@code isEnum()} 检查过。 */
-	@SuppressWarnings({"rawtypes", "unchecked"})
+	/** 不是枚举类型时返回 {@code null}，由调用方按普通值继续处理。 */
+	@Nullable
 	private static Object enumValue(Class<?> type, String name) {
-		return Enum.valueOf((Class) type, name);
+		var constants = type.getEnumConstants();
+		if (constants == null) return null;
+		for (var constant : constants) if (((Enum<?>) constant).name().equals(name)) return constant;
+		throw new IllegalArgumentException("No enum constant %s.%s".formatted(type.getCanonicalName(), name));
 	}
 	/** 列表元素是普通对象时按字段名反序列化。 */
 	@Nullable
@@ -266,10 +269,12 @@ public class ConfigSerializer<C> {
 			field.set(category, new Point(cc.getInt("x"), cc.getInt("y")));
 			return true;
 		}
-		if (type.isEnum()) {
-			if (!(value instanceof String name)) return false;
-			field.set(category, enumValue(type, name));
-			return true;
+		if (value instanceof String name) {
+			var constant = enumValue(type, name);
+			if (constant != null) {
+				field.set(category, constant);
+				return true;
+			}
 		}
 		if (value instanceof Number num) {
 			if (type == int.class || type == Integer.class) field.setInt(category, FieldValidators.correct(field, num.intValue()));

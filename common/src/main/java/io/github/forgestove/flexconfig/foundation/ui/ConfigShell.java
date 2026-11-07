@@ -26,8 +26,8 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 public final class ConfigShell<C, V> {
-	public static CategoryConfigNode<?> lastSelectedCategory;
-	public final RootConfigNode<C, V> root;
+	public static CategoryConfigNode lastSelectedCategory;
+	public final RootConfigNode root;
 	private final ConfigHost host;
 	private final C config;
 	private final ConfigHandler<C, V> handler;
@@ -83,7 +83,7 @@ public final class ConfigShell<C, V> {
 	private @Nullable ConfigRow removingRow;
 	private @Nullable Runnable removeAction;
 	private boolean suppressRebuildFx;
-	private CategoryConfigNode<C> keybindCategory;
+	private CategoryConfigNode keybindCategory;
 	private Map<String, String> savedTriggerKeybinds = Map.of();
 	/** 首次打开才重置编辑值；从子界面返回时保留未保存的修改。 */
 	private boolean initialized;
@@ -106,8 +106,8 @@ public final class ConfigShell<C, V> {
 			rows.get(i).reveal(UiMotion.CONTENT_ROWS_DELAY + stagger);
 		}
 	}
-	private List<CategoryConfigNode<?>> categories() {
-		var list = new ArrayList<CategoryConfigNode<?>>(root.categories());
+	private List<CategoryConfigNode> categories() {
+		var list = new ArrayList<>(root.categories());
 		if (keybindCategory != null) list.add(keybindCategory);
 		return list;
 	}
@@ -1105,14 +1105,14 @@ public final class ConfigShell<C, V> {
 			keybindCategory = null;
 			return;
 		}
-		var builder = CategoryConfigNode.<C>builder().title(Translation.KEYBINDS_LABEL);
-		modMappings.forEach(mapping -> builder.<Key>value(value -> value.valueType(Key.class)
+		var builder = CategoryConfigNode.builder().title(Translation.KEYBINDS_LABEL);
+		modMappings.forEach(mapping -> builder.value(value -> value.valueType(Key.class)
 			.name(mapping.getName())
 			.path("keybinds." + mapping.getName())
 			.title(Component.translatable(mapping.getName()))
 			.defaultValue(mapping.getDefaultKey())
 			.valueReader(config -> ClientUtil.boundKey(mapping))
-			.valueWriter((config, valueKey) -> mapping.setKey(valueKey))
+			.valueWriter((config, valueKey) -> mapping.setKey((Key) valueKey))
 			.restartType(null)));
 		var built = builder.build();
 		built.resetToActive(config);

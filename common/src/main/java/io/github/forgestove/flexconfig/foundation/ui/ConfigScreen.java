@@ -12,7 +12,7 @@ import org.jetbrains.annotations.*;
 import java.util.Set;
 /** 屏幕适配层：只处理 Screen 的打开、关闭和坐标转发，界面编排在 {@link ConfigShell}。 */
 public class ConfigScreen<C, V> extends Screen implements ConfigHost {
-	public final RootConfigNode<C, V> root;
+	public final RootConfigNode root;
 	private final Screen parent;
 	private final ConfigShell<C, V> shell;
 	public ConfigScreen(ConfigHandler<C, V> handler) {

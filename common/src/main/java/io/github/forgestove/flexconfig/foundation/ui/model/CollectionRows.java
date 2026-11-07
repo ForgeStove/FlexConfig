@@ -14,9 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 /** 集合标题行与元素行的生成。 */
-@SuppressWarnings({"unchecked", "rawtypes"})
 public class CollectionRows {
-	public static void append(RowContext ctx, ValueConfigNode<?, ?> node, int depth, List<ConfigRow> out) {
+	public static void append(RowContext ctx, ValueConfigNode node, int depth, List<ConfigRow> out) {
 		var header = new CollectionHeaderRow(ctx, node);
 		header.setDepth(depth);
 		out.add(header);
@@ -39,24 +38,21 @@ public class CollectionRows {
 		}
 		return FieldAccess.newInstance(type);
 	}
-	@SuppressWarnings("unchecked")
-	private static List<Object> values(ValueConfigNode<?, ?> node, RowContext ctx) {
-		//noinspection rawtypes
-		var value = (List<Object>) ((ValueConfigNode) node).getEditingValue(ctx.config());
+	private static List<Object> values(ValueConfigNode node, RowContext ctx) {
+		var value = node.getEditingElements(ctx.config());
 		if (value != null) return value;
 		value = new ArrayList<>();
-		//noinspection rawtypes
-		((ValueConfigNode) node).setEditingValue(value);
+		node.setEditingElements(value);
 		return value;
 	}
 	@Nullable
-	private static Object defaultElement(ValueConfigNode<?, ?> node, int index) {
+	private static Object defaultElement(ValueConfigNode node, int index) {
 		var defaults = node.getDefaultValue();
 		if (defaults instanceof List<?> list && index < list.size()) return FieldAccess.deepCopy(list.get(index));
 		var shape = node.getElementType();
 		return shape == null || shape.isCollection() ? null : defaultValueOf(shape.raw());
 	}
-	public static void add(RowContext ctx, ValueConfigNode<?, ?> node) {
+	public static void add(RowContext ctx, ValueConfigNode node) {
 		var shape = node.getElementType();
 		if (shape == null || isReadOnly(ctx, node)) return;
 		var template = defaultElement(node, 0);
@@ -66,14 +62,13 @@ public class CollectionRows {
 		if (element == null) return;
 		var list = values(node, ctx);
 		list.add(element);
-		//noinspection rawtypes
-		((ValueConfigNode) node).setEditingValue(list);
+		node.setEditingElements(list);
 		ctx.rebuildTab();
 	}
 	private static Object newNestedElement(ElementType shape) {
 		return shape.isArray() ? FieldAccess.listToArray(shape.raw().getComponentType(), List.of()) : new ArrayList<>();
 	}
-	public static void remove(RowContext ctx, ValueConfigNode<?, ?> node, int index) {
+	public static void remove(RowContext ctx, ValueConfigNode node, int index) {
 		if (isReadOnly(ctx, node)) return;
 		var list = values(node, ctx);
 		if (index < 0 || index >= list.size()) return;
@@ -82,23 +77,17 @@ public class CollectionRows {
 			element, () -> {
 				ctx.handler().shiftElementKeybinds(node.getPath(), index);
 				list.remove(index);
-				//noinspection rawtypes
-				((ValueConfigNode) node).setEditingValue(list);
+				node.setEditingElements(list);
 				ctx.rebuildTab();
 			}
 		);
 	}
-	private static boolean isReadOnly(RowContext ctx, ValueConfigNode<?, ?> node) {
+	private static boolean isReadOnly(RowContext ctx, ValueConfigNode node) {
 		if (!ctx.editable()) return true;
 		var pending = ClientLockManager.getPendingLock(ctx.fileKey(), node.getLockPath());
 		return pending != null ? pending : ClientLockManager.isLocked(ctx.fileKey(), node.getLockPath());
 	}
-	private static ValueConfigNode<Object, Object> elementNode(
-		ValueConfigNode<?, ?> node,
-		RowContext ctx,
-		int index,
-		Class<?> elementType
-	) {
+	private static ValueConfigNode elementNode(ValueConfigNode node, RowContext ctx, int index, Class<?> elementType) {
 		var list = values(node, ctx);
 		var baseline = index < list.size() ? FieldAccess.deepCopy(list.get(index)) : null;
 		return ValueConfigNode.builder()
@@ -118,19 +107,14 @@ public class CollectionRows {
 			.baselineValue(baseline)
 			.build();
 	}
-	private static ValueConfigNode<Object, Object> nestedElementNode(
-		ValueConfigNode<?, ?> node,
-		RowContext ctx,
-		int index,
-		ElementType shape
-	) {
+	private static ValueConfigNode nestedElementNode(ValueConfigNode node, RowContext ctx, int index, ElementType shape) {
 		var list = values(node, ctx);
 		var raw = shape.raw();
 		var array = raw.isArray();
 		Object defaultValue = defaultElement(node, index);
 		if (defaultValue != null && defaultValue.getClass().isArray()) defaultValue = FieldAccess.arrayToList(defaultValue);
-		ValueReader<Object, Object> reader;
-		ValueWriter<Object, Object> writer;
+		ValueReader reader;
+		ValueWriter writer;
 		Object baseline;
 		if (array) {
 			var componentType = raw.getComponentType();
@@ -168,7 +152,7 @@ public class CollectionRows {
 			.valueWriter(writer)
 			.build();
 	}
-	private static void appendElements(RowContext ctx, ValueConfigNode<?, ?> node, int depth, List<ConfigRow> out) {
+	private static void appendElements(RowContext ctx, ValueConfigNode node, int depth, List<ConfigRow> out) {
 		var shape = node.getElementType();
 		if (shape == null) return;
 		var list = values(node, ctx);
@@ -205,10 +189,10 @@ public class CollectionRows {
 			);
 		}
 	}
-	private static String optionKey(RowContext ctx, ValueConfigNode<?, ?> node) {
+	private static String optionKey(RowContext ctx, ValueConfigNode node) {
 		return "%s.config.option.%s".formatted(ctx.shell().root.modId(), node.getPath());
 	}
-	private static void addDelete(ConfigRow row, RowContext ctx, ValueConfigNode<?, ?> node, int index) {
+	private static void addDelete(ConfigRow row, RowContext ctx, ValueConfigNode node, int index) {
 		if (!(row instanceof ValueRow valueRow)) return;
 		var delete = new UiButton(Component.literal("-"), Style.DANGER, () -> remove(ctx, node, index));
 		delete.setEnabled(!isReadOnly(ctx, node));

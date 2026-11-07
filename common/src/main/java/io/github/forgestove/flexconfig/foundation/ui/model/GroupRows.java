@@ -73,7 +73,7 @@ public class GroupRows {
 			}
 		}
 	}
-	private static ValueConfigNode<Object, Object> fieldNode(
+	private static ValueConfigNode fieldNode(
 		Field field,
 		Object target,
 		@Nullable Object defaults,
@@ -90,8 +90,8 @@ public class GroupRows {
 		Object baseline = FieldAccess.getFieldValue(field, target);
 		if (isArray) baseline = FieldAccess.arrayToList(baseline);
 		var fieldKey = "%s.%s".formatted(keyPrefix, field.getName());
-		ValueReader<Object, Object> reader;
-		ValueWriter<Object, Object> writer;
+		ValueReader reader;
+		ValueWriter writer;
 		if (isArray) {
 			var componentType = rawType.getComponentType();
 			var holder = new WriteBackList[1];

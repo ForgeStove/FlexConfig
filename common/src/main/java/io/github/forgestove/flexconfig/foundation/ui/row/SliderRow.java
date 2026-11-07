@@ -11,7 +11,7 @@ import java.util.function.DoubleFunction;
 public class SliderRow extends ValueRow {
 	private final UiSlider slider;
 	private final DoubleFunction<Object> converter;
-	public SliderRow(RowContext ctx, ValueConfigNode<?, ?> node, DoubleFunction<Object> converter) {
+	public SliderRow(RowContext ctx, ValueConfigNode node, DoubleFunction<Object> converter) {
 		super(ctx, node);
 		this.converter = converter;
 		var range = Objects.requireNonNull(node.getSliderRange(), "slider row needs a slider range");

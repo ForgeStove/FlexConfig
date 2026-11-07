@@ -4,14 +4,15 @@ import com.mojang.blaze3d.platform.InputConstants.Type;
 import io.github.forgestove.flexconfig.foundation.ui.factory.EntryKeybind;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import org.jetbrains.annotations.Nullable;
+
 import java.util.Objects;
 /** 可捕获行（Boolean/Enum）的触发键位：注册、捕获、重置与撤销快照。 */
 public class TriggerKeybindSupport implements CaptureTarget {
-	private final ValueConfigNode<?, ?> node;
+	private final ValueConfigNode node;
 	private final RowContext ctx;
 	private final @Nullable String initialSerialized;
 	private boolean capturing;
-	public TriggerKeybindSupport(ValueConfigNode<?, ?> node, RowContext ctx) {
+	public TriggerKeybindSupport(ValueConfigNode node, RowContext ctx) {
 		this.node = node;
 		this.ctx = ctx;
 		initialSerialized = ctx.handler().getTriggerKeybind(node.getPath());
@@ -20,15 +21,16 @@ public class TriggerKeybindSupport implements CaptureTarget {
 		var handler = ctx.handler();
 		var path = node.getPath();
 		var serialized = handler.getTriggerKeybind(path);
-		handler.setTriggerKeybind(path, serialized, () -> {
-			valueChanger.run();
-			writeEditing();
-			ctx.saveByKeybind();
-		});
+		handler.setTriggerKeybind(
+			path, serialized, () -> {
+				valueChanger.run();
+				writeEditing();
+				ctx.saveByKeybind();
+			}
+		);
 	}
-	@SuppressWarnings({"rawtypes", "unchecked"})
 	private void writeEditing() {
-		((ValueConfigNode) node).writeEditingToConfig(ctx.config());
+		node.writeEditingToConfig(ctx.config());
 	}
 	public boolean capturing() {
 		return capturing;
@@ -70,11 +72,12 @@ public class TriggerKeybindSupport implements CaptureTarget {
 	@Override
 	public void captureMouse(int button) {
 		if (!capturing) return;
-		ctx.handler().setTriggerKeybind(
-			node.getPath(),
-			new EntryKeybind(Type.MOUSE.getOrCreate(button), EntryKeybind.getActiveModifierFlags()).serialize(),
-			null
-		);
+		ctx.handler()
+			.setTriggerKeybind(
+				node.getPath(),
+				new EntryKeybind(Type.MOUSE.getOrCreate(button), EntryKeybind.getActiveModifierFlags()).serialize(),
+				null
+			);
 		finishCapture();
 	}
 	public void resetToDefault() {

@@ -12,7 +12,7 @@ public class NumberRow extends ValueRow {
 	private final Predicate<String> validator;
 	private final Function<Object, String> formatter;
 	private boolean parseError;
-	public NumberRow(RowContext ctx, ValueConfigNode<?, ?> node, Function<String, Object> parser, Predicate<String> validator, Function<Object, String> formatter) {
+	public NumberRow(RowContext ctx, ValueConfigNode node, Function<String, Object> parser, Predicate<String> validator, Function<Object, String> formatter) {
 		super(ctx, node);
 		this.parser = parser;
 		this.validator = validator;

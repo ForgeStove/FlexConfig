@@ -15,7 +15,7 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 	private boolean capturing;
 	private KeybindState keyState = KeybindState.BOUND;
 	private List<Component> conflicts = List.of();
-	public KeybindRow(RowContext ctx, ValueConfigNode<?, ?> node) {
+	public KeybindRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx, node);
 		button = new UiButton(Component.empty(), Style.SECONDARY, this::beginCapture);
 		actionBar.add(button, UiTheme.CONTROL_WIDTH);

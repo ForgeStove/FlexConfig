@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 public class TranslationChecker {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/** 缺失的键按行打印，便于直接照抄进语言文件。 */
-	public static void check(RootConfigNode<?, ?> root) {
+	public static void check(RootConfigNode root) {
 		if (!FlexConfigServices.PLATFORM.isDevelopmentEnvironment()) return;
 		var language = ClientUtil.mc.getLanguageManager().getSelected();
 		var missing = root.translationKeys().stream().filter(key -> !I18n.exists(key)).toList();

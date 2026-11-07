@@ -9,17 +9,18 @@ public class ConfigUiModel {
 	public ConfigUiModel(RowContext ctx) {
 		this.ctx = ctx;
 	}
-	public void build(List<CategoryConfigNode<?>> categories) {
+	public void build(List<CategoryConfigNode> categories) {
 		var previous = active < tabs.size() ? tabs.get(active).node : null;
 		tabs.clear();
 		for (var category : categories) tabs.add(buildTab(category));
 		active = 0;
-		if (previous != null) for (var i = 0; i < tabs.size(); i++) if (tabs.get(i).node == previous) {
-			active = i;
-			break;
-		}
+		if (previous != null) for (var i = 0; i < tabs.size(); i++)
+			if (tabs.get(i).node == previous) {
+				active = i;
+				break;
+			}
 	}
-	private ConfigTabModel buildTab(CategoryConfigNode<?> category) {
+	private ConfigTabModel buildTab(CategoryConfigNode category) {
 		var tab = new ConfigTabModel(category);
 		tab.build(ctx);
 		return tab;

@@ -3,6 +3,7 @@ import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.annotation.*;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -45,19 +46,20 @@ public class FieldValidators {
 		)
 	);
 	@SuppressWarnings("unchecked")
-	public static <V> @Nullable ValueValidator<V> validatorFor(Class<? extends V> type, Field valueField) {
-		var factory = (ValidatorFactory<V>) VALIDATOR_FACTORIES.get(type);
-		return factory == null ? null : factory.create(valueField);
+	public static @Nullable ValueValidator validatorFor(Class<?> type, Field valueField) {
+		var factory = (ValidatorFactory<Object>) VALIDATOR_FACTORIES.get(type);
+		var validator = factory == null ? null : factory.create(valueField);
+		return validator == null ? null : validator::validate;
 	}
-	private static <V, A extends Annotation> @Nullable ValueValidator<V> validator(
+	private static <V, A extends Annotation> @Nullable TypedValidator<V> validator(
 		Field valueField,
 		Class<A> annotationType,
-		Function<A, ValueValidator<V>> validatorFactory
+		Function<A, TypedValidator<V>> validatorFactory
 	) {
 		var annotation = valueField.getAnnotation(annotationType);
 		return annotation == null ? null : validatorFactory.apply(annotation);
 	}
-	private static <V> ValueValidator<V> validate(Predicate<V> belowMin, Predicate<V> aboveMax, Number min, Number max) {
+	private static <V> TypedValidator<V> validate(Predicate<V> belowMin, Predicate<V> aboveMax, Number min, Number max) {
 		return value -> {
 			if (belowMin.test(value)) return Translation.VALIDATOR_MIN.copy().append(String.valueOf(min));
 			if (aboveMax.test(value)) return Translation.VALIDATOR_MAX.copy().append(String.valueOf(max));
@@ -165,6 +167,10 @@ public class FieldValidators {
 	}
 	@FunctionalInterface
 	private interface ValidatorFactory<V> {
-		ValueValidator<V> create(Field valueField);
+		@Nullable TypedValidator<V> create(Field valueField);
+	}
+	@FunctionalInterface
+	private interface TypedValidator<V> {
+		@Nullable Component validate(V value);
 	}
 }
