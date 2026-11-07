@@ -1,14 +1,17 @@
-package io.github.forgestove.flexconfig.api;
-import io.github.forgestove.flexconfig.foundation.FileKey;
+package io.github.forgestove.flexconfig.foundation;
+import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.api.annotation.Config;
+import io.github.forgestove.flexconfig.api.client.FlexConfigScreenFactory;
+import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
 import io.github.forgestove.flexconfig.foundation.tree.*;
-import io.github.forgestove.flexconfig.platform.FlexConfigClientServices;
-import io.github.forgestove.flexconfig.platform.FlexConfigServices;
+import io.github.forgestove.flexconfig.platform.*;
 import net.minecraft.server.MinecraftServer;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
 /** 一个模组可按 {@link ConfigType} 注册多份配置，各自对应一个文件。 */
-public class ConfigRegistry {
+public class ConfigStore {
 	private static final Object LOCK = new Object();
 	private static final List<ConfigType> PRIMARY_ORDER = List.of(ConfigType.CLIENT, ConfigType.COMMON, ConfigType.SERVER);
 	/** 注册成功后整体替换，读路径永远看到一致的一组索引。 */
@@ -93,13 +96,16 @@ public class ConfigRegistry {
 		if (handler == null) throw new IllegalStateException("Config handler for '%s' is not initialized.".formatted(key));
 		return handler;
 	}
+	@Internal
 	public static RootConfigNode<Object, Object> getRootConfigNode(FileKey key) {
 		return getHandler(key).cast().getConfigTree();
 	}
+	@Internal
 	public static void resetToSaved(FileKey key) {
 		getHandler(key).cast().reloadAndCopy();
 	}
 	/** 仅作用于活动配置，不修改 savedConfig，因此不会污染 TOML 文件。 */
+	@Internal
 	public static void applyLockedValue(FileKey key, ValueConfigNode<Object, Object> node, Object parsed) {
 		node.setActiveValue(getHandler(key).cast().getConfig(), parsed);
 	}
@@ -117,10 +123,12 @@ public class ConfigRegistry {
 	}
 	// ========== 查询 ==========
 	/** 锁的语义是服务端强制客户端的本地配置；只有 CLIENT 型且注册时显式开启 {@code lockable} 才生效。 */
+	@Internal
 	public static boolean isLockable(FileKey key) {
 		var handler = findByFile(key);
 		return handler != null && handler.getType() == ConfigType.CLIENT && handler.isLockable();
 	}
+	@Internal
 	public static Set<FileKey> getRegisteredFileKeys() {
 		return SNAPSHOT.byFile().keySet();
 	}

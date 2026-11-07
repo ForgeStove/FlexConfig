@@ -1,4 +1,6 @@
-package io.github.forgestove.flexconfig.api;
+package io.github.forgestove.flexconfig.api.client;
+import io.github.forgestove.flexconfig.api.ConfigType;
+import io.github.forgestove.flexconfig.api.registration.*;
 import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import io.github.forgestove.flexconfig.foundation.ui.*;
 import net.minecraft.client.gui.screens.Screen;

@@ -1,4 +1,4 @@
-package io.github.forgestove.flexconfig.api;
+package io.github.forgestove.flexconfig.api.menu;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 /** 注册时可选的菜单展示信息：左上角图标。 */

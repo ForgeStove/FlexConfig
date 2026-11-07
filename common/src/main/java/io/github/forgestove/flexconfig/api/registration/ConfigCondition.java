@@ -1,4 +1,5 @@
-package io.github.forgestove.flexconfig.api;
+package io.github.forgestove.flexconfig.api.registration;
+import io.github.forgestove.flexconfig.api.annotation.Condition;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 
 import java.lang.reflect.Field;

@@ -1,10 +1,11 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
-import io.github.forgestove.flexconfig.api.Accent;
+import io.github.forgestove.flexconfig.api.menu.Accent;
 import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
+
 import java.util.function.Supplier;
 /** 跨帧保留的界面上下文：焦点、拖拽 owner、提示延迟和淡入都由界面复用同一个实例。 */
 public class UiContext {

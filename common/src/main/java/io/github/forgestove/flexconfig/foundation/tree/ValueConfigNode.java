@@ -1,7 +1,7 @@
 package io.github.forgestove.flexconfig.foundation.tree;
-import io.github.forgestove.flexconfig.foundation.ElementType;
-import io.github.forgestove.flexconfig.foundation.FieldAccess;
-import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.api.RestartType;
+import io.github.forgestove.flexconfig.api.annotation.ColorValue;
+import io.github.forgestove.flexconfig.foundation.*;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 

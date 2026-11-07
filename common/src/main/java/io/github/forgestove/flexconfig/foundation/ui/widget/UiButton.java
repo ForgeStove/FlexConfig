@@ -1,8 +1,9 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
-import io.github.forgestove.flexconfig.api.Accent;
+import io.github.forgestove.flexconfig.api.menu.Accent;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
+
 import java.util.Locale;
 public class UiButton extends UiControl {
 	public enum Style {
@@ -84,9 +85,24 @@ public class UiButton extends UiControl {
 	}
 	private Palette palette(Accent accent) {
 		return switch (style) {
-			case PRIMARY -> new Palette(accent.base(), accent.light(), accent.lightest(), accent.darkest(), accent.bright(), accent.strong());
-			case DANGER -> new Palette(UiTheme.DANGER, UiTheme.DANGER_LIGHT, UiTheme.DANGER_LIGHT, UiTheme.DANGER_DEPTH, UiTheme.DANGER_LIGHT, 0xFF9E3A2F);
-			default -> new Palette(UiTheme.SECONDARY_FACE, UiTheme.SECONDARY_TOP, UiTheme.SECONDARY_SHINE, UiTheme.SECONDARY_LIP, UiTheme.SECONDARY_HOVER, UiTheme.SECONDARY_PRESSED);
+			case PRIMARY ->
+				new Palette(accent.base(), accent.light(), accent.lightest(), accent.darkest(), accent.bright(), accent.strong());
+			case DANGER -> new Palette(
+				UiTheme.DANGER,
+				UiTheme.DANGER_LIGHT,
+				UiTheme.DANGER_LIGHT,
+				UiTheme.DANGER_DEPTH,
+				UiTheme.DANGER_LIGHT,
+				0xFF9E3A2F
+			);
+			default -> new Palette(
+				UiTheme.SECONDARY_FACE,
+				UiTheme.SECONDARY_TOP,
+				UiTheme.SECONDARY_SHINE,
+				UiTheme.SECONDARY_LIP,
+				UiTheme.SECONDARY_HOVER,
+				UiTheme.SECONDARY_PRESSED
+			);
 		};
 	}
 	private record Palette(int face, int highlight, int shine, int depth, int hover, int pressed) {}

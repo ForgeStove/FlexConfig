@@ -1,4 +1,6 @@
-package io.github.forgestove.flexconfig.api;
+package io.github.forgestove.flexconfig.api.annotation;
+import io.github.forgestove.flexconfig.api.RestartType;
+
 import java.lang.annotation.*;
 /**
  * 保存时新值写入文件、运行时值保持不变，重启后运行时值才切换过去。

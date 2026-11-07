@@ -2,9 +2,8 @@ package io.github.forgestove.flexconfig.foundation.client;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
 import com.mojang.logging.LogUtils;
-import io.github.forgestove.flexconfig.api.ConfigRegistry;
-import io.github.forgestove.flexconfig.foundation.FileKey;
-import io.github.forgestove.flexconfig.api.ConfigType;
+import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.foundation.ConfigStore;
 import org.slf4j.Logger;
 
 import java.io.StringReader;
@@ -27,13 +26,13 @@ public class ClientServerConfigCache {
 			return;
 		}
 		SYNCED.put(key, toml);
-		ConfigRegistry.getHandler(key).cast().applySynced(toml);
+		ConfigStore.getHandler(key).cast().applySynced(toml);
 	}
 	private static boolean isServerConfig(FileKey key) {
-		return ConfigRegistry.getRegisteredFileKeys().contains(key) && ConfigRegistry.getHandler(key).getType() == ConfigType.SERVER;
+		return ConfigStore.getRegisteredFileKeys().contains(key) && ConfigStore.getHandler(key).getType() == ConfigType.SERVER;
 	}
 	public static void clear() {
-		SYNCED.keySet().forEach(key -> ConfigRegistry.getHandler(key).unload());
+		SYNCED.keySet().forEach(key -> ConfigStore.getHandler(key).unload());
 		SYNCED.clear();
 	}
 }

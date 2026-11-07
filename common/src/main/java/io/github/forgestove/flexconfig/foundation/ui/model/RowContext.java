@@ -1,6 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
-import io.github.forgestove.flexconfig.api.ConfigHandler;
-import io.github.forgestove.flexconfig.foundation.FileKey;
+import io.github.forgestove.flexconfig.api.FileKey;
+import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
 import io.github.forgestove.flexconfig.foundation.ui.ConfigShell;
 /** 行与配置界面之间的窄接口，行不直接依赖界面或 Screen 的私有状态。 */
 public record RowContext(ConfigShell<?, ?> shell) {

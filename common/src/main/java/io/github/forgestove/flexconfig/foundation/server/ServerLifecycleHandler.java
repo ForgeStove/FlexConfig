@@ -1,7 +1,7 @@
 package io.github.forgestove.flexconfig.foundation.server;
-import io.github.forgestove.flexconfig.api.ConfigRegistry;
-import io.github.forgestove.flexconfig.foundation.ConfigWatchService;
 import io.github.forgestove.flexconfig.api.ConfigType;
+import io.github.forgestove.flexconfig.foundation.ConfigStore;
+import io.github.forgestove.flexconfig.foundation.ConfigWatchService;
 import io.github.forgestove.flexconfig.foundation.network.*;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import net.minecraft.server.MinecraftServer;
@@ -13,18 +13,18 @@ public class ServerLifecycleHandler {
 	private static int watchTicks;
 	/** 世界即将开始：加载全部 SERVER 型配置，存档目录优先；双端都要跑，单人存档也走这里。 */
 	public static void onServerAboutToStart(MinecraftServer server) {
-		ConfigRegistry.loadServerConfigs(server);
+		ConfigStore.loadServerConfigs(server);
 	}
 	public static void onServerTick() {
 		if (++watchTicks % ConfigWatchService.INTERVAL_TICKS != 0) return;
 		for (var key : ConfigWatchService.poll(Set.of(), ConfigType.SERVER)) {
-			ConfigRegistry.getHandler(key).reloadAndCopy();
+			ConfigStore.getHandler(key).reloadAndCopy();
 			ServerLockApplier.reapply(key);   // 重载会抹掉锁值，需要重新叠加
 		}
 	}
 	public static void onServerStarting(MinecraftServer server) {
-		ConfigRegistry.getRegisteredFileKeys().forEach(key -> {
-			if (!ConfigRegistry.isLockable(key)) return;
+		ConfigStore.getRegisteredFileKeys().forEach(key -> {
+			if (!ConfigStore.isLockable(key)) return;
 			var lockStore = new ServerConfigLockStore(server, key.modId());
 			lockStore.load();
 			ConfigNetwork.setLockStore(key, lockStore);
@@ -37,8 +37,8 @@ public class ServerLifecycleHandler {
 	}
 	/** 顺序不可颠倒：WORLD 型改动要在 SERVER 型配置卸载前生效。 */
 	public static void onServerStopped() {
-		ConfigRegistry.applyWorldRestart();
-		ConfigRegistry.unloadServerConfigs();
+		ConfigStore.applyWorldRestart();
+		ConfigStore.unloadServerConfigs();
 	}
 	public static void onPlayerLogin(ServerPlayer player) {
 		// 仅向安装了此模组的客户端发送 — 否则NeoForge会抛出异常。

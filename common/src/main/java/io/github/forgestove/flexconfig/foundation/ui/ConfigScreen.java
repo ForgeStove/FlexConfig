@@ -1,10 +1,10 @@
 package io.github.forgestove.flexconfig.foundation.ui;
-import io.github.forgestove.flexconfig.api.ConfigHandler;
-import io.github.forgestove.flexconfig.foundation.FileKey;
-import io.github.forgestove.flexconfig.api.*;
-import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.api.FileKey;
+import io.github.forgestove.flexconfig.api.menu.Accent;
+import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
+import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
+import io.github.forgestove.flexconfig.foundation.tree.RootConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.*;
-import io.github.forgestove.flexconfig.foundation.tree.*;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.*;

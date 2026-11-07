@@ -1,4 +1,4 @@
-package io.github.forgestove.flexconfig.api;
+package io.github.forgestove.flexconfig.api.menu;
 import java.awt.Color;
 public class Accent {
 	public static final Accent DEFAULT = of(0xFF3C8527);

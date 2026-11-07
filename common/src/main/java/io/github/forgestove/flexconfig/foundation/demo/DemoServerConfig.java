@@ -1,6 +1,7 @@
 package io.github.forgestove.flexconfig.foundation.demo;
 import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.api.annotation.*;
 
 import java.util.*;
 @Config(value = FlexConfig.ID, type = ConfigType.SERVER)

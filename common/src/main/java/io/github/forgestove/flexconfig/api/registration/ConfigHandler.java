@@ -1,13 +1,18 @@
-package io.github.forgestove.flexconfig.api;
+package io.github.forgestove.flexconfig.api.registration;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.mojang.logging.LogUtils;
+import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.api.menu.*;
+import io.github.forgestove.flexconfig.api.menu.Accent;
 import io.github.forgestove.flexconfig.foundation.*;
+import io.github.forgestove.flexconfig.foundation.ConfigStore;
 import io.github.forgestove.flexconfig.foundation.tree.RootConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.factory.EntryKeybind;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -38,7 +43,7 @@ public class ConfigHandler<C, V> {
 	@Nullable private Path resolvedPath;
 	private ConfigHandler(Builder<C, V> builder) {
 		configClass = builder.configClass;
-		modId = ConfigRegistry.getModId(configClass);
+		modId = ConfigStore.getModId(configClass);
 		type = builder.type;
 		fileName = builder.fileName;
 		lockable = builder.lockable;
@@ -113,6 +118,7 @@ public class ConfigHandler<C, V> {
 		configTree.copy(defaults, activeConfig);
 		triggerKeybinds.clear();
 	}
+	@Internal
 	public RootConfigNode<C, V> getConfigTree() {
 		return configTree;
 	}
@@ -125,6 +131,7 @@ public class ConfigHandler<C, V> {
 	public Class<C> getConfigClass() {
 		return configClass;
 	}
+	@Internal
 	public ConfigSerializer<C> getSerializer() {
 		return serializer;
 	}
@@ -292,7 +299,7 @@ public class ConfigHandler<C, V> {
 		private Builder(Class<C> configClass) {
 			this.configClass = configClass;
 			serializerBuilder = ConfigSerializer.builder(configClass);
-			type = ConfigRegistry.requireAnnotation(configClass).type();
+			type = ConfigStore.requireAnnotation(configClass).type();
 		}
 		public Builder<C, V> type(ConfigType type) {
 			this.type = type;
@@ -315,11 +322,11 @@ public class ConfigHandler<C, V> {
 			menuIcon = icon;
 			return this;
 		}
-		/** 构建并注册到 {@link ConfigRegistry}；同一 (模组, 类型) 只能注册一次。 */
+		/** 构建并注册到 {@link ConfigStore}；同一 (模组, 类型) 只能注册一次。 */
 		public @NotNull ConfigHandler<C, V> build() {
-			if (fileName == null || fileName.isBlank()) fileName = ConfigNaming.fileName(ConfigRegistry.getModId(configClass), type, "");
+			if (fileName == null || fileName.isBlank()) fileName = ConfigNaming.fileName(ConfigStore.getModId(configClass), type, "");
 			var handler = new ConfigHandler<>(this);
-			ConfigRegistry.register(handler);
+			ConfigStore.register(handler);
 			return handler;
 		}
 	}

@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.api;
 import java.util.*;
-/** 按严重程度递增声明：节点聚合重启级别时取最重的一档。 */
 public enum RestartType {
 	WORLD,
 	/** 不能用于 {@link ConfigType#SERVER} 型配置。 */

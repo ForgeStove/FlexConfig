@@ -1,11 +1,10 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
-import io.github.forgestove.flexconfig.foundation.ConfigTranslation;
-import io.github.forgestove.flexconfig.foundation.FieldAccess;
-import io.github.forgestove.flexconfig.foundation.FieldValidators;
-import io.github.forgestove.flexconfig.api.*;
-import io.github.forgestove.flexconfig.foundation.ui.row.*;
+import io.github.forgestove.flexconfig.api.annotation.*;
+import io.github.forgestove.flexconfig.api.registration.ConfigCondition;
+import io.github.forgestove.flexconfig.foundation.*;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
+import io.github.forgestove.flexconfig.foundation.ui.row.*;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 

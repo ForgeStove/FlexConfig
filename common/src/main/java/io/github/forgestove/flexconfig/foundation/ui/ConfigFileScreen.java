@@ -1,6 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui;
-import io.github.forgestove.flexconfig.api.ConfigHandler;
-import io.github.forgestove.flexconfig.api.FlexConfigScreenFactory;
+import io.github.forgestove.flexconfig.api.client.FlexConfigScreenFactory;
+import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
 import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiFocus.Target;

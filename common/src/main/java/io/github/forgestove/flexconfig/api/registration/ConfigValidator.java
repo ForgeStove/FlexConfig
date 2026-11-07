@@ -1,4 +1,4 @@
-package io.github.forgestove.flexconfig.api;
+package io.github.forgestove.flexconfig.api.registration;
 import org.jetbrains.annotations.Nullable;
 @FunctionalInterface
 public interface ConfigValidator<C> {

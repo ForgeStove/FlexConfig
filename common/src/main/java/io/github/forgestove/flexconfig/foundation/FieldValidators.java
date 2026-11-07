@@ -1,6 +1,6 @@
 package io.github.forgestove.flexconfig.foundation;
 import com.mojang.logging.LogUtils;
-import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.api.annotation.*;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
 import org.jetbrains.annotations.Nullable;

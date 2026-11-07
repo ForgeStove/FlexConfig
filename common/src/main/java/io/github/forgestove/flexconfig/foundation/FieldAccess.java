@@ -1,6 +1,6 @@
 package io.github.forgestove.flexconfig.foundation;
 import com.mojang.logging.LogUtils;
-import io.github.forgestove.flexconfig.api.Order;
+import io.github.forgestove.flexconfig.api.annotation.Order;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 

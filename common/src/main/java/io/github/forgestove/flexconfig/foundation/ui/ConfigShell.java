@@ -1,16 +1,12 @@
 package io.github.forgestove.flexconfig.foundation.ui;
 import com.mojang.blaze3d.platform.InputConstants.Key;
-import io.github.forgestove.flexconfig.api.ConfigHandler;
-import io.github.forgestove.flexconfig.api.ConfigRegistry;
-import io.github.forgestove.flexconfig.foundation.FieldAccess;
-import io.github.forgestove.flexconfig.foundation.FileKey;
 import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.api.menu.Accent;
+import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
+import io.github.forgestove.flexconfig.foundation.*;
 import io.github.forgestove.flexconfig.foundation.client.*;
-import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.Char;
-import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.MouseDown;
-import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.MouseDrag;
-import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.MouseUp;
-import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.Scroll;
+import io.github.forgestove.flexconfig.foundation.tree.*;
+import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiFocus.Target;
 import io.github.forgestove.flexconfig.foundation.ui.model.*;
@@ -20,7 +16,6 @@ import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiGlyphButton.Glyph;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiPopupMenu.Item;
-import io.github.forgestove.flexconfig.foundation.tree.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.GuiGraphics;
@@ -1052,7 +1047,7 @@ public final class ConfigShell<C, V> {
 		return handler.getType() != ConfigType.SERVER || ClientUtil.mc.hasSingleplayerServer();
 	}
 	public boolean isLockable() {
-		return ConfigRegistry.isLockable(new FileKey(root.modId(), root.fileName()));
+		return ConfigStore.isLockable(new FileKey(root.modId(), root.fileName()));
 	}
 	public ConfigHandler<C, V> getHandler() {
 		return handler;

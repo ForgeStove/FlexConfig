@@ -2,7 +2,7 @@ package io.github.forgestove.flexconfig.foundation.demo;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import io.github.forgestove.flexconfig.FlexConfig;
-import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.api.annotation.*;
 
 import java.awt.Point;
 import java.util.*;

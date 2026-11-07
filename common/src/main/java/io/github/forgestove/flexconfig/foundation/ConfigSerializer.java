@@ -3,7 +3,8 @@ import com.electronwill.nightconfig.core.*;
 import com.electronwill.nightconfig.core.io.*;
 import com.electronwill.nightconfig.toml.*;
 import com.mojang.logging.LogUtils;
-import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.api.annotation.*;
+import io.github.forgestove.flexconfig.api.registration.*;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ public class ConfigSerializer<C> {
 	private Path targetPath;
 	private ConfigSerializer(Builder<C> builder) {
 		configClass = builder.configClass;
-		translationPrefix = ConfigRegistry.getModId(configClass) + ".config";
+		translationPrefix = ConfigStore.getModId(configClass) + ".config";
 	}
 	public static <C> Builder<C> builder(Class<C> configClass) {
 		return new Builder<>(configClass);

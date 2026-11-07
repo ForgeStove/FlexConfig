@@ -1,8 +1,8 @@
 package io.github.forgestove.flexconfig;
 import io.github.forgestove.flexconfig.foundation.client.ClientLifecycleHandler;
 import io.github.forgestove.flexconfig.foundation.network.ConfigNetwork;
-import io.github.forgestove.flexconfig.platform.NeoForgePayloads;
 import io.github.forgestove.flexconfig.foundation.server.ServerLifecycleHandler;
+import io.github.forgestove.flexconfig.platform.NeoForgePayloads;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;

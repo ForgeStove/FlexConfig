@@ -2,8 +2,8 @@ package io.github.forgestove.flexconfig.foundation.client;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
 import com.mojang.logging.LogUtils;
-import io.github.forgestove.flexconfig.api.ConfigRegistry;
-import io.github.forgestove.flexconfig.foundation.FileKey;
+import io.github.forgestove.flexconfig.api.FileKey;
+import io.github.forgestove.flexconfig.foundation.ConfigStore;
 import io.github.forgestove.flexconfig.foundation.LockValueCodec;
 import io.github.forgestove.flexconfig.foundation.network.ConfigLockPayload;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
@@ -27,7 +27,7 @@ public class ClientLockManager {
 		// 忽略玩家已断开连接后的延迟包
 		if (ClientUtil.mc.getConnection() == null && !ClientUtil.mc.isSingleplayer()) return;
 		var key = new FileKey(modId, fileName);
-		if (!ConfigRegistry.isLockable(key)) return;
+		if (!ConfigStore.isLockable(key)) return;
 		receivedSync = true;
 		CommentedConfig tomlConfig;
 		try {
@@ -38,7 +38,7 @@ public class ClientLockManager {
 		}
 		var newLocks = new HashMap<String, String>();
 		collectPaths(tomlConfig, "", newLocks);
-		var handler = ConfigRegistry.getHandler(key).cast();
+		var handler = ConfigStore.getHandler(key).cast();
 		var root = handler.getConfigTree();
 		var config = handler.getConfig();
 		// 恢复此文件上已被移除的锁定
@@ -49,7 +49,7 @@ public class ClientLockManager {
 			if (original == null) continue;
 			var node = root.getValueNode(oldEntry.getKey());
 			if (node == null) continue;
-			ConfigRegistry.applyLockedValue(key, node, original);
+			ConfigStore.applyLockedValue(key, node, original);
 			node.resetToActive(config);
 		}
 		// 备份加锁前的原值（仅记第一次，之后重复同步不改基线）
@@ -65,8 +65,8 @@ public class ClientLockManager {
 	public static void reapply(FileKey key) {
 		var lockedPaths = lockedConfigs.get(key);
 		var tomlConfig = syncedConfigs.get(key);
-		if (lockedPaths == null || lockedPaths.isEmpty() || tomlConfig == null || !ConfigRegistry.isLockable(key)) return;
-		var handler = ConfigRegistry.getHandler(key).cast();
+		if (lockedPaths == null || lockedPaths.isEmpty() || tomlConfig == null || !ConfigStore.isLockable(key)) return;
+		var handler = ConfigStore.getHandler(key).cast();
 		var root = handler.getConfigTree();
 		Object instance;
 		try {
@@ -81,7 +81,7 @@ public class ClientLockManager {
 			if (node == null) continue;
 			var typedValue = node.getActiveValue(instance);
 			if (typedValue == null) continue;
-			ConfigRegistry.applyLockedValue(key, node, typedValue);
+			ConfigStore.applyLockedValue(key, node, typedValue);
 			node.resetToActive(config);
 		}
 	}
@@ -120,7 +120,7 @@ public class ClientLockManager {
 		}
 		for (var entry : new ArrayList<>(pendingLocks.entrySet())) {
 			var key = entry.getKey();
-			if (!ConfigRegistry.isLockable(key.file())) continue;
+			if (!ConfigStore.isLockable(key.file())) continue;
 			String value;
 			if (entry.getValue()) value = getCurrentValueAsString(key.file(), key.path());
 			else {
@@ -132,15 +132,15 @@ public class ClientLockManager {
 		pendingLocks.clear();
 	}
 	private static @NotNull String getCurrentValueAsString(FileKey file, String configId) {
-		var node = ConfigRegistry.getRootConfigNode(file).getValueNode(configId);
-		var config = ConfigRegistry.getActiveConfig(file);
+		var node = ConfigStore.getRootConfigNode(file).getValueNode(configId);
+		var config = ConfigStore.getActiveConfig(file);
 		if (node == null || config == null) return "";
 		var value = node.getActiveValue(config);
 		return value == null ? "" : LockValueCodec.format(node, value);
 	}
 	private static void updateOriginalValue(FileKey file, String configId) {
-		var node = ConfigRegistry.getRootConfigNode(file).getValueNode(configId);
-		var config = ConfigRegistry.getActiveConfig(file);
+		var node = ConfigStore.getRootConfigNode(file).getValueNode(configId);
+		var config = ConfigStore.getActiveConfig(file);
 		if (node == null || config == null) return;
 		originalValues.put(new LockKey(file, configId), node.getActiveValue(config));
 	}
@@ -148,7 +148,7 @@ public class ClientLockManager {
 		return receivedSync;
 	}
 	public static void clear() {
-		ConfigRegistry.getRegisteredFileKeys().forEach(ConfigRegistry::resetToSaved);
+		ConfigStore.getRegisteredFileKeys().forEach(ConfigStore::resetToSaved);
 		originalValues.clear();
 		lockedConfigs.clear();
 		syncedConfigs.clear();

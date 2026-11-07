@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation;
-import io.github.forgestove.flexconfig.api.ConfigRegistry;
-import io.github.forgestove.flexconfig.api.ConfigType;
+import io.github.forgestove.flexconfig.api.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -29,7 +28,7 @@ public class ConfigWatchService {
 	}
 	@Nullable
 	private static Path handlerPath(FileKey key) {
-		return ConfigRegistry.getRegisteredFileKeys().contains(key) ? ConfigRegistry.getHandler(key).getPath() : null;
+		return ConfigStore.getRegisteredFileKeys().contains(key) ? ConfigStore.getHandler(key).getPath() : null;
 	}
 	/**
 	 * 返回自上次轮询以来被外部改动过的文件并更新基线；首次见到的文件仅建基线、不报告。
@@ -39,8 +38,8 @@ public class ConfigWatchService {
 		if (types.length == 0) return Set.of();
 		var allowed = EnumSet.copyOf(List.of(types));
 		var changed = new LinkedHashSet<FileKey>();
-		for (var key : ConfigRegistry.getRegisteredFileKeys()) {
-			if (excluded.contains(key) || !allowed.contains(ConfigRegistry.getHandler(key).getType())) continue;
+		for (var key : ConfigStore.getRegisteredFileKeys()) {
+			if (excluded.contains(key) || !allowed.contains(ConfigStore.getHandler(key).getType())) continue;
 			var path = handlerPath(key);
 			if (path == null || !Files.exists(path)) continue;
 			long stamp;

@@ -1,16 +1,13 @@
 package io.github.forgestove.flexconfig.foundation.network;
 import com.mojang.logging.LogUtils;
-import io.github.forgestove.flexconfig.api.ConfigRegistry;
-import io.github.forgestove.flexconfig.foundation.FileKey;
-import io.github.forgestove.flexconfig.foundation.LockValueCodec;
-import io.github.forgestove.flexconfig.foundation.SerializationException;
-import io.github.forgestove.flexconfig.api.ConfigType;
+import io.github.forgestove.flexconfig.api.*;
+import io.github.forgestove.flexconfig.foundation.ConfigStore;
+import io.github.forgestove.flexconfig.foundation.*;
 import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.foundation.server.*;
 import io.github.forgestove.flexconfig.foundation.ui.ConfigScreen;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
-import io.github.forgestove.flexconfig.platform.services.PayloadContext;
-import io.github.forgestove.flexconfig.platform.services.PayloadRegistrar;
-import io.github.forgestove.flexconfig.foundation.server.*;
+import io.github.forgestove.flexconfig.platform.services.*;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -51,7 +48,7 @@ public class ConfigNetwork {
 		if (payload.value().isEmpty()) lockStore.unlockEntry(payload.configId());
 		else {
 			// 字符串 → TOML 原生值：按路径查到节点，交给 LockValueCodec 按字段类型转（找不到节点或类型不支持就忽略这条）
-			var node = ConfigRegistry.getRootConfigNode(key).getValueNode(payload.configId());
+			var node = ConfigStore.getRootConfigNode(key).getValueNode(payload.configId());
 			var typed = node == null ? null : LockValueCodec.toToml(node, payload.value());
 			if (typed == null) return;
 			lockStore.lockEntry(payload.configId(), typed);
@@ -94,8 +91,8 @@ public class ConfigNetwork {
 	}
 	/** 下发的是文件值而非活动值，锁值由 {@link ConfigSyncPayload} 单独同步。 */
 	public static void sendServerConfigsToPlayer(ServerPlayer player) {
-		ConfigRegistry.getRegisteredFileKeys().forEach(key -> {
-			var handler = ConfigRegistry.getHandler(key);
+		ConfigStore.getRegisteredFileKeys().forEach(key -> {
+			var handler = ConfigStore.getHandler(key);
 			if (handler.getType() != ConfigType.SERVER) return;
 			String tomlContent;
 			try {
