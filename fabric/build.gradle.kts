@@ -7,10 +7,28 @@ loom {
 	mods {
 		create(p("modId")) { sourceSet("main") }
 	}
+	runs {
+		named("client") {
+			client()
+		}
+		named("server") {
+			server()
+			runDirectory.set(file("run/server"))
+		}
+		configureEach {
+			generateRunConfig.set(true)
+			preferGradleTask.set(false)
+			jvmArguments.add("-XX:+AllowEnhancedClassRedefinition")
+			jvmArguments.add("-XX:+IgnoreUnrecognizedVMOptions")
+		}
+	}
 }
 dependencies {
 	minecraft("com.mojang:minecraft:${p("mcVersion")}")
-	mappings(loom.officialMojangMappings())
+	@Suppress("UnstableApiUsage") mappings(loom.layered {
+		officialMojangMappings()
+		parchment("org.parchmentmc.data:parchment-${p("mcVersion")}:${p("parchmentVersion")}@zip")
+	})
 	modImplementation("net.fabricmc:fabric-loader:${p("fabricLoaderVersion")}")
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabricApiVersion")}+${p("mcVersion")}")
 	fun impleclude(string: String) { implementation(string)?.let { include(it) } }
@@ -21,4 +39,5 @@ dependencies {
 repositories {
 	maven("https://maven.fabricmc.net")
 	maven("https://maven.terraformersmc.com/releases")
+	maven("https://maven.parchmentmc.org")
 }

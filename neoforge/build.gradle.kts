@@ -12,16 +12,16 @@ neoForge {
 	runs {
 		create("client") {
 			client()
-			systemProperty("terminal.jline", "true")
+			systemProperties.put("terminal.jline", "true")
 		}
 		create("server") {
 			server()
 			gameDirectory.set(file("run/server"))
-			programArgument("--nogui")
+			programArguments.add("--nogui")
 		}
 		configureEach {
-			jvmArgument("-XX:+IgnoreUnrecognizedVMOptions")
-			jvmArgument("-XX:+AllowEnhancedClassRedefinition")
+			jvmArguments.add("-XX:+AllowEnhancedClassRedefinition")
+			jvmArguments.add("-XX:+IgnoreUnrecognizedVMOptions")
 		}
 	}
 	mods.create(p("modId")) { sourceSet(sourceSets.main.get()) }

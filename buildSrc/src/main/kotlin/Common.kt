@@ -4,55 +4,27 @@ import me.modmuss50.mpp.ModPublishExtension
 import me.modmuss50.mpp.ReleaseType
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePluginExtension
-import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
-import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
-import org.gradle.language.jvm.tasks.ProcessResources
 
 fun Project.configure(loader: String) {
 	extensions.getByType(BasePluginExtension::class.java).archivesName.set(p("modId"))
 	group = p("modGroupId")
 	version = "${p("mcVersion")}-${p("modVersion")}-$loader"
-	extensions.getByType(JavaPluginExtension::class.java).apply {
-		toolchain.languageVersion.set(JavaLanguageVersion.of(p("javaVersion")))
-		withSourcesJar()
-	}
-	tasks.named<Jar>("jar") {
-		from(rootProject.file("LICENSE"))
-	}
-	tasks.named<Test>("test") {
-		failOnNoDiscoveredTests.set(false)
-	}
-	val generateMetadata = tasks.register<ProcessResources>("generateMetadata") {
-		description = "Generate this project metadata from templates."
+	val generateMetadata = tasks.register<Copy>("generateMetadata") {
+		description = "Expand mod metadata templates from gradle.properties."
 		val values = project.extra.properties.mapValues { it.value.toString() }
 		inputs.properties(values)
 		expand(values)
-		from(rootProject.file("src/$loader/templates"))
+		from(layout.projectDirectory.dir("src/main/templates"))
 		into(layout.buildDirectory.dir("generated/sources/modMetadata"))
 	}
-	extensions.getByType(SourceSetContainer::class.java).apply {
-		val main = named("main")
-		main.configure {
-			// 核心源码在根目录共享，加载器专属代码在 src/<loader>
-			java.srcDir(rootProject.file("src/main/java"))
-			java.srcDir(rootProject.file("src/$loader/java"))
-			resources.srcDir(rootProject.file("src/main/resources"))
-			resources.srcDir(generateMetadata)
-		}
-		named("test") {
-			java.srcDir(rootProject.file("src/test/java"))
-			java.srcDir(rootProject.file("src/$loader/test/java"))
-			resources.srcDir(rootProject.file("src/test/resources"))
-			resources.srcDir(rootProject.file("src/$loader/test/resources"))
-			compileClasspath += main.get().output + main.get().compileClasspath
-			runtimeClasspath += main.get().output + main.get().runtimeClasspath
-		}
+	extensions.getByType(SourceSetContainer::class.java).named("main") {
+		resources.srcDir(generateMetadata)
 	}
 	repositories.apply {
 		mavenLocal()

@@ -1,0 +1,70 @@
+package io.github.forgestove.flexconfig;
+import io.github.forgestove.flexconfig.foundation.client.ClientLifecycleHandler;
+import io.github.forgestove.flexconfig.foundation.network.ConfigNetwork;
+import io.github.forgestove.flexconfig.platform.NeoForgePayloads;
+import io.github.forgestove.flexconfig.foundation.server.ServerLifecycleHandler;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut;
+import net.neoforged.neoforge.client.event.ClientTickEvent.Post;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
+import net.neoforged.neoforge.event.server.*;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+/**
+ * NeoForge 的事件订阅适配层：本文件只做「解包事件数据 → 转交核心」，不含任何业务逻辑。
+ * <p>
+ * 移植到别的加载器时，只需照着这里重写一遍订阅；对应的处理都在
+ * {@link ClientLifecycleHandler} 与 {@link ServerLifecycleHandler} 里。
+ */
+@EventBusSubscriber
+public class ConfigEvents {
+	@SubscribeEvent
+	public static void register(RegisterPayloadHandlersEvent event) {
+		ConfigNetwork.register(NeoForgePayloads.create(event));
+	}
+	@SubscribeEvent
+	public static void onServerAboutToStart(ServerAboutToStartEvent event) {
+		ServerLifecycleHandler.onServerAboutToStart(event.getServer());
+	}
+	@SubscribeEvent
+	public static void onServerTick(ServerTickEvent.Post event) {
+		ServerLifecycleHandler.onServerTick();
+	}
+	@SubscribeEvent
+	public static void onServerStopped(ServerStoppedEvent event) {
+		ServerLifecycleHandler.onServerStopped();
+	}
+	@EventBusSubscriber(Dist.CLIENT)
+	public static class Client {
+		@SubscribeEvent
+		public static void onClientTick(Post event) {
+			ClientLifecycleHandler.tick();
+		}
+		@SubscribeEvent
+		public static void onLoggingOut(LoggingOut event) {
+			ClientLifecycleHandler.onLoggingOut();
+		}
+	}
+	/**
+	 * 服务端事件两种 dist 都要注册：单人存档的内置服务端就跑在客户端 JVM 里。
+	 * 只挂 {@code Dist.DEDICATED_SERVER} 的话，内置服务端上锁存储不会加载、加入的玩家也收不到锁与 SERVER 配置。
+	 */
+	@EventBusSubscriber
+	public static class Server {
+		@SubscribeEvent
+		public static void onServerStarting(ServerStartingEvent event) {
+			ServerLifecycleHandler.onServerStarting(event.getServer());
+		}
+		@SubscribeEvent
+		public static void onServerStopping(ServerStoppingEvent event) {
+			ServerLifecycleHandler.onServerStopping();
+		}
+		@SubscribeEvent
+		public static void onPlayerLogin(PlayerLoggedInEvent event) {
+			if (event.getEntity() instanceof ServerPlayer player) ServerLifecycleHandler.onPlayerLogin(player);
+		}
+	}
+}
