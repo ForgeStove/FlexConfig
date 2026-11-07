@@ -276,8 +276,4 @@ public abstract class ValueRow extends ConfigRow {
 	public String configPath() {
 		return node.getPath();
 	}
-	@Override
-	public Object identity() {
-		return node.getIdentity();
-	}
 }

@@ -80,8 +80,8 @@ public final class ConfigShell<C, V> {
 	private List<ConfigRow> searchResults = List.of();
 	private int lastWidth, lastHeight;
 	private @Nullable CaptureTarget capture;
-	private @Nullable ConfigRow removingRow;
-	private @Nullable Runnable removeAction;
+	/** 正在播放退出动画的行及其后续操作；整棵子树作为一组一起收起。 */
+	private final List<PendingRemoval> pendingRemovals = new ArrayList<>();
 	private boolean suppressRebuildFx;
 	private CategoryConfigNode keybindCategory;
 	private Map<String, String> savedTriggerKeybinds = Map.of();
@@ -121,6 +121,7 @@ public final class ConfigShell<C, V> {
 			}
 	}
 	private void updateSearch(String query) {
+		if (!pendingRemovals.isEmpty()) rebuildActiveTab();
 		searchQuery = query.trim();
 		SearchIndex.clearHighlights(model);
 		searchResults = searchQuery.isEmpty() && !changedOnly ? List.of() : SearchIndex.search(rowContext, model, searchQuery,
@@ -168,6 +169,7 @@ public final class ConfigShell<C, V> {
 		openPopup(menu);
 	}
 	private void selectTab(int index) {
+		if (!pendingRemovals.isEmpty()) rebuildActiveTab();
 		closeDropdown();
 		var currentTab = model.activeTab();
 		if (currentTab != null && searchQuery.isEmpty()) {
@@ -208,13 +210,13 @@ public final class ConfigShell<C, V> {
 		windowAnim.update(seconds);
 		riseAnim.update(seconds);
 		closeAnim.update(seconds);
-		if (removingRow != null && removingRow.exited()) {
-			var action = removeAction;
-			removingRow = null;
-			removeAction = null;
+		if (!pendingRemovals.isEmpty() && pendingRemovals.stream().allMatch(PendingRemoval::finished)) {
 			suppressRebuildFx = true;
-			if (action != null) action.run();
-			suppressRebuildFx = false;
+			try {
+				rebuildActiveTab();
+			} finally {
+				suppressRebuildFx = false;
+			}
 		}
 		if (closing && closeAnim.done()) {
 			var action = closeAction;
@@ -383,8 +385,7 @@ public final class ConfigShell<C, V> {
 		fadingDropdown = null;
 		openMenu = null;
 		fadingMenu = null;
-		removingRow = null;
-		removeAction = null;
+		flushPendingRemovals();
 		suppressRebuildFx = false;
 		outgoingRows = List.of();
 		ui.setDragOwner(null);
@@ -958,23 +959,68 @@ public final class ConfigShell<C, V> {
 		toast.info(Translation.TOAST_UNDONE);
 	}
 	public void exitRow(Object identity, Runnable action) {
-		ConfigRow target = null;
-		if (removingRow == null) for (var row : activeRows())
-			if (row.identity() == identity) {
-				target = row;
-				break;
-			}
-		if (target == null) {
+		var key = String.valueOf(identity);
+		var rows = new ArrayList<ConfigRow>();
+		for (var row : activeRows()) {
+			var id = row.identity();
+			if (id == null) continue;
+			var path = id.toString();
+			// 标题行连同它的字段行、嵌套元素行作为一整棵子树一起收起
+			if (path.equals(key) || path.startsWith(key + ".") || path.startsWith(key + "[")) rows.add(row);
+		}
+		if (rows.isEmpty()) {
 			action.run();
+			rebuildActiveTab();
 			return;
 		}
-		removingRow = target;
-		removeAction = action;
-		target.onExit();
+		if (rows.stream().allMatch(ConfigRow::exiting)) return;   // 重复点击，已经在收起
+		for (var row : rows) row.onExit();
+		pendingRemovals.add(new PendingRemoval(rows, action, null));
+	}
+	/** 收起一个集合的全部元素行，重建后让新的元素行重新展开；用于集合重置。 */
+	public void exitElements(String collectionPath, Runnable action) {
+		var prefix = collectionPath + "[";
+		var rows = new ArrayList<ConfigRow>();
+		for (var row : activeRows()) {
+			var id = row.identity();
+			if (id != null && id.toString().startsWith(prefix)) rows.add(row);
+		}
+		if (!rows.isEmpty() && rows.stream().allMatch(ConfigRow::exiting)) return;   // 重复点击，已经在收起
+		for (var row : rows) row.onExit();
+		pendingRemovals.add(new PendingRemoval(rows, action, collectionPath));
+	}
+	private void animateCollection(String collectionPath) {
+		if (model == null) return;
+		var tab = model.activeTab();
+		if (tab == null) return;
+		var prefix = collectionPath + "[";
+		for (var row : tab.rows) {
+			var id = row.identity();
+			if (id == null) continue;
+			var path = id.toString();
+			if (path.startsWith(prefix)) row.expandFrom(0);
+			else if (path.equals(collectionPath) && row instanceof ValueRow valueRow) valueRow.wash();
+		}
+	}
+	/** 立即结束所有待处理的删除；返回重建后需要重新展开的集合路径。 */
+	private List<String> flushPendingRemovals() {
+		if (pendingRemovals.isEmpty()) return List.of();
+		var pending = List.copyOf(pendingRemovals);
+		pendingRemovals.clear();
+		var expansions = new ArrayList<String>();
+		for (var removal : pending) {
+			removal.action().run();
+			if (removal.expandPath() != null) expansions.add(removal.expandPath());
+		}
+		return expansions;
 	}
 	public void rebuildActiveTab() {
 		if (model == null) return;
 		closeDropdown();
+		var hadPending = !pendingRemovals.isEmpty();
+		var expansions = flushPendingRemovals();
+		// 刚处理过删除/重置时，旧行的收缩比例属于已被移除的项，不能套到同路径的新行上
+		var quiet = suppressRebuildFx || hadPending;
 		var tab = model.activeTab();
 		var oldRows = tab == null ? List.<ConfigRow>of() : List.copyOf(tab.rows);
 		var oldIds = new HashSet<>();
@@ -1002,16 +1048,18 @@ public final class ConfigShell<C, V> {
 			for (var row : newRows) {
 				var id = row.identity();
 				if (id == null) continue;
-				if (!oldIds.contains(id)) row.onEnter();
-				else {
+				if (!oldIds.contains(id)) {
+					if (!quiet) row.onEnter();
+				} else if (!quiet) {
 					var scale = expanding.get(id);
 					if (scale != null) row.expandFrom(scale);
 				}
 			}
-			if (removed && !suppressRebuildFx) pageIn.start(0.5F, 1, UiMotion.TAB_ROWS_IN);
+			if (removed && !quiet) pageIn.start(0.5F, 1, UiMotion.TAB_ROWS_IN);
 			tab.clampScroll(layout.content.height(), layout.content.width());
 			contentPane.setScroll(tab.scroll);
 		}
+		for (var path : expansions) animateCollection(path);
 		refresh();
 	}
 	private void done() {
@@ -1117,5 +1165,11 @@ public final class ConfigShell<C, V> {
 		var built = builder.build();
 		built.resetToActive(config);
 		keybindCategory = built;
+	}
+	private record PendingRemoval(List<ConfigRow> rows, Runnable action, @Nullable String expandPath) {
+		boolean finished() {
+			for (var row : rows) if (!row.exited()) return false;
+			return true;
+		}
 	}
 }

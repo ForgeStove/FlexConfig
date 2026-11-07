@@ -10,19 +10,9 @@ import java.util.*;
 public class GroupHeaderRow extends ConfigRow {
 	private final Component label;
 	private final String path;
-	private final Object identity;
 	private final @Nullable UiButton delete;
-	public GroupHeaderRow(
-		RowContext ctx,
-		Object identity,
-		String path,
-		Component label,
-		int depth,
-		boolean canDelete,
-		@Nullable Runnable onDelete
-	) {
+	public GroupHeaderRow(RowContext ctx, String path, Component label, int depth, boolean canDelete, @Nullable Runnable onDelete) {
 		super(ctx);
-		this.identity = identity;
 		this.path = path;
 		this.label = label;
 		this.depth = depth;
@@ -73,10 +63,6 @@ public class GroupHeaderRow extends ConfigRow {
 	@Override
 	public String configPath() {
 		return path;
-	}
-	@Override
-	public Object identity() {
-		return identity;
 	}
 	@Override
 	public List<UiControl> controls() {

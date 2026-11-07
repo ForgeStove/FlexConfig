@@ -74,13 +74,22 @@ public class CollectionRows {
 		if (index < 0 || index >= list.size()) return;
 		var element = list.get(index);
 		ctx.shell().exitRow(
-			element, () -> {
-				ctx.handler().shiftElementKeybinds(node.getPath(), index);
-				list.remove(index);
-				node.setEditingElements(list);
-				ctx.rebuildTab();
+			elementPath(node, index), () -> {
+				// 动画期间列表可能已被别处改动，按元素引用重新定位后再删
+				var elements = values(node, ctx);
+				var current = indexOfIdentity(elements, element);
+				if (current < 0) return;
+				ctx.handler().shiftElementKeybinds(node.getPath(), current);
+				elements.remove(current);
 			}
 		);
+	}
+	private static String elementPath(ValueConfigNode node, int index) {
+		return "%s[%d]".formatted(node.getPath(), index);
+	}
+	private static int indexOfIdentity(List<Object> list, Object element) {
+		for (var i = 0; i < list.size(); i++) if (list.get(i) == element) return i;
+		return -1;
 	}
 	private static boolean isReadOnly(RowContext ctx, ValueConfigNode node) {
 		if (!ctx.editable()) return true;
@@ -93,8 +102,7 @@ public class CollectionRows {
 		return ValueConfigNode.builder()
 			.valueType(FieldAccess.boxed(elementType))
 			.name("%s[%d]".formatted(node.getName(), index))
-			.path("%s[%d]".formatted(node.getPath(), index))
-			.identity(index < list.size() ? list.get(index) : null)
+			.path(elementPath(node, index))
 			.title(node.getTitle().copy().append(" #" + (index + 1)))
 			.defaultValue(defaultElement(node, index))
 			.valueReader(ignored -> index < list.size() ? list.get(index) : null)
@@ -139,8 +147,7 @@ public class CollectionRows {
 		return ValueConfigNode.builder()
 			.valueType(List.class)
 			.name("%s[%d]".formatted(node.getName(), index))
-			.path("%s[%d]".formatted(node.getPath(), index))
-			.identity(index < list.size() ? list.get(index) : null)
+			.path(elementPath(node, index))
 			.title(node.getTitle().copy().append(" #" + (index + 1)))
 			.defaultValue(defaultValue)
 			.elementType(shape.element())
@@ -173,7 +180,7 @@ public class CollectionRows {
 			}
 			var element = list.get(i);
 			var key = "%s.%s".formatted(optionKey(ctx, node), element.getClass().getSimpleName());
-			var path = "%s[%d]".formatted(node.getPath(), i);
+			var path = elementPath(node, i);
 			GroupRows.appendGroup(
 				ctx,
 				element,

@@ -19,14 +19,21 @@ public class CollectionHeaderRow extends ValueRow {
 	}
 	@Override
 	public void resetToDefault() {
-		ctx.handler().clearElementKeybinds(node.getPath());
-		super.resetToDefault();
-		ctx.rebuildTab();
+		if (state.readOnly) return;
+		ctx.shell().exitElements(
+			node.getPath(), () -> {
+				super.resetToDefault();
+				ctx.handler().clearElementKeybinds(node.getPath());
+			}
+		);
 	}
 	@Override
 	public void resetToActive() {
-		ctx.handler().clearElementKeybinds(node.getPath());
-		super.resetToActive();
-		ctx.rebuildTab();
+		ctx.shell().exitElements(
+			node.getPath(), () -> {
+				super.resetToActive();
+				ctx.handler().clearElementKeybinds(node.getPath());
+			}
+		);
 	}
 }

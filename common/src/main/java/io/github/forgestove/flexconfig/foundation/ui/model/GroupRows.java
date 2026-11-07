@@ -25,7 +25,7 @@ public class GroupRows {
 		boolean canDelete,
 		List<ConfigRow> out
 	) {
-		out.add(new GroupHeaderRow(ctx, target, path, label, depth, canDelete, onDelete));
+		out.add(new GroupHeaderRow(ctx, path, label, depth, canDelete, onDelete));
 		appendChildren(ctx, target, defaults, path, keyPrefix, lockPath, depth + 1, out);
 	}
 	public static void appendChildren(
