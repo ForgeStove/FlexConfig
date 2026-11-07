@@ -1,9 +1,7 @@
 package io.github.forgestove.flexconfig.platform;
-import io.github.forgestove.flexconfig.platform.services.NetworkService;
-import io.github.forgestove.flexconfig.platform.services.PlatformService;
+import io.github.forgestove.flexconfig.platform.services.*;
 
 import java.util.ServiceLoader;
-/** 服务端也会加载的平台服务入口。客户端专属服务见 {@link FlexConfigClientServices}。 */
 public class FlexConfigServices {
 	public static final PlatformService PLATFORM = load(PlatformService.class);
 	public static final NetworkService NETWORK = load(NetworkService.class);

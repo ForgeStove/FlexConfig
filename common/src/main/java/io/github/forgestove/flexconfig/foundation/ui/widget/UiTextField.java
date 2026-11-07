@@ -14,7 +14,8 @@ import java.util.function.*;
 /** 自绘单行文本编辑：光标、选区、横向滚动和剪贴板都自己处理。 */
 public class UiTextField extends UiControl {
 	private static final int PAD = 3;
-	private String value = "";
+	private final Deque<String> history = new ArrayDeque<>();
+	private String value;
 	private int cursor;
 	private int anchor = -1;
 	private int maxLength = Integer.MAX_VALUE;
@@ -29,7 +30,6 @@ public class UiTextField extends UiControl {
 	private boolean focusedLast;
 	private long caretShownAt;
 	private long lastClickMs;
-	private final Deque<String> history = new ArrayDeque<>();
 	public UiTextField() {}
 	public UiTextField(String initial) {
 		value = initial;
@@ -209,7 +209,9 @@ public class UiTextField extends UiControl {
 	private void insert(String text) {
 		var start = selectionStart();
 		var end = selectionEnd();
-		var base = start >= 0 ? value.substring(0, start) + text + value.substring(end) : value.substring(0, cursor) + text + value.substring(cursor);
+		var base = start >= 0
+			? value.substring(0, start) + text + value.substring(end)
+			: value.substring(0, cursor) + text + value.substring(cursor);
 		if (base.length() > maxLength || !filter.test(base)) return;
 		record();
 		value = base;

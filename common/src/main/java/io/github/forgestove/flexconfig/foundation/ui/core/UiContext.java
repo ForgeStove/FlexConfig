@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
-/** 跨帧保留的界面上下文：焦点、拖拽 owner、提示延迟和淡入都由界面复用同一个实例。 */
+/** 跨帧保留的界面状态：焦点、拖拽 owner、提示延迟和淡入，都由界面复用同一个实例。 */
 public class UiContext {
 	public GuiGraphics graphics;
 	public UiPainter painter;

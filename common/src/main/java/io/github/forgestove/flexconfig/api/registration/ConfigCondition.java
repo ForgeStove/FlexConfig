@@ -4,7 +4,7 @@ import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-/** 实现类须有无参构造（框架按无参构造实例化）。 */
+/** 实现类要有无参构造，框架通过它创建实例。 */
 @FunctionalInterface
 public interface ConfigCondition {
 	/** 无 {@link Condition} 注解的字段视为通过。 */

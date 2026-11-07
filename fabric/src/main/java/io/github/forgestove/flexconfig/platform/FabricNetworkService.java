@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 public class FabricNetworkService implements NetworkService {
-	/** 当前服务端实例；由 {@code FabricEvents} 在启动/停止时维护，仅用于广播（Fabric 没有全局广播 API）。 */
+	/** 当前服务端实例；由 {@code FabricEvents} 在启动/停止时维护，只在广播时使用（Fabric 没有全局广播 API）。 */
 	public static MinecraftServer server;
 	@Override
 	public void sendToPlayer(ServerPlayer player, NetworkPayload payload) {
@@ -19,7 +19,7 @@ public class FabricNetworkService implements NetworkService {
 		if (current == null) return;
 		for (var player : current.getPlayerList().getPlayers()) ServerPlayNetworking.send(player, payload);
 	}
-	/** 客户端专属 API，写在全限定名里靠 JVM 惰性解析隔离——专用服务器不会执行到这里。 */
+	/** 客户端专属 API，用全限定名写，JVM 执行到这里时才解析，专用服务器不会调用。 */
 	@Override
 	public void sendToServer(NetworkPayload payload) {
 		ClientPlayNetworking.send(payload);

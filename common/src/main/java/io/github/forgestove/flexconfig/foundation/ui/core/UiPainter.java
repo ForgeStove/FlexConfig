@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.util.*;
-/** 唯一绘制入口：新界面只允许通过这里画东西，跨版本差异和渲染顺序集中管理。 */
+/** 所有界面都通过这里绘制，跨版本差异和渲染顺序也在这里处理。 */
 public class UiPainter {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final GuiGraphics gui;

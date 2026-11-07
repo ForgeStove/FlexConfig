@@ -198,7 +198,7 @@ public record RootConfigNode<C, V>(
 			if (!evaluatePathCondition(path)) return;
 			var rawType = valueField.getType();
 			var defaultValue = FieldAccess.getFieldValue(valueField, defaultCategory);
-			// 数组在配置树里按 List 编辑，落盘时再转回数组
+			// 数组在配置树里按 List 编辑，写入文件时再转回数组
 			var type = rawType.isArray() ? List.class : FieldAccess.boxed(rawType);
 			var treeDefault = rawType.isArray() ? FieldAccess.arrayToList(defaultValue) : defaultValue;
 			var elementType = FieldAccess.elementShape(valueField);
@@ -239,7 +239,7 @@ public record RootConfigNode<C, V>(
 				.sliderRange(FieldValidators.sliderRange(valueField))
 				.validator(FieldValidators.validatorFor(type, valueField)));
 		}
-		/** 校验声明的重启级别适用于本配置类型，不适用则在构建配置树时抛异常。 */
+		/** 检查当前配置类型是否支持声明的重启级别，不支持就在构建配置树时抛异常。 */
 		private @Nullable RestartType restartTypeOf(Field field) {
 			var annotation = field.getAnnotation(RequiresRestart.class);
 			if (annotation == null) return null;

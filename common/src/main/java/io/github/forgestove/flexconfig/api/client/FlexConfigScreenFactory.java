@@ -5,10 +5,9 @@ import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import io.github.forgestove.flexconfig.foundation.ui.*;
 import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.NotNull;
-/** 配置界面的构建入口；挂到模组列表的动作由加载器侧的 {@code ClientUiService#registerConfigScreen} 实现。 */
 public class FlexConfigScreenFactory {
 	/**
-	 * 仅有一份配置且此刻可用时直接打开，否则先进 {@link ConfigFileScreen}（其中不可用项置灰）。
+	 * 只有一份配置并且可用时直接打开，否则进入 {@link ConfigFileScreen}；不可用的项在列表里显示为灰色。
 	 */
 	public static @NotNull Screen createConfigScreen(String modId) {
 		var handlers = ConfigRegistry.getHandlers(modId);

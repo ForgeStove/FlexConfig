@@ -66,7 +66,7 @@ public class FieldValidators {
 	}
 	/**
 	 * 滑块的取值范围 {@code {min, max}}：注解写了 {@code slider = true} 时返回，否则 {@code null}。此时 min 与 max
-	 * 都须显式写出，因为默认值是类型的上下限、范围过大无法拖动；漏写一个会直接抛异常。
+	 * 都要显式写出，因为默认值是类型的上下限、范围过大无法拖动；漏写一个会直接抛异常。
 	 */
 	public static @Nullable SliderRange sliderRange(Field field) {
 		var intRange = field.getAnnotation(IntRange.class);

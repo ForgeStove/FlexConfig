@@ -8,10 +8,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Set;
-/** 服务器侧的生命周期处理：SERVER 型配置的加载与热重载、配置锁的加载与下发（调用点由加载器的事件订阅转发）。 */
+/** 服务端启动、停止和玩家登录时调用这里的方法，处理 SERVER 型配置的加载、热重载和配置锁下发。 */
 public class ServerLifecycleHandler {
 	private static int watchTicks;
-	/** 世界即将开始：加载全部 SERVER 型配置，存档目录优先；双端都要跑，单人存档也走这里。 */
+	/** 世界开始前加载全部 SERVER 型配置，存档目录优先；客户端和服务端都要调用，单人存档也会进入这里。 */
 	public static void onServerAboutToStart(MinecraftServer server) {
 		ConfigStore.loadServerConfigs(server);
 	}

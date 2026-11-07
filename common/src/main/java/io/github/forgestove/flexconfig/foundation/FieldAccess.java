@@ -13,7 +13,7 @@ public class FieldAccess {
 	private static final Set<Field> WARNED_FIELDS = ConcurrentHashMap.newKeySet();
 	/**
 	 * 按 {@link Order @Order} 值排序，同值者保持声明顺序，无注解者视为 0。
-	 * 配置树与序列化器须共用本方法，否则会出现「GUI 能看到但永不落盘」一类不一致。
+	 * 配置树和序列化器都使用这个方法，否则界面能看到的值可能永远不会写入文件。
 	 */
 	public static Field[] collectOrderedFields(Class<?> clazz) {
 		var fields = Arrays.stream(clazz.getDeclaredFields())

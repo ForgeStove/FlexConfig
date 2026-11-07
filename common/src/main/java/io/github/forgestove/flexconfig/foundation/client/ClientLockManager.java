@@ -52,7 +52,7 @@ public class ClientLockManager {
 			ConfigStore.applyLockedValue(key, node, original);
 			node.resetToActive(config);
 		}
-		// 备份加锁前的原值（仅记第一次，之后重复同步不改基线）
+		// 备份加锁前的原值；只记录第一次，后续重复同步不更新基线
 		for (var path : newLocks.keySet()) {
 			var node = root.getValueNode(path);
 			if (node == null) continue;

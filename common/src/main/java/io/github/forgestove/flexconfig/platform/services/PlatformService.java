@@ -2,7 +2,7 @@ package io.github.forgestove.flexconfig.platform.services;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-/** 加载器无关的基础能力；服务端也会加载。 */
+/** common 里的代码只通过这个接口访问加载器，Fabric 和 NeoForge 各提供一份实现。 */
 public interface PlatformService {
 	Path configDir();
 	boolean isModLoaded(String modId);

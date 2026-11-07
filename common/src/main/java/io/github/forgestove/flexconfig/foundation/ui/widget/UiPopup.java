@@ -1,6 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiContext;
-/** 界面层全局唯一的弹层：下拉、行右键菜单、页面菜单都走这套接口。 */
+/** 界面层全局唯一的弹层；下拉、行右键菜单和页面菜单都通过这套接口操作。 */
 public interface UiPopup {
 	void renderPopup(UiContext ui);
 	boolean isOverPopup(double mouseX, double mouseY);

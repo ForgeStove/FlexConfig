@@ -6,11 +6,11 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 /**
- * Fabric 的事件订阅适配层：本类只做「解包事件数据 → 转交核心」，不含任何业务逻辑。
+ * Fabric 的事件订阅适配层：本类只把事件数据解包后交给核心处理，不含业务逻辑。
  * <p>
- * 与 NeoForge 的 {@code ConfigEvents} 一一对应，唯一的语义收缩：NeoForge 分
- * {@code ServerAboutToStartEvent}（世界加载前）与 {@code ServerStartingEvent}（加载后）两档，
- * Fabric 只有 {@code SERVER_STARTING} 一档，故两者都压到这里。注册期配置已就绪，早一点应用锁无害。
+ * 与 NeoForge 的 {@code ConfigEvents} 一一对应，区别是 NeoForge 分
+ * {@code ServerAboutToStartEvent}（世界加载前）和 {@code ServerStartingEvent}（加载后）两次，
+ * Fabric 只有 {@code SERVER_STARTING} 一次，所以两种事件都注册在这里。启动时配置已经就绪，提前应用锁不影响结果。
  */
 public class FabricEvents implements ModInitializer {
 	@Override

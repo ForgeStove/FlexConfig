@@ -3,22 +3,19 @@ import com.electronwill.nightconfig.core.CommentedConfig;
 import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.api.menu.*;
-import io.github.forgestove.flexconfig.api.menu.Accent;
 import io.github.forgestove.flexconfig.foundation.*;
-import io.github.forgestove.flexconfig.foundation.ConfigStore;
 import io.github.forgestove.flexconfig.foundation.tree.RootConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.factory.EntryKeybind;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
-/** 文件路径由 {@link ConfigNaming} 解析；SERVER 型要进世界才能定位存档目录，故构造期不读盘，其余类型在构造期读取。 */
 @SuppressWarnings("unused")
 public class ConfigHandler<C, V> {
 	private static final Logger LOGGER = LogUtils.getLogger();
@@ -89,11 +86,11 @@ public class ConfigHandler<C, V> {
 		}
 		var fresh = acceptLoaded(toml == null ? newInstance() : deserialize(toml));
 		configTree.copy(fresh, savedConfig);
-		// 运行时按需同步：待生效的延迟项保持旧值（重载不该让它们提前生效）
+		// 重载时延迟生效的项保持旧值，避免它们提前生效
 		configTree.copyForRuntime(fresh, activeConfig);
 		triggerKeybinds.clear();
 		if (toml != null) triggerKeybinds.putAll(ConfigSerializer.readKeybinds(toml));
-		// 刚读过盘，把修改时间记为基线，免得热重载把自己的这次读取当成外部改动
+		// 读取文件后记录修改时间，避免热重载把这次读取当成外部改动
 		ConfigWatchService.markCurrent(new FileKey(modId, fileName));
 	}
 	private C deserialize(CommentedConfig toml) {
@@ -104,7 +101,7 @@ public class ConfigHandler<C, V> {
 			return newInstance();
 		}
 	}
-	/** 用服务端下发的整份内容覆盖 saved 与 active；仅改内存，不落盘也不读本地文件。 */
+	/** 用服务端下发的整份内容覆盖 saved 与 active；只修改内存，不写入文件，也不读取本地文件。 */
 	public void applySynced(CommentedConfig toml) {
 		var fresh = acceptLoaded(deserialize(toml));
 		configTree.copy(fresh, savedConfig);
@@ -186,7 +183,7 @@ public class ConfigHandler<C, V> {
 		} catch (SerializationException e) {
 			LOGGER.error("Failed to save configuration", e);
 		}
-		// 刚写过盘，把修改时间记为基线，免得热重载把自己的这次写入当成外部改动
+		// 写入文件后记录修改时间，避免热重载把这次写入当成外部改动
 		ConfigWatchService.markCurrent(new FileKey(modId, fileName));
 		return true;
 	}
@@ -283,7 +280,7 @@ public class ConfigHandler<C, V> {
 			}
 		});
 	}
-	/** 以快照整体覆盖当前快捷键绑定，用于取消编辑时回撤。 */
+	/** 用快照整体覆盖当前快捷键绑定，取消编辑时回撤到快照。 */
 	public void restoreTriggerKeybinds(Map<String, String> snapshot) {
 		triggerKeybinds.clear();
 		triggerKeybinds.putAll(snapshot);
@@ -313,7 +310,6 @@ public class ConfigHandler<C, V> {
 			this.lockable = lockable;
 			return this;
 		}
-		/** 强调色基色；明暗和按下/悬停变体由 {@link Accent#of(int)} 推导。 */
 		public Builder<C, V> theme(int accent) {
 			this.accent = Accent.of(accent);
 			return this;

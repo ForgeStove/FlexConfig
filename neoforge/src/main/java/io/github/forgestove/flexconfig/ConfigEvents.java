@@ -13,12 +13,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEven
 import net.neoforged.neoforge.event.server.*;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-/**
- * NeoForge 的事件订阅适配层：本文件只做「解包事件数据 → 转交核心」，不含任何业务逻辑。
- * <p>
- * 移植到别的加载器时，只需照着这里重写一遍订阅；对应的处理都在
- * {@link ClientLifecycleHandler} 与 {@link ServerLifecycleHandler} 里。
- */
 @EventBusSubscriber
 public class ConfigEvents {
 	@SubscribeEvent
@@ -48,10 +42,6 @@ public class ConfigEvents {
 			ClientLifecycleHandler.onLoggingOut();
 		}
 	}
-	/**
-	 * 服务端事件两种 dist 都要注册：单人存档的内置服务端就跑在客户端 JVM 里。
-	 * 只挂 {@code Dist.DEDICATED_SERVER} 的话，内置服务端上锁存储不会加载、加入的玩家也收不到锁与 SERVER 配置。
-	 */
 	@EventBusSubscriber
 	public static class Server {
 		@SubscribeEvent

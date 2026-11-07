@@ -2,7 +2,7 @@ package io.github.forgestove.flexconfig.api;
 import java.util.*;
 public enum RestartType {
 	WORLD,
-	/** 不能用于 {@link ConfigType#SERVER} 型配置。 */
+	/** {@link ConfigType#SERVER} 型配置不能使用这个值。 */
 	GAME(ConfigType.SERVER);
 	private final Set<ConfigType> invalidTypes;
 	RestartType(ConfigType... invalidTypes) {

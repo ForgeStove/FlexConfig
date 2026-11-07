@@ -15,16 +15,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 /**
- * Fabric 的包注册。与 NeoForge 的单入口不同：S2C 的接收器只能用 {@code ClientPlayNetworking} 注册，
- * 那是客户端专属类，只能等到客户端入口再碰——所以这里先把 S2C 接收器暂存，
- * 由 {@code FabricClientEvents} 在 {@code onInitializeClient} 里取走注册。
+ * Fabric 的包注册。S2C 接收器只能用 {@code ClientPlayNetworking} 注册，这个类只在客户端存在，
+ * 所以要先把接收器暂存，等 {@code FabricClientEvents} 在 {@code onInitializeClient} 里注册。
  * <p>
- * 类型注册（{@code PayloadTypeRegistry}）与服务端接收器是双端 API，在 common 入口即可完成。
+ * 类型注册（{@code PayloadTypeRegistry}）和服务端接收器在两端都能用，在 common 的初始化阶段就能完成。
  */
 public class FabricPayloads implements PayloadRegistrar {
 	/** 待注册的 S2C 接收器。 */
 	private static final List<Pending<?>> PENDING = new ArrayList<>();
-	/** 由客户端入口调用：把暂存的 S2C 接收器真正挂到 {@code ClientPlayNetworking} 上。 */
+	/** 客户端初始化时调用，把暂存的 S2C 接收器注册到 {@code ClientPlayNetworking}。 */
 	public static void registerClientReceivers() {
 		PENDING.forEach(FabricPayloads::registerClient);
 		PENDING.clear();
@@ -64,7 +63,7 @@ public class FabricPayloads implements PayloadRegistrar {
 		PENDING.add(new Pending<>(registered, handler));
 	}
 	private record Pending<P extends NetworkPayload>(Type<P> type, PayloadHandler<P> handler) {}
-	/** 服务端上下文；接收器回调在网络线程，用 {@code server().execute} 切回主线程。 */
+	/** 服务端侧实现；接收器回调在网络线程，用 {@code server().execute} 切回主线程。 */
 	private record FabricServerContext(ServerPlayNetworking.Context context) implements PayloadContext {
 		@Override
 		public @Nullable ServerPlayer player() {
@@ -76,7 +75,7 @@ public class FabricPayloads implements PayloadRegistrar {
 			context.server().execute(task);
 		}
 	}
-	/** 客户端上下文；客户端没有「服务端玩家」，故 {@link #player()} 恒为 {@code null}。 */
+	/** 客户端侧实现；客户端没有服务端玩家，所以 {@link #player()} 恒为 {@code null}。 */
 	private record FabricClientContext(Context context) implements PayloadContext {
 		@Override
 		public @Nullable ServerPlayer player() {

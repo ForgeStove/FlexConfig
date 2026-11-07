@@ -1,7 +1,7 @@
 package io.github.forgestove.flexconfig.platform.services;
 import io.github.forgestove.flexconfig.platform.NetworkPayload;
 import net.minecraft.server.level.ServerPlayer;
-/** 配置同步的收发；{@link #sendToServer} 只在客户端调用。 */
+/** 发送配置同步包；{@link #sendToServer} 只能在客户端调用。 */
 public interface NetworkService {
 	void sendToPlayer(ServerPlayer player, NetworkPayload payload);
 	void sendToAllPlayers(NetworkPayload payload);

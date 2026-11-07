@@ -4,7 +4,7 @@ import io.github.forgestove.flexconfig.api.FileKey;
 import io.github.forgestove.flexconfig.foundation.ConfigStore;
 import io.github.forgestove.flexconfig.foundation.network.ConfigNetwork;
 import org.slf4j.Logger;
-/** 把锁定的配置项也应用到服务端自身的活动配置（与客户端那个对等）；先重载撤销旧锁值再逐条应用，解锁后能恢复原值。 */
+/** 把锁定的配置项应用到服务端自身的活动配置；先重载撤销旧锁值，再逐条应用，解锁后能恢复原值。 */
 public class ServerLockApplier {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	public static void applyAll(FileKey key, ServerConfigLockStore store) {
@@ -33,7 +33,7 @@ public class ServerLockApplier {
 			ConfigStore.applyLockedValue(key, node, value);
 		}
 	}
-	/** 配置文件被外部重载后，重新叠加锁定值（调用方已重读文件，这里不再读盘）。 */
+	/** 配置文件被外部重载后，重新叠加锁定值；调用方已经重新读取文件，这里不再读取。 */
 	public static void reapply(FileKey key) {
 		var store = ConfigNetwork.getLockStore(key);
 		if (store == null) return;

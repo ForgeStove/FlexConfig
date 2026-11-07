@@ -2,7 +2,7 @@ package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.network.chat.Component;
-/** 可选择的 chip，用于搜索过滤器等。 */
+/** 可选择的 chip，搜索过滤器会用到。 */
 public class UiChip extends UiControl {
 	private final UiAnim hover = new UiAnim(0);
 	private Component label;

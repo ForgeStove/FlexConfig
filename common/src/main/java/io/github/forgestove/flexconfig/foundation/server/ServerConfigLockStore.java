@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 
 import java.nio.file.*;
 import java.util.*;
-/** 按世界存档存储锁定的配置条目，落盘为存档下的 {@code serverconfig/flexconfig/<modId>_locks.toml}；{@code flexconfig} 子目录是为了不和官方认的「server 配置覆盖文件」混在一起。 */
+/** 按世界存档保存锁定的配置条目，文件是存档下的 {@code serverconfig/flexconfig/<modId>_locks.toml}；{@code flexconfig} 子目录用来和官方的「server 配置覆盖文件」分开。 */
 public class ServerConfigLockStore {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Path lockFilePath;
@@ -67,7 +67,7 @@ public class ServerConfigLockStore {
 		collectPaths(locks, "", result);
 		return Collections.unmodifiableSet(result);
 	}
-	/** 直接交出底层配置对象，服务端应用时无需再走文本往返。 */
+	/** 直接返回底层配置对象，服务端应用时不再经过文本转换。 */
 	public CommentedConfig toConfig() {
 		return locks;
 	}

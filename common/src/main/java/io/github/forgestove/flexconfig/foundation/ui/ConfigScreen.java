@@ -10,7 +10,7 @@ import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.*;
 
 import java.util.Set;
-/** 屏幕适配层：只负责生命周期、坐标转发和 Screen 环境，界面编排在 {@link ConfigShell}。 */
+/** 屏幕适配层：只处理 Screen 的打开、关闭和坐标转发，界面编排在 {@link ConfigShell}。 */
 public class ConfigScreen<C, V> extends Screen implements ConfigHost {
 	public final RootConfigNode<C, V> root;
 	private final Screen parent;

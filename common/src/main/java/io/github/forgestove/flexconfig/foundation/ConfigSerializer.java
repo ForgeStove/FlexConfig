@@ -187,7 +187,7 @@ public class ConfigSerializer<C> {
 		}
 		return warnNull(field, "list element does not match " + elementType.getSimpleName());
 	}
-	/** 运行期才知道枚举类型，类型正确性由 {@code isEnum()} 前置检查保证。 */
+	/** 枚举类型在运行期才能确定，调用前已经用 {@code isEnum()} 检查过。 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private static Object enumValue(Class<?> type, String name) {
 		return Enum.valueOf((Class) type, name);
@@ -301,7 +301,7 @@ public class ConfigSerializer<C> {
 			field.set(category, object);
 			return true;
 		}
-		// 原始 boolean 的 isInstance 恒为 false，需单独放行
+		// 原始 boolean 的 isInstance 恒为 false，要单独处理
 		if (value instanceof Boolean bool && (type == boolean.class || type == Boolean.class)) {
 			field.set(category, bool);
 			return true;
@@ -329,7 +329,7 @@ public class ConfigSerializer<C> {
 			throw new SerializationException(e);
 		}
 	}
-	/** 不含快捷键段，供网络下发等场景使用。 */
+	/** 不含快捷键段，网络下发时使用。 */
 	public String writeToString(C config) throws SerializationException {
 		try {
 			return new TomlWriter().writeToString(toConfig(config));
@@ -418,7 +418,7 @@ public class ConfigSerializer<C> {
 		return sb.toString();
 	}
 	private String translate(String key) {
-		// Translation 依赖客户端 I18n，专用服务端触碰会加载 client-only 类；服务端不生成注释即可
+		// Translation 依赖客户端 I18n，专用服务端调用会加载客户端类；服务端不生成注释，不会进入这个方法
 		if (translationPrefix == null || !FlexConfigServices.PLATFORM.isClient()) return null;
 		key = "%s.%s".formatted(translationPrefix, key);
 		return Translation.getString(key);

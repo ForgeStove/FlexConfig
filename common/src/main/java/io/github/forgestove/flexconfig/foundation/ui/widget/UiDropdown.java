@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.*;
-/** 带过滤框的弹层下拉。弹层由界面统一放到内容层之上，避免被列表 scissor 截断。 */
 public class UiDropdown extends UiControl implements UiPopup {
 	private static final int ROW_HEIGHT = 16, MAX_ROWS = 8, PAD = 4, FILTER_HEIGHT = 16;
 	public record Option(Object value, Component label) {}

@@ -6,9 +6,9 @@ import org.slf4j.Logger;
 
 import java.util.*;
 /**
- * 批次窗口由 {@code RootConfigNode}/{@code CategoryConfigNode} 的写回遍历用 {@link #begin()}/{@link #end()} 界定，
- * 深度归零才派发，使 handler 执行时配置对象已是完整新值；不经树遍历的单节点写入（快捷键路径）深度为 0，
- * {@link #record} 时即派发。目前在客户端保存路径上使用（单线程），未做线程安全。
+ * 批次窗口由 {@code RootConfigNode} 和 {@code CategoryConfigNode} 的写回遍历用 {@link #begin()}/{@link #end()} 划定，
+ * 深度归零才派发，handler 执行时配置对象已经是完整的新值；不经过树遍历的单节点写入（快捷键路径）深度为 0，
+ * 调用 {@link #record} 时立即派发。只在客户端保存时使用；单线程，没有做线程安全。
  */
 public class ConfigChangeDispatcher {
 	private static final Logger LOGGER = LogUtils.getLogger();

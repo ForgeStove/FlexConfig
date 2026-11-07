@@ -104,7 +104,7 @@ public class ConfigStore {
 	public static void resetToSaved(FileKey key) {
 		getHandler(key).cast().reloadAndCopy();
 	}
-	/** 仅作用于活动配置，不修改 savedConfig，因此不会污染 TOML 文件。 */
+	/** 只改活动配置，不修改 savedConfig，所以不会改动 TOML 文件。 */
 	@Internal
 	public static void applyLockedValue(FileKey key, ValueConfigNode<Object, Object> node, Object parsed) {
 		node.setActiveValue(getHandler(key).cast().getConfig(), parsed);
@@ -113,7 +113,7 @@ public class ConfigStore {
 	public static void applyWorldRestart() {
 		for (var handler : allHandlers()) handler.applyWorldRestart();
 	}
-	// ========== 生命周期 ==========
+	// ========== 加载与卸载 ==========
 	/** 世界即将开始：解析并加载 SERVER 型配置（存档优先，回退全局 config）。 */
 	public static void loadServerConfigs(MinecraftServer server) {
 		for (var handler : allHandlers()) if (handler.getType() == ConfigType.SERVER) handler.loadFromDisk(server);

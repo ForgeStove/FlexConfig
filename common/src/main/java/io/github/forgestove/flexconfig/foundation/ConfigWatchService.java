@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 /**
- * 配置文件的外部改动探测（修改时间轮询）；节流与侧别分工由调用方负责：客户端轮询非 SERVER 型，服务端轮询 SERVER 型。
+ * 轮询配置文件的修改时间，检测外部改动；节流和侧别分工由调用方决定：客户端轮询非 SERVER 型，服务端轮询 SERVER 型。
  */
 public class ConfigWatchService {
 	/** 轮询间隔：20 tick，约 1 秒。 */
