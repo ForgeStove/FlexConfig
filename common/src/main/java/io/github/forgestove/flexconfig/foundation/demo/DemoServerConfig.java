@@ -12,11 +12,9 @@ public class DemoServerConfig {
 	public static class Gameplay {
 		@IntRange(min = 1, max = 64, slider = true) public int maxPlayersPerTeam = 8;
 		public boolean friendlyFire = true;
-		public boolean keepInventory = false;
 		@RequiresRestart(RestartType.WORLD) public boolean hardcore = false;
 		public List<String> whitelist = new ArrayList<>(List.of("Steve", "Alex"));
 		@StringLength(min = 1, max = 32) public String motd = "Flex Config demo";
-		public boolean announceDeaths = true;
 	}
 	public static class Limits {
 		@IntRange(min = 1, max = 1000) public int maxEntitiesPerChunk = 128;
