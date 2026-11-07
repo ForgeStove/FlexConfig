@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.screen;
+import io.github.forgestove.flexconfig.foundation.ui.FlexGuiTextures;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.ConfigUiModel;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiScrollPane;
@@ -49,12 +50,16 @@ public class SidebarView extends UiScrollPane {
 			} else if (hover.get() > 0.01) ui.painter.rect(item, UiTheme.mulAlpha(UiTheme.ROW_HOVER, 0.6F * (float) hover.get()));
 			var nudge = active ? 0F : (float) hover.get();
 			if (nudge != 0F) ui.painter.pushTranslate(nudge, 0F);
-			var glyph = new UiBounds(item.x() + 7, item.y() + (item.height() - 7) / 2, 7, 7);
-			drawGlyph(ui.painter, i, glyph, active ? ui.accent().base() : UiTheme.TEXT_3);
-			var label = ui.painter.trim(tab.title.getString(), item.width() - 34);
+			var icon = FlexGuiTextures.of(tab.node.getIcon());
+			if (icon != null) ui.painter.texture(
+				icon.texture,
+				new UiBounds(item.x() + 6, item.y() + (item.height() - 16) / 2, 16, 16)
+			);
+			var textInset = icon == null ? 10 : 26;
+			var label = ui.painter.trim(tab.title.getString(), item.width() - textInset - 16);
 			ui.painter.text(
 				label,
-				item.x() + 18,
+				item.x() + textInset,
 				item.y() + (item.height() - ui.painter.lineHeight()) / 2,
 				active || hover.get() > 0.5 ? UiTheme.TEXT : UiTheme.TEXT_2
 			);
@@ -83,58 +88,6 @@ public class SidebarView extends UiScrollPane {
 			var top = (int) Math.round(indicatorTop.get());
 			var bottom = (int) Math.round(indicatorBottom.get());
 			ui.painter.rect(bounds().x(), top + 1, 3, Math.max(0, bottom - top - 2), ui.accent().base());
-		}
-	}
-	private static void drawGlyph(UiPainter painter, int index, UiBounds b, int color) {
-		switch (index % 8) {
-			case 0 -> {
-				for (var i = 0; i < 3; i++) {
-					var y = b.y() + 1 + i * 3;
-					painter.rect(b.x(), y, 7, 1, color);
-					painter.rect(b.x() + (i == 0 ? 1 : i == 1 ? 4 : 2), y - 1, 2, 3, color);
-				}
-			}
-			case 1 -> {
-				for (var i = 0; i < 3; i++) {
-					painter.rect(b.x() + 1 + i, b.y() + 2 + i, 1, 1, color);
-					painter.rect(b.x() + 5 - i, b.y() + 2 + i, 1, 1, color);
-				}
-				painter.rect(b.x() + 3, b.y() + 2, 1, 4, color);
-			}
-			case 2 -> {
-				painter.rect(b.x() + 3, b.y(), 1, 7, color);
-				painter.rect(b.x(), b.y() + 3, 7, 1, color);
-				painter.rect(b.x() + 1, b.y() + 1, 1, 1, color);
-				painter.rect(b.x() + 5, b.y() + 5, 1, 1, color);
-			}
-			case 3 -> {
-				painter.border(b.x(), b.y(), 7, 7, color);
-				painter.rect(b.x() + 1, b.y() + 1, 5, 1, color);
-				painter.rect(b.x() + 1, b.y() + 5, 5, 1, color);
-				painter.rect(b.x() + 3, b.y() + 1, 1, 5, color);
-			}
-			case 4 -> {
-				painter.rect(b.x(), b.y(), 7, 1, color);
-				for (var i = 1; i < 6; i++) painter.rect(b.x() + i, b.y() + i, 1, 1, color);
-				painter.rect(b.x(), b.y() + 6, 7, 1, color);
-			}
-			case 5 -> {
-				painter.border(b.x(), b.y() + 2, 3, 3, color);
-				painter.border(b.x() + 4, b.y() + 2, 3, 3, color);
-				painter.rect(b.x() + 3, b.y() + 3, 1, 1, color);
-			}
-			case 6 -> {
-				for (var i = 0; i < 3; i++) painter.rect(b.x(), b.y() + i * 3, 7, 1, color);
-				painter.rect(b.x() + 2, b.y() + 1, 1, 1, color);
-				painter.rect(b.x() + 4, b.y() + 4, 1, 1, color);
-			}
-			default -> {
-				painter.rect(b.x() + 2, b.y(), 3, 1, color);
-				painter.rect(b.x() + 1, b.y() + 1, 1, 2, color);
-				painter.rect(b.x() + 5, b.y() + 1, 1, 2, color);
-				painter.rect(b.x() + 3, b.y() + 3, 1, 1, color);
-				painter.rect(b.x() + 3, b.y() + 5, 1, 2, color);
-			}
 		}
 	}
 	@Override

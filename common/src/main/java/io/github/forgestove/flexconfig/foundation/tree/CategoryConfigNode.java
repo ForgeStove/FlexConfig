@@ -1,5 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.tree;
 import com.google.common.collect.ImmutableList;
+import io.github.forgestove.flexconfig.api.CategoryIcon;
 import io.github.forgestove.flexconfig.foundation.ConfigChangeDispatcher;
 import io.github.forgestove.flexconfig.api.RestartType;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
@@ -10,6 +11,7 @@ import java.util.function.UnaryOperator;
 public class CategoryConfigNode implements ConfigNode {
 	private Component title;
 	private Component tooltip;
+	private CategoryIcon icon = CategoryIcon.NONE;
 	private ImmutableList<ConfigNode> children;
 	public static Builder builder() {
 		return new Builder();
@@ -17,6 +19,10 @@ public class CategoryConfigNode implements ConfigNode {
 	@NotNull
 	public Component getTitle() {
 		return title;
+	}
+	@NotNull
+	public CategoryIcon getIcon() {
+		return icon;
 	}
 	@Nullable
 	@Override
@@ -112,6 +118,10 @@ public class CategoryConfigNode implements ConfigNode {
 		}
 		public Builder tooltip(Component tooltip) {
 			node.tooltip = tooltip;
+			return this;
+		}
+		public Builder icon(CategoryIcon icon) {
+			node.icon = icon;
 			return this;
 		}
 		public Builder value(UnaryOperator<ValueConfigNode.Builder> valueBuilder) {

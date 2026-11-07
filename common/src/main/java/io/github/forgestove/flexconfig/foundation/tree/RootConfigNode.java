@@ -149,7 +149,9 @@ public record RootConfigNode(
 			var defaultCategory = FieldAccess.getFieldValue(categoryField, defaultConfig);
 			var categoryKey = modId + ".config.category." + categoryField.getName();
 			translationKeys.add(categoryKey);
-			var categoryBuilder = CategoryConfigNode.builder().title(ConfigTranslation.translatable(categoryKey));
+			var categoryBuilder = CategoryConfigNode.builder()
+				.title(ConfigTranslation.translatable(categoryKey))
+				.icon(categoryField.getAnnotation(Category.class).icon());
 			for (var valueField : FieldAccess.collectOrderedFields(categoryField.getType()))
 				if (valueField.isAnnotationPresent(Category.class)) {
 					if (!ConfigCondition.evaluate(valueField)) continue;
@@ -167,7 +169,9 @@ public record RootConfigNode(
 			var pathKey = buildPathKey(path);
 			var categoryKey = modId + ".config.category." + pathKey;
 			translationKeys.add(categoryKey);
-			var builder = CategoryConfigNode.builder().title(ConfigTranslation.translatable(categoryKey));
+			var builder = CategoryConfigNode.builder()
+				.title(ConfigTranslation.translatable(categoryKey))
+				.icon(subCategoryField.getAnnotation(Category.class).icon());
 			for (var valueField : FieldAccess.collectOrderedFields(subCategoryField.getType()))
 				if (valueField.isAnnotationPresent(Category.class)) {
 					if (!ConfigCondition.evaluate(valueField)) continue;

@@ -2,6 +2,7 @@ package io.github.forgestove.flexconfig.foundation.demo;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import io.github.forgestove.flexconfig.FlexConfig;
+import io.github.forgestove.flexconfig.api.CategoryIcon;
 import io.github.forgestove.flexconfig.api.annotation.*;
 
 import java.awt.Point;
@@ -9,8 +10,8 @@ import java.util.*;
 @Config(FlexConfig.ID)
 @SuppressWarnings("unused")
 public class DemoConfig {
-	@Category public Toggles toggles = new Toggles();
-	@Category public Numbers numbers = new Numbers();
+	@Category(icon = CategoryIcon.CONTROLS) public Toggles toggles = new Toggles();
+	@Category(icon = CategoryIcon.GENERAL) public Numbers numbers = new Numbers();
 	public enum Theme {
 		Default,
 		Dark,
