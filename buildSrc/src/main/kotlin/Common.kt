@@ -1,11 +1,10 @@
-@file:Suppress("unused", "KotlinPrintToLogpoint")
-
 import me.modmuss50.mpp.ModPublishExtension
 import me.modmuss50.mpp.ReleaseType
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePluginExtension
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.named
@@ -41,7 +40,8 @@ fun Project.configure(loader: String) {
 		append(System.getProperty("os.arch"))
 	})
 	extensions.getByType(ModPublishExtension::class.java).apply {
-		file.set(tasks.named<Jar>("jar").flatMap { it.archiveFile })
+		val publishJar = tasks.named(if(loader == "fabric") "remapJar" else "jar", AbstractArchiveTask::class.java)
+		file.set(publishJar.flatMap { it.archiveFile })
 		additionalFiles.from(tasks.named<Jar>("sourcesJar").flatMap { it.archiveFile })
 		changelog.set(rootProject.file("CHANGELOG.md").readText())
 		type.set(ReleaseType.BETA)
@@ -50,7 +50,7 @@ fun Project.configure(loader: String) {
 		modLoaders.add(loader)
 		github {
 			repository.set("ForgeStove/FlexConfig")
-			commitish.set("main")
+			commitish.set(providers.environmentVariable("GITHUB_REF_NAME").orElse(p("mcVersion")))
 			accessToken.set(providers.environmentVariable("GITHUB_TOKEN"))
 		}
 	}
