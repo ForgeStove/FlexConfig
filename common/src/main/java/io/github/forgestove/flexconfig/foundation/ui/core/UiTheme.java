@@ -25,6 +25,8 @@ public class UiTheme {
 	public static final int BORDER = 0xFF1E1E1F;
 	public static final int BORDER_LIGHT = 0xFFA8A8AE;
 	public static final int SEP = 0xFF323334;
+	/** 比 {@link #SIDEBAR} 深一档；{@link #SEP} 与侧边栏背景几乎同色，选中项底边要用这个。 */
+	public static final int SEP_DARK = 0xFF28292A;
 	public static final int GROOVE_LIGHT = 0xFF5A5B5C;
 	public static final int WELL = 0xFF1F2021;
 	public static final int OUTLINE = 0xFFA8A8AE;

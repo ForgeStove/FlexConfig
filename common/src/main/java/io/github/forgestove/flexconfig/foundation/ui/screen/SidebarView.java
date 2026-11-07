@@ -45,7 +45,7 @@ public class SidebarView extends UiScrollPane {
 			if (active) {
 				ui.painter.rect(item.x(), item.y(), item.width(), 1, UiTheme.GROOVE_LIGHT);
 				ui.painter.rect(item.x(), item.y() + 1, item.width(), item.height() - 2, UiTheme.PANEL);
-				ui.painter.rect(item.x(), item.bottom() - 1, item.width(), 1, UiTheme.SEP);
+				ui.painter.rect(item.x(), item.bottom() - 1, item.width(), 1, UiTheme.SEP_DARK);
 			} else if (hover.get() > 0.01) ui.painter.rect(item, UiTheme.mulAlpha(UiTheme.ROW_HOVER, 0.6F * (float) hover.get()));
 			var nudge = active ? 0F : (float) hover.get();
 			if (nudge != 0F) ui.painter.pushTranslate(nudge, 0F);
@@ -82,7 +82,7 @@ public class SidebarView extends UiScrollPane {
 			indicatorBottom.update(ui.delta);
 			var top = (int) Math.round(indicatorTop.get());
 			var bottom = (int) Math.round(indicatorBottom.get());
-			ui.painter.rect(bounds().x(), top, 3, Math.max(1, bottom - top), ui.accent().base());
+			ui.painter.rect(bounds().x(), top + 1, 3, Math.max(0, bottom - top - 2), ui.accent().base());
 		}
 	}
 	private static void drawGlyph(UiPainter painter, int index, UiBounds b, int color) {

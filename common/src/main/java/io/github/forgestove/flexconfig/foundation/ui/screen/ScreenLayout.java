@@ -20,7 +20,7 @@ public class ScreenLayout {
 		showcase = showShowcase ? new UiBounds(x + 4, bodyY + 4, leftWidth - 8, 56) : UiBounds.EMPTY;
 		var footerY = (showShowcase ? showcase.bottom() : bodyY) + 4;
 		footer = new UiBounds(x + 4, footerY, leftWidth - 8, 18);
-		tabs = new UiBounds(x, footer.bottom() + 2, leftWidth, Math.max(0, panel.bottom() - footer.bottom() - 4));
+		tabs = new UiBounds(x, footer.bottom() + 4, leftWidth, Math.max(0, panel.bottom() - footer.bottom() - 4));
 		var contentX = sidebar.right() + 6;
 		var contentRight = panel.right() - UiTheme.PADDING - UiTheme.SCROLLBAR_WIDTH - 2;
 		pageHeader = new UiBounds(contentX, bodyY + 2, Math.max(0, contentRight - contentX), UiTheme.PAGE_HEADER);

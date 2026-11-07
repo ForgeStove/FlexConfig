@@ -142,23 +142,29 @@ public class UiPainter {
 			rect(x + 6 - i, y + i, 1, 1, argb);
 		}
 	}
+	/** 字体渲染会把 α 低于 4 的颜色补成不透明，淡入淡出时会在阈值附近闪一下，低于该值直接不画。 */
+	private static final int MIN_TEXT_ALPHA = 8;
 	public void text(String text, int x, int y, int color) {
 		text(text, x, y, color, false);
 	}
 	public void text(String text, int x, int y, int color, boolean shadow) {
-		if (text == null || text.isEmpty() || alpha <= 0.004F) return;
-		gui.drawString(ClientUtil.mc.font, text, x, y, col(color), shadow);
+		if (text == null || text.isEmpty()) return;
+		var argb = col(color);
+		if (argb >>> 24 < MIN_TEXT_ALPHA) return;
+		gui.drawString(ClientUtil.mc.font, text, x, y, argb, shadow);
 	}
 	public void text(Component text, int x, int y, int color) {
 		text(text, x, y, color, false);
 	}
 	public void text(Component text, int x, int y, int color, boolean shadow) {
-		if (alpha <= 0.004F) return;
-		gui.drawString(ClientUtil.mc.font, text, x, y, col(color), shadow);
+		var argb = col(color);
+		if (argb >>> 24 < MIN_TEXT_ALPHA) return;
+		gui.drawString(ClientUtil.mc.font, text, x, y, argb, shadow);
 	}
 	public void text(FormattedCharSequence text, int x, int y, int color) {
-		if (alpha <= 0.004F) return;
-		gui.drawString(ClientUtil.mc.font, text, x, y, col(color), false);
+		var argb = col(color);
+		if (argb >>> 24 < MIN_TEXT_ALPHA) return;
+		gui.drawString(ClientUtil.mc.font, text, x, y, argb, false);
 	}
 	public void textEmphasis(String text, int x, int y, int color) {
 		text(Component.literal(text).withStyle(ChatFormatting.BOLD), x, y, color, false);
