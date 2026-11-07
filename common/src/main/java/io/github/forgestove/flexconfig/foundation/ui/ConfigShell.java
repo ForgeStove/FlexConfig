@@ -46,6 +46,7 @@ public final class ConfigShell<C, V> {
 	private final UiAnim searchWidth = new UiAnim(90, UiMotion.SEARCH_WIDTH);
 	private final UiTween pageOut = new UiTween(1);
 	private final UiTween pageIn = new UiTween(1);
+	private byte pageDirection = 1;
 	private ScreenLayout layout;
 	private ConfigUiModel model;
 	private SidebarView sidebar;
@@ -188,8 +189,17 @@ public final class ConfigShell<C, V> {
 	private void selectTab(int index) {
 		if (!pendingRemovals.isEmpty()) rebuildActiveTab();
 		closeDropdown();
+		var sameTab = index == model.activeIndex();
+		var hasSearch = !searchQuery.isEmpty() || searchField != null && !searchField.value().isEmpty();
+		// 点当前分类且没有搜索条件时什么都不用重放，否则整页会再刷一次动画
+		if (sameTab && !hasSearch) {
+			ui.focus.clear();
+			return;
+		}
 		var currentTab = model.activeTab();
-		if (currentTab != null && searchQuery.isEmpty()) {
+		if (currentTab != null && searchQuery.isEmpty() && !sameTab) {
+			pageDirection = (byte) Integer.signum(index - model.activeIndex());
+			if (pageDirection == 0) pageDirection = 1;
 			outgoingRows = currentTab.rows;
 			outgoingScroll = contentPane.scroll();
 			pageOut.start(1, 0, UiMotion.TAB_ROWS_IN);
@@ -286,7 +296,7 @@ public final class ConfigShell<C, V> {
 		pageIn.update(seconds);
 		if (!pageOut.done() && !outgoingRows.isEmpty()) renderOutgoing(ui, outgoingRows, outgoingScroll);
 		ui.painter.pushAlpha(pageIn.value());
-		ui.painter.pushTranslate((1F - pageIn.value()) * UiMotion.PAGE_SLIDE, 0);
+		ui.painter.pushTranslate((1F - pageIn.value()) * UiMotion.PAGE_SLIDE_IN * pageDirection, 0);
 		contentPane.render(ui);
 		ui.painter.popTranslate();
 		ui.painter.popAlpha();
@@ -604,7 +614,7 @@ public final class ConfigShell<C, V> {
 		var y = layout.content.y() - (int) Math.round(scroll);
 		var content = layout.content;
 		ui.painter.pushAlpha(pageOut.value());
-		ui.painter.pushTranslate(-(1F - pageOut.value()) * UiMotion.PAGE_SLIDE, 0);
+		ui.painter.pushTranslate(-(1F - pageOut.value()) * UiMotion.PAGE_SLIDE_OUT * pageDirection, 0);
 		ui.painter.scissorOn(content);
 		for (var row : rows) {
 			var height = row.heightFor(content.width());

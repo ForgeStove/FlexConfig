@@ -171,7 +171,7 @@ public abstract class ValueRow extends ConfigRow {
 		var left = bounds().x() + UiTheme.INDENT + depth * UiTheme.INDENT;
 		var dotSize = Math.round(2F * dot.value());
 		if (dotSize > 0) {
-			painter.rect(left, titleTop() + 3, dotSize, dotSize, ui.accent().base());
+			painter.rect(left, titleTop() + 3, dotSize, dotSize, ui.accent().bright());
 			left += 6;
 		}
 		var available = descriptionWidth(bounds().width());

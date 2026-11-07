@@ -21,7 +21,7 @@ public class UiMotion {
 	public static final TweenSpec BACKDROP_IN = new TweenSpec(160F, UiEasing.ENTER);
 	public static final TweenSpec CONTENT_ROWS_IN = new TweenSpec(180F, UiEasing.ENTER);
 	public static final TweenSpec TAB_ROWS_IN = new TweenSpec(160F, UiEasing.ENTER);
-	public static final float PAGE_SLIDE = 8F;
+	public static final float PAGE_SLIDE_IN = 24F, PAGE_SLIDE_OUT = 16F;
 	public static final TweenSpec POPUP_IN = new TweenSpec(120F, UiEasing.ENTER);
 	public static final TweenSpec POPUP_OUT = new TweenSpec(80F, UiEasing.EXIT);
 	public static final TweenSpec TOOLTIP_FADE = new TweenSpec(100F, UiEasing.ENTER);
