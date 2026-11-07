@@ -26,6 +26,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 public final class ConfigShell<C, V> {
+	private static final int DIALOG_MAX_WIDTH = 300, DIALOG_PAD = 8, DIALOG_BUTTON_WIDTH = 70, DIALOG_BUTTON_HEIGHT = 18;
 	public static CategoryConfigNode lastSelectedCategory;
 	public final RootConfigNode root;
 	private final ConfigHost host;
@@ -257,8 +258,8 @@ public final class ConfigShell<C, V> {
 			layout.panel.height() + 2,
 			UiTheme.WINDOW_EDGE
 		);
-		painter.rect(layout.header.x(), layout.header.y(), layout.header.width(), layout.header.height() - 3, UiTheme.TITLEBAR);
-		painter.rect(layout.header.x(), layout.header.bottom() - 3, layout.header.width(), 1, UiTheme.TITLEBAR_EDGE);
+		painter.rect(layout.header.x(), layout.header.y(), layout.header.width(), layout.header.height() - 2, UiTheme.TITLEBAR);
+		painter.rect(layout.header.x(), layout.header.bottom() - 2, layout.header.width(), 1, UiTheme.TITLEBAR_EDGE);
 		painter.rect(layout.header.x(), layout.header.bottom() - 1, layout.header.width(), 1, UiTheme.WINDOW_EDGE);
 		painter.rect(layout.sidebar, UiTheme.SIDEBAR);
 		painter.rect(
@@ -498,24 +499,48 @@ public final class ConfigShell<C, V> {
 	}
 	private void renderDialog(UiContext ui) {
 		var painter = ui.painter;
-		var panel = new UiBounds((logicalWidth - 300) / 2, (logicalHeight - 140) / 2, 300, 140);
+		var font = ClientUtil.mc.font;
+		var contentWidth = Math.clamp(
+			Math.max(painter.textWidthEmphasis(dialogTitle.getString()), font.width(dialogBody)),
+			DIALOG_BUTTON_WIDTH * 2 + UiTheme.GAP,
+			DIALOG_MAX_WIDTH - DIALOG_PAD * 2
+		);
+		var lines = font.split(dialogBody, contentWidth);
+		var panelWidth = contentWidth + DIALOG_PAD * 2;
+		var panelHeight = UiTheme.HEADER_HEIGHT
+			+ DIALOG_PAD
+			+ lines.size() * font.lineHeight
+			+ DIALOG_PAD
+			+ DIALOG_BUTTON_HEIGHT
+			+ DIALOG_PAD;
+		var panel = new UiBounds((logicalWidth - panelWidth) / 2, (logicalHeight - panelHeight) / 2, panelWidth, panelHeight);
 		painter.pushZ(300);
 		painter.rect(0, 0, logicalWidth, logicalHeight, 0x99000000);
 		painter.rect(panel.x() + 3, panel.y() + 3, panel.width(), panel.height(), UiTheme.SHADOW);
 		painter.border(panel.x() - 1, panel.y() - 1, panel.width() + 2, panel.height() + 2, UiTheme.WINDOW_EDGE);
-		painter.rect(panel.x(), panel.y(), panel.width(), UiTheme.HEADER_HEIGHT - 3, UiTheme.TITLEBAR);
-		painter.rect(panel.x(), panel.y() + UiTheme.HEADER_HEIGHT - 3, panel.width(), 1, UiTheme.TITLEBAR_EDGE);
+		painter.rect(panel.x(), panel.y(), panel.width(), UiTheme.HEADER_HEIGHT - 2, UiTheme.TITLEBAR);
+		painter.rect(panel.x(), panel.y() + UiTheme.HEADER_HEIGHT - 2, panel.width(), 1, UiTheme.TITLEBAR_EDGE);
 		painter.rect(panel.x(), panel.y() + UiTheme.HEADER_HEIGHT - 1, panel.width(), 1, UiTheme.WINDOW_EDGE);
 		painter.rect(panel.x(), panel.y() + UiTheme.HEADER_HEIGHT, panel.width(), panel.height() - UiTheme.HEADER_HEIGHT, UiTheme.PANEL);
-		painter.textEmphasis(dialogTitle, panel.x() + 8, panel.y() + 7, UiTheme.TITLE_INK);
-		var lines = ClientUtil.mc.font.split(dialogBody, panel.width() - 16);
-		var ty = panel.y() + UiTheme.HEADER_HEIGHT + 8;
+		painter.textEmphasis(dialogTitle, panel.x() + DIALOG_PAD, panel.y() + 7, UiTheme.TITLE_INK);
+		var ty = panel.y() + UiTheme.HEADER_HEIGHT + DIALOG_PAD;
 		for (var line : lines) {
-			painter.text(line, panel.x() + 8, ty, UiTheme.TEXT);
-			ty += ClientUtil.mc.font.lineHeight;
+			painter.text(line, panel.x() + DIALOG_PAD, ty, UiTheme.TEXT);
+			ty += font.lineHeight;
 		}
-		dialogCancel.setBounds(new UiBounds(panel.right() - 8 - 70, panel.bottom() - 8 - 18, 70, 18));
-		dialogConfirm.setBounds(new UiBounds(dialogCancel.bounds().x() - 4 - 70, dialogCancel.bounds().y(), 70, 18));
+		var buttonY = panel.bottom() - DIALOG_PAD - DIALOG_BUTTON_HEIGHT;
+		dialogCancel.setBounds(new UiBounds(
+			panel.right() - DIALOG_PAD - DIALOG_BUTTON_WIDTH,
+			buttonY,
+			DIALOG_BUTTON_WIDTH,
+			DIALOG_BUTTON_HEIGHT
+		));
+		dialogConfirm.setBounds(new UiBounds(
+			dialogCancel.bounds().x() - UiTheme.GAP - DIALOG_BUTTON_WIDTH,
+			buttonY,
+			DIALOG_BUTTON_WIDTH,
+			DIALOG_BUTTON_HEIGHT
+		));
 		dialogCancel.render(ui);
 		dialogConfirm.render(ui);
 		painter.popZ();

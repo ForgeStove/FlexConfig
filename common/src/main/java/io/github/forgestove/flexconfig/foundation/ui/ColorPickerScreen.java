@@ -117,8 +117,8 @@ public class ColorPickerScreen extends Screen {
 		painter.rect(panel.x() + 2, panel.y() + 2, panel.width(), panel.height(), UiTheme.SHADOW);
 		painter.border(panel.x() - 1, panel.y() - 1, panel.width() + 2, panel.height() + 2, UiTheme.WINDOW_EDGE);
 		var titleBar = new UiBounds(panel.x(), panel.y(), panel.width(), UiTheme.HEADER_HEIGHT);
-		painter.rect(titleBar.x(), titleBar.y(), titleBar.width(), titleBar.height() - 3, UiTheme.TITLEBAR);
-		painter.rect(titleBar.x(), titleBar.bottom() - 3, titleBar.width(), 1, UiTheme.TITLEBAR_EDGE);
+		painter.rect(titleBar.x(), titleBar.y(), titleBar.width(), titleBar.height() - 2, UiTheme.TITLEBAR);
+		painter.rect(titleBar.x(), titleBar.bottom() - 2, titleBar.width(), 1, UiTheme.TITLEBAR_EDGE);
 		painter.rect(titleBar.x(), titleBar.bottom() - 1, titleBar.width(), 1, UiTheme.WINDOW_EDGE);
 		painter.rect(panel.x(), titleBar.bottom(), panel.width(), panel.height() - titleBar.height(), UiTheme.PANEL);
 		var heading = title.getString().toUpperCase(Locale.ROOT);

@@ -4,6 +4,7 @@ import io.github.forgestove.flexconfig.api.annotation.*;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -120,7 +121,7 @@ public class FieldValidators {
 	public static int correct(Field field, int value) {
 		var range = field.getAnnotation(IntRange.class);
 		if (range == null) return value;
-		var corrected = Math.clamp(value, range.min(), range.max());
+		var corrected = Mth.clamp(value, range.min(), range.max());
 		if (corrected != value) corrected(field, value, corrected, range.min(), range.max());
 		return corrected;
 	}
@@ -130,21 +131,21 @@ public class FieldValidators {
 	public static long correct(Field field, long value) {
 		var range = field.getAnnotation(LongRange.class);
 		if (range == null) return value;
-		var corrected = Math.clamp(value, range.min(), range.max());
+		var corrected = Mth.clamp(value, range.min(), range.max());
 		if (corrected != value) corrected(field, value, corrected, range.min(), range.max());
 		return corrected;
 	}
 	public static float correct(Field field, float value) {
 		var range = field.getAnnotation(FloatRange.class);
 		if (range == null || Float.isNaN(value)) return value;
-		var corrected = Math.clamp(value, range.min(), range.max());
+		var corrected = Mth.clamp(value, range.min(), range.max());
 		if (corrected != value) corrected(field, value, corrected, range.min(), range.max());
 		return corrected;
 	}
 	public static double correct(Field field, double value) {
 		var range = field.getAnnotation(DoubleRange.class);
 		if (range == null || Double.isNaN(value)) return value;
-		var corrected = Math.clamp(value, range.min(), range.max());
+		var corrected = Mth.clamp(value, range.min(), range.max());
 		if (corrected != value) corrected(field, value, corrected, range.min(), range.max());
 		return corrected;
 	}

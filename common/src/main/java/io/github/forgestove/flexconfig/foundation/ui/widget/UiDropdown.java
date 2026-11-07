@@ -13,6 +13,7 @@ public class UiDropdown extends UiControl implements UiPopup {
 	private final Supplier<Object> selected;
 	private final Consumer<Object> onSelect;
 	private final Consumer<UiDropdown> opener;
+	private final Runnable onClose;
 	private final UiTextField filter = new UiTextField();
 	private boolean open, closing, above;
 	private final UiTween openAnim = new UiTween(0);
@@ -21,11 +22,19 @@ public class UiDropdown extends UiControl implements UiPopup {
 	private int pressedOption = -1;
 	private UiBounds popup = UiBounds.EMPTY;
 	private UiBounds viewport = UiBounds.EMPTY;
-	public UiDropdown(List<Option> options, Supplier<Object> selected, Consumer<Object> onSelect, Consumer<UiDropdown> opener) {
+	/** {@code onClose} 用于自身发起的关闭（选中、Esc），交给界面清掉弹层引用，否则下一次点击会被空弹层吞掉。 */
+	public UiDropdown(
+		List<Option> options,
+		Supplier<Object> selected,
+		Consumer<Object> onSelect,
+		Consumer<UiDropdown> opener,
+		Runnable onClose
+	) {
 		this.options = options;
 		this.selected = selected;
 		this.onSelect = onSelect;
 		this.opener = opener;
+		this.onClose = onClose;
 	}
 	public UiTextField filterField() {
 		return filter;
@@ -206,7 +215,7 @@ public class UiDropdown extends UiControl implements UiPopup {
 	private void select(Object value) {
 		UiSound.click();
 		onSelect.accept(value);
-		close();
+		onClose.run();
 	}
 	@Override
 	public boolean popupMouseScrolled(double amount) {
@@ -219,7 +228,7 @@ public class UiDropdown extends UiControl implements UiPopup {
 		if (!open) return false;
 		var list = filtered();
 		if (keyCode == 256) {   // Esc
-			close();
+			onClose.run();
 			return true;
 		}
 		if (keyCode == 265) {   // Up
@@ -232,7 +241,7 @@ public class UiDropdown extends UiControl implements UiPopup {
 		}
 		if (keyCode == 257 || keyCode == 335) {   // Enter
 			if (!list.isEmpty() && highlight >= 0 && highlight < list.size()) select(list.get(highlight).value());
-			else close();
+			else onClose.run();
 			return true;
 		}
 		return filter.keyPressed(ctx, keyCode, scanCode, modifiers);
