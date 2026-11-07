@@ -88,7 +88,7 @@ public class UiPainter {
 		);
 		if (size.isEmpty()) return;
 		var dims = size.get();
-		gui.blit(texture, bounds.x(), bounds.y(), 0F, 0F, bounds.width(), bounds.height(), dims[0], dims[1]);
+		gui.blit(texture, bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0F, 0F, dims[0], dims[1], dims[0], dims[1]);
 	}
 	public void gradient(UiBounds bounds, int top, int bottom) {
 		if (bounds.width() <= 0 || bounds.height() <= 0 || alpha <= 0.004F) return;
