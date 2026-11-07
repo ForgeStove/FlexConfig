@@ -148,7 +148,7 @@ public class ConfigHandler<C, V> {
 		return accent;
 	}
 	private @NotNull MenuOptions buildMenuOptions(Builder<C, V> builder) {
-		return builder.menuIcon == null ? MenuOptions.NONE : new MenuOptions(builder.menuIcon);
+		return builder.menuLogo == null ? MenuOptions.NONE : new MenuOptions(builder.menuLogo);
 	}
 	public String getFileName() {
 		return fileName;
@@ -292,7 +292,7 @@ public class ConfigHandler<C, V> {
 		private String fileName;
 		private boolean lockable;
 		private Accent accent = Accent.DEFAULT;
-		private @Nullable ResourceLocation menuIcon;
+		private @Nullable ResourceLocation menuLogo;
 		private Builder(Class<C> configClass) {
 			this.configClass = configClass;
 			serializerBuilder = ConfigSerializer.builder(configClass);
@@ -314,8 +314,8 @@ public class ConfigHandler<C, V> {
 			this.accent = Accent.of(accent);
 			return this;
 		}
-		public Builder<C, V> menuIcon(@Nullable ResourceLocation icon) {
-			menuIcon = icon;
+		public Builder<C, V> menuLogo(@Nullable ResourceLocation logo) {
+			menuLogo = logo;
 			return this;
 		}
 		/** 构建并注册到 {@link ConfigStore}；同一 (模组, 类型) 只能注册一次。 */

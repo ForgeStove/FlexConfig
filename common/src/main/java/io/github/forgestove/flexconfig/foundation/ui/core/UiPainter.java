@@ -9,7 +9,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.*;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -69,9 +69,10 @@ public class UiPainter {
 		gui.fill(x, y, x + width, y + height, col(color));
 	}
 	private static final Map<ResourceLocation, Optional<int[]>> TEXTURE_SIZES = new HashMap<>();
-	public void texture(ResourceLocation texture, UiBounds bounds) {
-		if (texture == null || bounds.width() <= 0 || bounds.height() <= 0 || alpha <= 0.004F) return;
-		var size = TEXTURE_SIZES.computeIfAbsent(
+	/** 贴图的原始像素尺寸（宽、高）；缺失或读取失败返回 {@code null}。 */
+	public int @Nullable [] textureSize(@Nullable ResourceLocation texture) {
+		if (texture == null) return null;
+		return TEXTURE_SIZES.computeIfAbsent(
 			texture, id -> {
 				var resource = ClientUtil.mc.getResourceManager().getResource(id);
 				if (resource.isEmpty()) {
@@ -85,9 +86,12 @@ public class UiPainter {
 					return Optional.empty();
 				}
 			}
-		);
-		if (size.isEmpty()) return;
-		var dims = size.get();
+		).orElse(null);
+	}
+	public void texture(ResourceLocation texture, UiBounds bounds) {
+		if (texture == null || bounds.width() <= 0 || bounds.height() <= 0 || alpha <= 0.004F) return;
+		var dims = textureSize(texture);
+		if (dims == null) return;
 		gui.blit(texture, bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0F, 0F, dims[0], dims[1], dims[0], dims[1]);
 	}
 	public void gradient(UiBounds bounds, int top, int bottom) {
