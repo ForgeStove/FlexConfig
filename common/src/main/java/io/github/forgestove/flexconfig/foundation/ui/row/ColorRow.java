@@ -18,7 +18,7 @@ public class ColorRow extends ValueRow {
 		field.setMaxLength(maxLength());
 		field.setFilter(s -> HEX.matcher(s).matches());
 		field.setResponder(this::onInput);
-		var swatch = new UiColorSwatch(alpha, this::colorValue, this::openPicker);
+		var swatch = new UiColorSwatch(this::colorValue, this::openPicker);
 		swatch.tooltip(Translation.COLOR_PICKER_TOOLTIP);
 		actionBar.add(field, UiTheme.CONTROL_WIDTH - UiTheme.ACTION_SIZE - UiTheme.GAP).add(swatch, UiTheme.ACTION_SIZE);
 	}

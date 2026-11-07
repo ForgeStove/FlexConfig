@@ -78,6 +78,8 @@ public final class ConfigShell<C, V> {
 	private boolean changedOnly;
 	private String searchQuery = "";
 	private List<ConfigRow> searchResults = List.of();
+	/** 实际匹配行数，不含空结果提示行。 */
+	private int searchCount;
 	private int lastWidth, lastHeight;
 	private @Nullable CaptureTarget capture;
 	/** 正在播放退出动画的行及其后续操作；整棵子树作为一组一起收起。 */
@@ -124,12 +126,24 @@ public final class ConfigShell<C, V> {
 		if (!pendingRemovals.isEmpty()) rebuildActiveTab();
 		searchQuery = query.trim();
 		SearchIndex.clearHighlights(model);
-		searchResults = searchQuery.isEmpty() && !changedOnly ? List.of() : SearchIndex.search(rowContext, model, searchQuery,
-			changedOnly);
+		var searching = !searchQuery.isEmpty() || changedOnly;
+		var results = searching ? SearchIndex.search(rowContext, model, searchQuery, changedOnly) : List.<ConfigRow>of();
+		searchCount = results.size();
+		if (searching && results.isEmpty()) {
+			var message = searchQuery.isEmpty() ? Translation.SEARCH_NO_CHANGES : Translation.searchNoMatch(searchQuery);
+			results.add(new SearchEmptyRow(rowContext, message, this::clearSearch));
+		}
+		searchResults = results;
 		var tab = model.activeTab();
 		contentPane.setScroll(searchQuery.isEmpty() && !changedOnly && tab != null ? tab.scroll : 0);
 		pageIn.start(0, 1, UiMotion.TAB_ROWS_IN);
 		revealRows(searchResults);
+	}
+	private void clearSearch() {
+		changedOnly = false;
+		changedChip.setSelected(false);
+		if (searchField != null) searchField.setValue("");
+		updateSearch("");
 	}
 	private void openPageMenu() {
 		var items = new ArrayList<Item>();
@@ -521,7 +535,7 @@ public final class ConfigShell<C, V> {
 			headerText = headerText.copy().append("  ·  ").append(Translation.RESTART_REQUIRED_TITLE.copy().withStyle(ChatFormatting.RED));
 		painter.text(headerText, layout.pageHeader.x(), layout.pageHeader.y() + 4, UiTheme.TEXT_3);
 		if (!searchQuery.isEmpty() || changedOnly) {
-			var count = Translation.searchResults(searchResults.size());
+			var count = Translation.searchResults(searchCount);
 			painter.text(count, layout.pageHeader.x() + painter.textWidth(headerText) + 8, layout.pageHeader.y() + 4, UiTheme.TEXT_3);
 		}
 		closeButton.setBounds(new UiBounds(

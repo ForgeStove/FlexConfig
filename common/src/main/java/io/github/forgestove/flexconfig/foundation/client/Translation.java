@@ -38,7 +38,9 @@ public class Translation {
 	public static final Component DONE_LABEL = translatable("flexconfig.done");
 	public static final Component PAGE_RESET = translatable("flexconfig.page.reset");
 	public static final Component ROW_COPY = translatable("flexconfig.row.copy");
+	public static final Component SEARCH_CLEAR = translatable("flexconfig.search.clear");
 	public static final Component SEARCH_MENU = translatable("flexconfig.search.menu");
+	public static final Component SEARCH_NO_CHANGES = translatable("flexconfig.search.no_changes");
 	public static final Component SEARCH_PLACEHOLDER = translatable("flexconfig.search.placeholder");
 	public static final Component TOAST_UNDONE = translatable("flexconfig.toast.undone");
 	public static final Component TOOLTIP_CHANGED = translatable("flexconfig.tooltip.changed");
@@ -48,6 +50,9 @@ public class Translation {
 	}
 	public static Component searchResults(int count) {
 		return translatable("flexconfig.search.results", count);
+	}
+	public static Component searchNoMatch(String query) {
+		return translatable("flexconfig.search.no_match", query);
 	}
 	public static Component undoChanges(int count) {
 		return translatable("flexconfig.undo_changes", count);

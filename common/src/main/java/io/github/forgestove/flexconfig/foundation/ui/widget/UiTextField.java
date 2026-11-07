@@ -1,6 +1,7 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
+import io.github.forgestove.flexconfig.foundation.ui.FlexGuiTextures;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.Util;
 import net.minecraft.client.gui.screens.Screen;
@@ -85,17 +86,11 @@ public class UiTextField extends UiControl {
 		var painter = ctx.painter;
 		painter.well(bounds(), error ? UiTheme.DANGER : focused ? ctx.accent().base() : UiTheme.WINDOW_EDGE, hovered(ctx) ? 0.3F : 0F);
 		var inner = bounds().inset(1, 1);
-		if (leadingSearch) {
-			var lx = inner.x() + 3;
-			var ly = inner.y() + (inner.height() - 7) / 2;
-			var lens = isFocused(ctx) ? UiTheme.TEXT : UiTheme.TEXT_3;
-			painter.rect(lx + 1, ly + 1, 3, 1, lens);
-			painter.rect(lx + 1, ly + 5, 3, 1, lens);
-			painter.rect(lx, ly + 2, 1, 3, lens);
-			painter.rect(lx + 4, ly + 2, 1, 3, lens);
-			painter.rect(lx + 4, ly + 5, 2, 1, lens);
-			painter.rect(lx + 5, ly + 6, 1, 1, lens);
-		}
+		if (leadingSearch) painter.icon(
+			FlexGuiTextures.ICON_SEARCH,
+			new UiBounds(inner.x() + 1, inner.y(), 12, inner.height()),
+			isFocused(ctx) ? UiTheme.TEXT : UiTheme.TEXT_3
+		);
 		var textX = inner.x() + textLeft() - scroll;
 		var textY = bounds().y() + (bounds().height() - painter.lineHeight()) / 2 + 1;
 		painter.scissorOn(inner);

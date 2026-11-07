@@ -63,7 +63,7 @@ public class UiSlider extends UiControl {
 		var tickSteps = steps > 1 && steps <= 24 ? steps : 0;
 		for (var i = 1; i < tickSteps; i++) {
 			var tickX = track.x() + 1 + Math.round((track.width() - 2) * (float) i / tickSteps);
-			painter.rect(tickX, track.y() + 2, 1, 3, tickX < fillX ? accent.darkest() : UiTheme.GROOVE_LIGHT);
+			painter.rect(tickX, track.y() + 1, 1, 4, tickX < fillX ? accent.darkest() : UiTheme.GROOVE_LIGHT);
 		}
 		if (defaultValue != null) {
 			double value1 = defaultValue.getAsDouble();
@@ -94,7 +94,7 @@ public class UiSlider extends UiControl {
 		} else {
 			var text = painter.trim(format.apply(value.getAsDouble()), valueCell.width() - 2);
 			var idle = hover.get() > 0.5 ? UiTheme.TEXT : UiTheme.TEXT_2;
-			var color = !enabled ? UiTheme.DISABLED : dragging ? accent.light() : UiTheme.fadeToward(idle, accent.light(), changedTint.value());
+			var color = !enabled ? UiTheme.DISABLED : UiTheme.fadeToward(accent.light(), idle, changedTint.value());
 			painter.textRight(Component.literal(text), valueCell.right(), valueCell.y(), color);
 		}
 		if (dragging) {
