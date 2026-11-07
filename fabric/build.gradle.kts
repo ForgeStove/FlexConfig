@@ -10,10 +10,14 @@ loom {
 	runs {
 		named("client") {
 			client()
+			displayName.set("fabric - Client")
+			appendProjectPathToDisplayName.set(false)
 		}
 		named("server") {
 			server()
 			runDirectory.set(file("run/server"))
+			displayName.set("fabric - Server")
+			appendProjectPathToDisplayName.set(false)
 		}
 		configureEach {
 			generateRunConfig.set(true)
