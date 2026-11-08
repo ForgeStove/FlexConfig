@@ -1,12 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
-/** 弹簧/补间参数与位移常量。 */
 public class UiMotion {
-	public static boolean reducedMotion() {
-		return ClientUtil.mc.options.screenEffectScale().get() <= 0D;
-	}
-	public record SpringSpec(float response, float damping) {}
-	public record TweenSpec(float durationMs, UiEasing easing) {}
 	public static final SpringSpec HOVER_IN = new SpringSpec(0.08F, 1F);
 	public static final SpringSpec HOVER_OUT = new SpringSpec(0.16F, 1F);
 	public static final SpringSpec CONTROL = new SpringSpec(0.18F, 0.82F);
@@ -34,4 +28,9 @@ public class UiMotion {
 	public static final int ROW_STAGGER_MAX = 9;
 	public static final float TOOLTIP_HOVER_DELAY = 450F;
 	public static final float TOOLTIP_FOCUS_DELAY = 700F;
+	public static boolean reducedMotion() {
+		return ClientUtil.mc.options.screenEffectScale().get() <= 0D;
+	}
+	public record SpringSpec(float response, float damping) {}
+	public record TweenSpec(float durationMs, UiEasing easing) {}
 }

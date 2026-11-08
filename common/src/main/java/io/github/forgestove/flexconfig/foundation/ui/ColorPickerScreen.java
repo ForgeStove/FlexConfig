@@ -3,11 +3,11 @@ import com.mojang.blaze3d.platform.InputConstants;
 import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiFocus.Target;
+import io.github.forgestove.flexconfig.foundation.ui.screen.UiScreen;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor.ARGB32;
@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.regex.Pattern;
 /** 颜色选择器：顶部预览，下方色相、饱和度、亮度、透明度通道滑条与十六进制输入。 */
-public class ColorPickerScreen extends Screen {
+public class ColorPickerScreen extends UiScreen {
 	private static final int PREVIEW_SIZE = 80, COLUMN_WIDTH = 148, PAD = 8;
 	private static final int ACTION_WIDTH = 64, ACTION_HEIGHT = 18, HEX_WIDTH = 70;
 	private static final Pattern HEX_PATTERN = Pattern.compile("[0-9A-Fa-f]*");
@@ -26,14 +26,11 @@ public class ColorPickerScreen extends Screen {
 	private static final int[] HUE_STOPS = {0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000};
 	private final Screen parent;
 	private final boolean hasAlpha;
-	private final UiContext ui = new UiContext();
 	private final List<UiColorSlider> sliders = new ArrayList<>();
 	private final UiTextField hex;
 	private final UiButton ok, cancel;
 	private float hue, saturation = 1F, brightness = 1F;
 	private int alpha = 255;
-	private int zoom = 1, logicalWidth, logicalHeight;
-	private UiControl pressedControl;
 	private UiBounds panel = UiBounds.EMPTY, preview = UiBounds.EMPTY;
 	public ColorPickerScreen(Screen parent, int initialColor, boolean hasAlpha, IntConsumer onColorSelected) {
 		super(Translation.COLOR_PICKER_TOOLTIP);
@@ -101,18 +98,15 @@ public class ColorPickerScreen extends Screen {
 		hex.setValue(hexOf(colorFromHSB()));
 	}
 	@Override
-	public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-		renderBackground(graphics, mouseX, mouseY, delta);
+	protected void renderBeforeScale(int mouseX, int mouseY, float delta) {
+		renderBackground(ui.graphics, mouseX, mouseY, delta);
+	}
+	@Override
+	protected void renderUi(UiContext ui, int mouseX, int mouseY, float delta) {
 		ui.onRefresh(() -> {});
-		zoom = UiPrefs.zoom(width, height);
-		logicalWidth = Math.max(1, width / zoom);
-		logicalHeight = Math.max(1, height / zoom);
-		ui.beginFrame(graphics, ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F, mouseX / (double) zoom, mouseY / (double) zoom);
-		ui.viewport(logicalWidth, logicalHeight);
 		layout();
 		var painter = painter();
-		painter.rect(0, 0, width, height, UiTheme.BACKDROP_TOP);
-		painter.pushScale(zoom);
+		painter.rect(0, 0, logicalWidth, logicalHeight, UiTheme.BACKDROP_TOP);
 		painter.rect(panel.x() + 4, panel.y() + 4, panel.width(), panel.height(), UiTheme.SHADOW);
 		painter.rect(panel.x() + 2, panel.y() + 2, panel.width(), panel.height(), UiTheme.SHADOW);
 		painter.border(panel.x() - 1, panel.y() - 1, panel.width() + 2, panel.height() + 2, UiTheme.WINDOW_EDGE);
@@ -138,11 +132,7 @@ public class ColorPickerScreen extends Screen {
 		focusables.add(ok);
 		focusables.add(cancel);
 		ui.focus.setOrder(focusables);
-		var current = ui.focus.current();
-		if (ui.focusVisible() && current instanceof UiControl control && !(control instanceof UiTextField))
-			painter.border(control.focusBounds().inset(-1), ui.accent().light());
-		ui.renderTooltip();
-		painter.popScale();
+		renderFocusRing(painter, control -> !(control instanceof UiTextField));
 	}
 	private UiPainter painter() {
 		return ui.painter;
@@ -217,48 +207,19 @@ public class ColorPickerScreen extends Screen {
 	}
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		mouseX /= zoom;
-		mouseY /= zoom;
-		ui.setFocusVisible(false);
-		ui.pointer(mouseX, mouseY);
-		if (button != 0) return false;
-		for (var slider : sliders) if (slider.mouseClicked(ui, mouseX, mouseY, button)) return true;
-		if (hex.mouseClicked(ui, mouseX, mouseY, button)) return true;
-		if (ok.mouseClicked(ui, mouseX, mouseY, button)) {
-			pressedControl = ok;
-			return true;
-		}
-		if (cancel.mouseClicked(ui, mouseX, mouseY, button)) {
-			pressedControl = cancel;
-			return true;
-		}
-		return false;
+		var controls = new ArrayList<UiControl>(sliders);
+		controls.add(hex);
+		controls.add(ok);
+		controls.add(cancel);
+		return pressControl(controls, mouseX, mouseY, button);
 	}
 	@Override
 	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-		mouseX /= zoom;
-		mouseY /= zoom;
-		ui.pointer(mouseX, mouseY);
-		if (ui.dragOwner() instanceof UiControl control) return control.mouseDragged(ui, mouseX, mouseY, button, dragX, dragY);
-		return false;
+		return dragControl(mouseX, mouseY, button, dragX, dragY);
 	}
 	@Override
 	public boolean mouseReleased(double mouseX, double mouseY, int button) {
-		mouseX /= zoom;
-		mouseY /= zoom;
-		ui.pointer(mouseX, mouseY);
-		if (pressedControl != null) {
-			var control = pressedControl;
-			pressedControl = null;
-			control.mouseReleased(ui, mouseX, mouseY, button);
-			return true;
-		}
-		if (ui.dragOwner() instanceof UiControl control) {
-			var handled = control.mouseReleased(ui, mouseX, mouseY, button);
-			ui.setDragOwner(null);
-			return handled;
-		}
-		return false;
+		return releaseControl(mouseX, mouseY, button);
 	}
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {

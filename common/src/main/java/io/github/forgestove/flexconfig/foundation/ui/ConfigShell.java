@@ -67,10 +67,7 @@ public final class ConfigShell<C, V> {
 	private Runnable dialogAction = () -> {};
 	private UiButton dialogConfirm, dialogCancel;
 	private @Nullable Runnable closeAction;
-	private @Nullable UiDropdown openDropdown;
-	private @Nullable UiDropdown fadingDropdown;
-	private @Nullable UiPopup openMenu;
-	private @Nullable UiPopup fadingMenu;
+	private final UiPopupHost popups = new UiPopupHost();
 	private UiTextField searchField;
 	private UiChip changedChip;
 	private UiButton pageMenuButton;
@@ -303,20 +300,7 @@ public final class ConfigShell<C, V> {
 		if (!searching && tab != null) tab.scroll = contentPane.scroll();
 		footer.render(ui);
 		renderFocusRing(ui);
-		if (openMenu != null && openMenu.closing()) {
-			fadingMenu = openMenu;
-			openMenu = null;
-		}
-		var popup = activePopup();
-		if (popup != null) popup.renderPopup(ui);
-		if (fadingMenu != null) {
-			fadingMenu.renderPopup(ui);
-			if (!fadingMenu.closing()) fadingMenu = null;
-		}
-		if (fadingDropdown != null) {
-			fadingDropdown.renderPopup(ui);
-			if (!fadingDropdown.closing()) fadingDropdown = null;
-		}
+		popups.render(ui);
 		painter.popTranslate();
 		painter.popAlpha();
 		if (dialogOpen) renderDialog(ui);
@@ -409,10 +393,7 @@ public final class ConfigShell<C, V> {
 		pressedControl = null;
 		pressedRow = null;
 		sidebarPressed = false;
-		openDropdown = null;
-		fadingDropdown = null;
-		openMenu = null;
-		fadingMenu = null;
+		popups.clear();
 		flushPendingRemovals();
 		suppressRebuildFx = false;
 		outgoingRows = List.of();
@@ -652,6 +633,7 @@ public final class ConfigShell<C, V> {
 		if (undoButton.visible()) focusables.add(undoButton);
 		focusables.add(closeButton);
 		for (var control : footer.controls()) if (control.focusable()) focusables.add(control);
+		var openDropdown = popups.openDropdown();
 		if (openDropdown != null) focusables.add(openDropdown.filterField());
 		ui.focus.setOrder(focusables);
 		for (var row : rows)
@@ -761,6 +743,7 @@ public final class ConfigShell<C, V> {
 		var popup = activePopup();
 		if (popup != null) {
 			if (popup.isOverPopup(mouseX, mouseY)) return popup.popupMouseClicked(ui, mouseX, mouseY, button);
+			var openDropdown = popups.openDropdown();
 			var onCell = openDropdown != null && openDropdown.bounds().contains(mouseX, mouseY);
 			closeDropdown();
 			if (onCell) return true;
@@ -1170,35 +1153,21 @@ public final class ConfigShell<C, V> {
 		ui.focus.clear();
 	}
 	private @Nullable UiPopup activePopup() {
-		return openMenu != null ? openMenu : openDropdown;
+		return popups.active();
 	}
 	public void openPopup(UiPopup popup) {
-		closeDropdown();
-		openMenu = popup;
+		popups.open(popup);
 	}
 	public void openDropdown(UiDropdown dropdown) {
-		if (openDropdown == dropdown) {
+		if (popups.openDropdown() == dropdown) {
 			closeDropdown();
 			return;
 		}
-		closeDropdown();
-		openMenu = null;
-		dropdown.setViewport(layout.content);
-		dropdown.setOpen(true);
-		openDropdown = dropdown;
+		popups.open(dropdown, layout.content);
 		ui.focus.set(dropdown.filterField());
 	}
 	public void closeDropdown() {
-		if (openDropdown != null) {
-			openDropdown.beginClose();
-			fadingDropdown = openDropdown;
-		}
-		if (openMenu != null) {
-			openMenu.close();
-			fadingMenu = openMenu;
-		}
-		openDropdown = null;
-		openMenu = null;
+		popups.close();
 	}
 	public void endCapture(CaptureTarget target) {
 		if (capture == target) capture = null;

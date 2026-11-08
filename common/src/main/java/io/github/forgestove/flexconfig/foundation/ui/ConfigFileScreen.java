@@ -4,10 +4,10 @@ import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
 import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiFocus.Target;
+import io.github.forgestove.flexconfig.foundation.ui.screen.UiScreen;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
@@ -15,16 +15,13 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 /** 单份配置的模组不经过本界面，由 {@link FlexConfigScreenFactory} 直接打开 {@link ConfigScreen}。 */
-public class ConfigFileScreen extends Screen {
+public class ConfigFileScreen extends UiScreen {
 	private static final int BUTTON_HEIGHT = 20, SPACING = 6;
 	private final String modId;
 	private final List<ConfigHandler<?, ?>> handlers;
 	private final @Nullable Screen parent;
 	private final List<UiButton> fileButtons = new ArrayList<>();
 	private UiButton doneButton;
-	private final UiContext ui = new UiContext();
-	private UiControl pressedControl;
-	private int zoom = 1, logicalWidth, logicalHeight;
 	private UiBounds panel = UiBounds.EMPTY;
 	private final UiTween backdropAnim = new UiTween(0);
 	private final UiTween windowAnim = new UiTween(0);
@@ -82,12 +79,9 @@ public class ConfigFileScreen extends Screen {
 		ClientUtil.mc.setScreen(new ConfigScreen<>(handler));
 	}
 	@Override
-	@SuppressWarnings("DuplicatedCode")
-	public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-		var seconds = ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F;
+	protected void renderUi(UiContext ui, int mouseX, int mouseY, float delta) {
+		var seconds = ui.delta;
 		ui.onRefresh(() -> {});
-		ui.beginFrame(graphics, seconds, mouseX / (double) zoom, mouseY / (double) zoom);
-		ui.viewport(logicalWidth, logicalHeight);
 		backdropAnim.update(seconds);
 		windowAnim.update(seconds);
 		riseAnim.update(seconds);
@@ -99,12 +93,11 @@ public class ConfigFileScreen extends Screen {
 			if (action != null) action.run();
 			return;
 		}
-		renderBackground(graphics, mouseX, mouseY, delta);
+		renderBackground(ui.graphics, mouseX, mouseY, delta);
 		updatePanel();
 		var painter = ui.painter;
 		var closeFactor = closeAnim.value();
-		painter.rect(0, 0, width, height, UiTheme.mulAlpha(UiTheme.BACKDROP_TOP, backdropAnim.value() * closeFactor));
-		painter.pushScale(zoom);
+		painter.rect(0, 0, logicalWidth, logicalHeight, UiTheme.mulAlpha(UiTheme.BACKDROP_TOP, backdropAnim.value() * closeFactor));
 		var rise = riseAnim.value() + (closing ? (1F - closeFactor) * UiMotion.CLOSE_DROP : 0);
 		painter.pushAlpha(windowAnim.value() * closeFactor);
 		painter.pushTranslate(0, rise);
@@ -135,43 +128,25 @@ public class ConfigFileScreen extends Screen {
 		doneButton.render(ui);
 		focusables.add(doneButton);
 		ui.focus.setOrder(focusables);
-		var current = ui.focus.current();
-		if (ui.focusVisible() && current instanceof UiControl control) painter.border(control.focusBounds().inset(-1),
-			ui.accent().light());
-		if (!closing) ui.renderTooltip();
+		renderFocusRing(painter);
 		painter.popTranslate();
 		painter.popAlpha();
-		painter.popScale();
+	}
+	@Override
+	protected boolean showTooltip() {
+		return !closing;
 	}
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (closing) return false;
-		mouseX /= zoom;
-		mouseY /= zoom;
-		ui.setFocusVisible(false);
-		ui.pointer(mouseX, mouseY);
-		for (var fileButton : fileButtons)
-			if (fileButton.mouseClicked(ui, mouseX, mouseY, button)) {
-				pressedControl = fileButton;
-				return true;
-			}
-		if (doneButton.mouseClicked(ui, mouseX, mouseY, button)) {
-			pressedControl = doneButton;
-			return true;
-		}
-		return false;
+		var controls = new ArrayList<UiControl>(fileButtons);
+		controls.add(doneButton);
+		return pressControl(controls, mouseX, mouseY, button);
 	}
 	@Override
 	public boolean mouseReleased(double mouseX, double mouseY, int button) {
 		if (closing) return false;
-		mouseX /= zoom;
-		mouseY /= zoom;
-		if (pressedControl == null) return false;
-		var control = pressedControl;
-		pressedControl = null;
-		ui.pointer(mouseX, mouseY);
-		control.mouseReleased(ui, mouseX, mouseY, button);
-		return true;
+		return releaseControl(mouseX, mouseY, button);
 	}
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
