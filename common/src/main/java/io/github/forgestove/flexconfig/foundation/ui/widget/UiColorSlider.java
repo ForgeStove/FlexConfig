@@ -3,7 +3,6 @@ import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.util.Mth;
 
 import java.util.function.*;
-/** 颜色通道滑条：轨道渐变由调用方绘制，把手沿用配置滑条的立体样式。取值固定映射到 0~1。 */
 public class UiColorSlider extends UiControl {
 	private static final int KNOB_W = 10, KNOB_H = 12;
 	private final DoubleSupplier value;

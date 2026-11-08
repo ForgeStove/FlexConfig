@@ -4,7 +4,6 @@ import net.minecraft.Util;
 import net.minecraft.util.Mth;
 
 import java.util.Objects;
-/** 滚动容器基类：内容裁剪、平滑滚动与滚轮加速；滚动条等装饰由子类通过 {@link #paintOverlay} 叠加。 */
 public class UiScrollView extends UiControl {
 	protected static final double[] WHEEL_ACCEL = {1, 1.2, 1.6, 2.2, 3};
 	private ScrollMotion motion = new SpringScrollMotion(UiMotion.SCROLL);

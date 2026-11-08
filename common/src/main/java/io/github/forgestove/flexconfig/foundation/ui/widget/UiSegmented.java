@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
-/** 分段选择：少量选项时替代下拉。 */
 public class UiSegmented extends UiControl {
 	private final List<Component> labels;
 	private final IntConsumer onSelect;

@@ -2,7 +2,6 @@ package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.network.chat.Component;
-/** 小图标按钮（关闭等）。 */
 public class UiGlyphButton extends UiControl {
 	public enum Glyph {
 		CLOSE

@@ -12,7 +12,6 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 import java.util.function.*;
-/** 自绘单行文本编辑：光标、选区、横向滚动和剪贴板都自己处理。 */
 public class UiTextField extends UiControl {
 	private static final int PAD = 3;
 	private final Deque<String> history = new ArrayDeque<>();

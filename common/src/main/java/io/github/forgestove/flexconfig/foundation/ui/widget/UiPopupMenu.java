@@ -6,7 +6,6 @@ import net.minecraft.util.Mth;
 
 import java.util.List;
 import java.util.function.IntConsumer;
-/** 通用弹层列表：行右键菜单、页面菜单、tab 菜单共用。 */
 public class UiPopupMenu implements UiPopup {
 	private static final int ROW_HEIGHT = 16, MAX_ROWS = 8;
 	private final List<Item> items;

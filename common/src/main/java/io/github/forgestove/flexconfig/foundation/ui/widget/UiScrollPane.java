@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-/** 带右侧立体滚动条的滚动容器；滚动条各段都是 protected，子类可以只替换其中一部分。 */
 public class UiScrollPane extends UiScrollView {
 	protected static final int TRACK_WIDTH = 2, KNOB_WIDTH = 8, MIN_KNOB = 12, SHADOW_HEIGHT = 6, KNOB_SHADOW = 2;
 	protected boolean draggingBar;

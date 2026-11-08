@@ -3,12 +3,11 @@ import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiFocus.Target;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-/** 自绘控件基类：不继承原版 widget，布局和命中都在每帧完成。 */
 public abstract class UiControl implements Target {
-	private UiBounds bounds = UiBounds.EMPTY;
-	private Component tooltip;
 	protected boolean enabled = true, visible = true;
 	protected boolean down;
+	private UiBounds bounds = UiBounds.EMPTY;
+	private Component tooltip;
 	public UiBounds bounds() {
 		return bounds;
 	}

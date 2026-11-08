@@ -1,7 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import org.jetbrains.annotations.Nullable;
-/** 弹层宿主：同一时刻只保留一个活动弹层，旧弹层进入淡出列表；下拉框和右键菜单可以脱离配置界面单独使用。 */
 public class UiPopupHost {
 	private @Nullable UiDropdown openDropdown;
 	private @Nullable UiDropdown fadingDropdown;

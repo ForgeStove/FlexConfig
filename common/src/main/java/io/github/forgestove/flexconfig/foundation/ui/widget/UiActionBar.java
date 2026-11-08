@@ -2,7 +2,6 @@ package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 
 import java.util.*;
-/** 行尾控件从左往右排列，宽度由调用方决定。 */
 public class UiActionBar {
 	private final List<Entry> entries = new ArrayList<>();
 	public UiActionBar add(UiControl control, int width) {
