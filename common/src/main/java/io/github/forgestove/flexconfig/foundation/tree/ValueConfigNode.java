@@ -67,11 +67,11 @@ public class ValueConfigNode implements ConfigNode {
 	}
 	@Override
 	public void resetToDefault() {
-		setEditingValue(copyValue(getDefaultValue()));
+		setEditingValue(copyForEditing(getDefaultValue()));
 	}
 	@Override
 	public void resetToActive(Object config) {
-		setEditingValue(copyValue(writeThrough ? baselineValue : currentBase(config)));
+		setEditingValue(copyForEditing(writeThrough ? baselineValue : currentBase(config)));
 	}
 	@Override
 	public @Nullable RestartType restartType(Object config) {
@@ -147,11 +147,15 @@ public class ValueConfigNode implements ConfigNode {
 	}
 	public Object getEditingValue(Object config) {
 		if (writeThrough) return valueReader.read(config);
-		if (editingValue == null) editingValue = copyValue(currentBase(config));
+		if (editingValue == null) editingValue = copyForEditing(currentBase(config));
 		return editingValue;
 	}
-	private Object copyValue(Object value) {
-		return FieldAccess.deepCopy(value);
+	/**
+	 * 编辑副本：除集合外的值在界面上都是整体替换，不会就地修改，直接复用引用；
+	 * 集合需要独立容器，元素深拷贝保证就地编辑不会写回活动配置。
+	 */
+	public Object copyForEditing(Object value) {
+		return valueType == List.class ? FieldAccess.deepCopy(value) : value;
 	}
 	public void setActiveValue(Object config, Object value) {
 		valueWriter.write(config, value);

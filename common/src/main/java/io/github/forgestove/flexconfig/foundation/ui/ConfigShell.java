@@ -161,7 +161,7 @@ public final class ConfigShell<C, V> {
 		for (var row : tab.rows)
 			if (row instanceof ValueRow valueRow && valueRow.canReset()) {
 				var node = valueRow.node();
-				var previous = FieldAccess.deepCopy(node.getEditingValue(config));
+				var previous = node.copyForEditing(node.getEditingValue(config));
 				valueRow.resetToDefault();
 				restores.add(() -> node.setEditingValue(previous));
 			}
