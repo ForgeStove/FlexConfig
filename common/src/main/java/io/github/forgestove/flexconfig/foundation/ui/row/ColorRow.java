@@ -20,7 +20,7 @@ public class ColorRow extends ValueRow {
 		field.setResponder(this::onInput);
 		var swatch = new UiColorSwatch(this::colorValue, this::openPicker);
 		swatch.tooltip(Translation.COLOR_PICKER_TOOLTIP);
-		actionBar.add(field, UiTheme.CONTROL_WIDTH - UiTheme.ACTION_SIZE - UiTheme.GAP).add(swatch, UiTheme.ACTION_SIZE);
+		actionBar.add(swatch, UiTheme.ACTION_SIZE).add(field, UiTheme.CONTROL_WIDTH - UiTheme.ACTION_SIZE - UiTheme.GAP);
 	}
 	private int colorValue() {
 		return ((Number) value()).intValue();
