@@ -1,13 +1,13 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
+import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
 import io.github.forgestove.flexconfig.foundation.ConfigTranslation;
 import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
-import io.github.forgestove.flexconfig.foundation.ui.core.*;
+import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.factory.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiDropdown.Option;
-import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -64,11 +64,7 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 		return Math.max(TRIGGER_WIDTH, widest + 20);
 	}
 	private Component label(Enum<?> value) {
-		return ConfigTranslation.translatable("%s.config.enum.%s.%s".formatted(
-			ctx.shell().root.modId(),
-			value.getDeclaringClass().getSimpleName(),
-			value.name()
-		));
+		return ConfigTranslation.translatable(ConfigTranslationKeys.enumValue(ctx.shell().root.modId(), value));
 	}
 	private Enum<?> nextValue() {
 		var current = (Enum<?>) value();

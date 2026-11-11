@@ -3,8 +3,9 @@ import com.electronwill.nightconfig.core.*;
 import com.electronwill.nightconfig.core.io.*;
 import com.electronwill.nightconfig.toml.*;
 import com.mojang.logging.LogUtils;
+import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
 import io.github.forgestove.flexconfig.api.annotation.*;
-import io.github.forgestove.flexconfig.api.registration.*;
+import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import org.jetbrains.annotations.Nullable;
@@ -413,7 +414,7 @@ public class ConfigSerializer<C> {
 	private String buildFieldComment(String categorySnake, String fieldName) {
 		var optionKey = "option.%s.%s".formatted(categorySnake, fieldName);
 		var title = translate(optionKey);
-		var tooltip = translate(optionKey + ".tooltip");
+		var tooltip = translate(ConfigTranslationKeys.tooltip(optionKey));
 		var sb = new StringBuilder();
 		if (title != null) sb.append(" ").append(title);
 		if (tooltip != null) for (var line : tooltip.split("\n")) {

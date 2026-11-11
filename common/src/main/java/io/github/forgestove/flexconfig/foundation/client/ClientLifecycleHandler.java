@@ -1,7 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.client;
 import io.github.forgestove.flexconfig.api.*;
-import io.github.forgestove.flexconfig.foundation.ConfigStore;
-import io.github.forgestove.flexconfig.foundation.ConfigWatchService;
+import io.github.forgestove.flexconfig.foundation.*;
 import io.github.forgestove.flexconfig.foundation.ui.ConfigScreen;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import net.minecraft.client.resources.language.I18n;
@@ -28,6 +27,7 @@ public class ClientLifecycleHandler {
 		if (language.equals(scannedLanguage)) return;
 		scannedLanguage = language;
 		ConfigStore.getRegisteredFileKeys().forEach(key -> TranslationChecker.check(ConfigStore.getRootConfigNode(key)));
+		TranslationChecker.checkExternalSources();
 	}
 	private static void watchConfigFiles() {
 		if (++watchTicks % ConfigWatchService.INTERVAL_TICKS != 0) return;

@@ -1,14 +1,13 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
-import io.github.forgestove.flexconfig.foundation.ConfigTranslation;
-import io.github.forgestove.flexconfig.foundation.ElementType;
-import io.github.forgestove.flexconfig.foundation.FieldAccess;
+import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
+import io.github.forgestove.flexconfig.foundation.*;
 import io.github.forgestove.flexconfig.foundation.client.ClientLockManager;
+import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
+import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiTheme;
 import io.github.forgestove.flexconfig.foundation.ui.row.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
-import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
-import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,7 +196,7 @@ public class CollectionRows {
 		}
 	}
 	private static String optionKey(RowContext ctx, ValueConfigNode node) {
-		return "%s.config.option.%s".formatted(ctx.shell().root.modId(), node.getPath());
+		return ConfigTranslationKeys.option(ctx.shell().root.modId(), node.getPath());
 	}
 	private static void addDelete(ConfigRow row, RowContext ctx, ValueConfigNode node, int index) {
 		if (!(row instanceof ValueRow valueRow)) return;

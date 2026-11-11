@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
+import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
 import io.github.forgestove.flexconfig.api.annotation.*;
 import io.github.forgestove.flexconfig.api.registration.ConfigCondition;
 import io.github.forgestove.flexconfig.foundation.*;
@@ -112,7 +113,7 @@ public class GroupRows {
 			.name(field.getName())
 			.path("%s.%s".formatted(path, field.getName()))
 			.title(ConfigTranslation.translatable(fieldKey))
-			.tooltip(ConfigTranslation.translatable(fieldKey + ".tooltip"))
+			.tooltip(ConfigTranslation.translatable(ConfigTranslationKeys.tooltip(fieldKey)))
 			.defaultValue(defaultValue)
 			.elementType(elementType)
 			.colorValue(field.getAnnotation(ColorValue.class))

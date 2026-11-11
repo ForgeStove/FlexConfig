@@ -147,7 +147,7 @@ public record RootConfigNode(
 		}
 		private CategoryConfigNode createCategoryNode(Field categoryField) {
 			var defaultCategory = FieldAccess.getFieldValue(categoryField, defaultConfig);
-			var categoryKey = modId + ".config.category." + categoryField.getName();
+			var categoryKey = ConfigTranslationKeys.category(modId, categoryField.getName());
 			translationKeys.add(categoryKey);
 			var categoryBuilder = CategoryConfigNode.builder()
 				.title(ConfigTranslation.translatable(categoryKey))
@@ -167,7 +167,7 @@ public record RootConfigNode(
 			for (var field : parentPath) defaultParent = FieldAccess.getFieldValue(field, defaultParent);
 			var defaultSubCategory = FieldAccess.getFieldValue(subCategoryField, defaultParent);
 			var pathKey = buildPathKey(path);
-			var categoryKey = modId + ".config.category." + pathKey;
+			var categoryKey = ConfigTranslationKeys.category(modId, pathKey);
 			translationKeys.add(categoryKey);
 			var builder = CategoryConfigNode.builder()
 				.title(ConfigTranslation.translatable(categoryKey))
@@ -201,21 +201,17 @@ public record RootConfigNode(
 			var elementType = FieldAccess.elementShape(valueField);
 			var valueName = valueField.getName();
 			var pathKey = buildPathKey(path);
-			var titleKey = "%s.config.option.%s.%s".formatted(modId, pathKey, valueName);
+			var titleKey = ConfigTranslationKeys.option(modId, pathKey, valueName);
 			translationKeys.add(titleKey);
-			translationKeys.add(titleKey + ".tooltip");
+			translationKeys.add(ConfigTranslationKeys.tooltip(titleKey));
 			// 枚举值的显示键：<modId>.config.enum.<枚举类名>.<常量名>
 			if (type.isEnum()) for (var constant : type.getEnumConstants())
-				translationKeys.add("%s.config.enum.%s.%s".formatted(modId, type.getSimpleName(), ((Enum<?>) constant).name()));
+				translationKeys.add(ConfigTranslationKeys.enumValue(modId, (Enum<?>) constant));
 			else if (elementType != null && elementType.raw().isEnum()) for (var constant : elementType.raw().getEnumConstants())
-				translationKeys.add("%s.config.enum.%s.%s".formatted(
-					modId,
-					elementType.raw().getSimpleName(),
-					((Enum<?>) constant).name()
-				));
+				translationKeys.add(ConfigTranslationKeys.enumValue(modId, (Enum<?>) constant));
 			else if (elementType != null && !elementType.isSimple()) collectElementTranslationKeys(elementType, titleKey);
 			var fullPath = (pathKey.isEmpty() ? "" : pathKey + ".") + valueName;
-			var tooltip = ConfigTranslation.translatable(titleKey + ".tooltip");
+			var tooltip = ConfigTranslation.translatable(ConfigTranslationKeys.tooltip(titleKey));
 			if (valueField.isAnnotationPresent(WarnCheat.class)) tooltip = tooltip.copy()
 				.append(Component.literal("\n"))
 				.append(Translation.WARN_CHEAT_TOOLTIP.copy().withStyle(ChatFormatting.RED));
@@ -297,7 +293,7 @@ public record RootConfigNode(
 			for (var field : FieldAccess.collectOrderedFields(type)) {
 				var fieldKey = "%s.%s".formatted(prefix, field.getName());
 				translationKeys.add(fieldKey);
-				translationKeys.add(fieldKey + ".tooltip");
+				translationKeys.add(ConfigTranslationKeys.tooltip(fieldKey));
 				if (field.isAnnotationPresent(Category.class)) {
 					collectObjectTranslationKeys(field.getType(), fieldKey);
 					continue;
@@ -305,7 +301,7 @@ public record RootConfigNode(
 				var fieldType = field.getType().isArray() ? field.getType().getComponentType() : field.getType();
 				if (!fieldType.isEnum()) continue;
 				for (var constant : fieldType.getEnumConstants())
-					translationKeys.add("%s.config.enum.%s.%s".formatted(modId, fieldType.getSimpleName(), ((Enum<?>) constant).name()));
+					translationKeys.add(ConfigTranslationKeys.enumValue(modId, (Enum<?>) constant));
 			}
 		}
 	}
