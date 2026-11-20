@@ -7,10 +7,8 @@ import io.github.forgestove.flexconfig.foundation.ui.core.UiFocus.Target;
 import io.github.forgestove.flexconfig.foundation.ui.screen.UiScreen;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
@@ -30,7 +28,7 @@ public class ConfigFileScreen extends UiScreen {
 	private boolean opened, closing;
 	private @Nullable Runnable closeAction;
 	public ConfigFileScreen(String modId, List<ConfigHandler<?, ?>> handlers) {
-		super(ClientUtil.modName(modId));
+		super(UiText.from(ClientUtil.modName(modId)));
 		this.modId = modId;
 		this.handlers = handlers;
 		parent = ClientUtil.mc.screen;
@@ -47,7 +45,7 @@ public class ConfigFileScreen extends UiScreen {
 				button.tooltip(Translation.tooltip(Translation.SERVER_CONFIG_UNAVAILABLE, Translation.SERVER_CONFIG_UNAVAILABLE_TOOLTIP));
 			fileButtons.add(button);
 		}
-		doneButton = new UiButton(Translation.DONE_LABEL.copy().withStyle(ChatFormatting.BOLD), Style.PRIMARY, this::onClose);
+		doneButton = new UiButton(Translation.DONE_LABEL.copy().withStyle(UiStyle.BOLD), Style.PRIMARY, this::onClose);
 		if (!opened) {
 			opened = true;
 			backdropAnim.start(0, 1, UiMotion.BACKDROP_IN);
@@ -71,9 +69,9 @@ public class ConfigFileScreen extends UiScreen {
 		var height = 22 + 12 + Math.max(1, fileButtons.size()) * (BUTTON_HEIGHT + SPACING) + BUTTON_HEIGHT + 16;
 		panel = new UiBounds((logicalWidth - width) / 2, (logicalHeight - height) / 2, width, height);
 	}
-	private Component label(ConfigHandler<?, ?> handler) {
+	private UiText label(ConfigHandler<?, ?> handler) {
 		var key = "%s.config.file.%s".formatted(modId, handler.getType().extension());
-		return Component.translatableWithFallback(key, handler.getFileName());
+		return UiText.translatableWithFallback(handler.getFileName(), key);
 	}
 	private void open(ConfigHandler<?, ?> handler) {
 		ClientUtil.mc.setScreen(new ConfigScreen<>(handler));
@@ -93,7 +91,7 @@ public class ConfigFileScreen extends UiScreen {
 			if (action != null) action.run();
 			return;
 		}
-		renderBackground(ui.graphics, mouseX, mouseY, delta);
+		renderBackground(graphics, mouseX, mouseY, delta);
 		updatePanel();
 		var painter = ui.painter;
 		var closeFactor = closeAnim.value();

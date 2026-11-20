@@ -2,7 +2,7 @@ package io.github.forgestove.flexconfig.foundation.ui;
 import io.github.forgestove.flexconfig.api.FileKey;
 import io.github.forgestove.flexconfig.api.menu.Accent;
 import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
-import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
+import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.tree.RootConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.*;
 import net.minecraft.client.gui.GuiGraphics;
@@ -14,12 +14,14 @@ import java.util.Set;
 public class ConfigScreen<C, V> extends Screen implements ConfigHost {
 	public final RootConfigNode root;
 	private final Screen parent;
-	private final ConfigShell<C, V> shell;
+	private final ConfigHandler<C, V> handler;
+	private final UiView shell;
 	public ConfigScreen(ConfigHandler<C, V> handler) {
 		super(handler.getConfigTree().getTitle());
+		this.handler = handler;
 		root = handler.getConfigTree();
 		parent = ClientUtil.mc.screen;
-		shell = new ConfigShell<>(this, handler);
+		shell = new ConfigShell(this, handler);
 	}
 	@Override
 	protected void init() {
@@ -33,7 +35,7 @@ public class ConfigScreen<C, V> extends Screen implements ConfigHost {
 	public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
 		if (shell.closed()) return;
 		renderBackground(graphics, mouseX, mouseY, delta);
-		shell.frame(graphics, mouseX, mouseY, delta);
+		shell.frame(new MinecraftRenderTarget(graphics), mouseX, mouseY, delta);
 	}
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -71,10 +73,10 @@ public class ConfigScreen<C, V> extends Screen implements ConfigHost {
 		shell.refresh();
 	}
 	public Set<FileKey> editedFiles() {
-		return shell.editedFiles();
+		return Set.of(new FileKey(root.modId(), root.fileName()));
 	}
 	public Accent accent() {
-		return shell.accent();
+		return handler.getAccent();
 	}
 	@Override
 	public int guiWidth() {

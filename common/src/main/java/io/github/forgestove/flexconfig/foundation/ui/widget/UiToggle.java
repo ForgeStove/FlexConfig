@@ -75,7 +75,7 @@ public class UiToggle extends UiControl {
 	public boolean mouseReleased(UiContext ctx, double mouseX, double mouseY, int button) {
 		if (!down) return false;
 		down = false;
-		if (button != 0 || !enabled || !bounds().contains(mouseX, mouseY)) return true;
+		if (button != 0 || !enabled || !releasedWithin(mouseX, mouseY)) return true;
 		var next = !value.getAsBoolean();
 		UiSound.click(next ? 1.15F : 0.95F);
 		setter.accept(next);

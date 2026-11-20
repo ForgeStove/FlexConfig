@@ -1,11 +1,9 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import com.mojang.blaze3d.platform.InputConstants;
-import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
-import io.github.forgestove.flexconfig.foundation.ui.FlexGuiTextures;
+import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.Util;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -21,7 +19,7 @@ public class UiTextField extends UiControl {
 	private int maxLength = Integer.MAX_VALUE;
 	private Predicate<String> filter = ignored -> true;
 	private Consumer<String> responder = ignored -> {};
-	private @Nullable Component placeholder;
+	private @Nullable UiText placeholder;
 	private @Nullable Runnable onEnter;
 	private boolean error;
 	private boolean leadingSearch;
@@ -57,7 +55,7 @@ public class UiTextField extends UiControl {
 	public void setResponder(Consumer<String> responder) {
 		this.responder = responder;
 	}
-	public void setPlaceholder(@Nullable Component placeholder) {
+	public void setPlaceholder(@Nullable UiText placeholder) {
 		this.placeholder = placeholder;
 	}
 	public void setError(boolean error) {
@@ -314,7 +312,7 @@ public class UiTextField extends UiControl {
 		var width = 0;
 		while (index < value.length()) {
 			var next = index + Character.charCount(value.codePointAt(index));
-			var piece = ClientUtil.mc.font.width(value.substring(index, next));
+			var piece = UiTexts.width(value.substring(index, next));
 			if (width + piece / 2.0 > target) return index;
 			width += piece;
 			index = next;
@@ -324,10 +322,10 @@ public class UiTextField extends UiControl {
 	private void clampScroll() {
 		var innerWidth = bounds().width() - 2 - PAD * 2;
 		if (innerWidth <= 0) return;
-		var caret = ClientUtil.mc.font.width(value.substring(0, cursor));
+		var caret = UiTexts.width(value.substring(0, cursor));
 		if (caret - scroll > innerWidth) scroll = caret - innerWidth;
 		else if (caret - scroll < 0) scroll = caret;
-		var total = ClientUtil.mc.font.width(value);
+		var total = UiTexts.width(value);
 		scroll = Mth.clamp(scroll, 0, Math.max(0, total - innerWidth));
 	}
 }

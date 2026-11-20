@@ -1,11 +1,10 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
-import net.minecraft.network.chat.Component;
 public class InfoRow extends ConfigRow {
-	private final Component text;
+	private final UiText text;
 	private final boolean error;
-	public InfoRow(RowContext ctx, Component text, int depth, boolean error) {
+	public InfoRow(RowContext ctx, UiText text, int depth, boolean error) {
 		super(ctx);
 		this.text = text;
 		this.depth = depth;
@@ -13,6 +12,11 @@ public class InfoRow extends ConfigRow {
 	}
 	@Override
 	public void render(UiContext ui) {
-		ui.painter.text(text, bounds().x() + UiTheme.INDENT + depth * UiTheme.INDENT, bounds().y() + (bounds().height() - ui.painter.lineHeight()) / 2, error ? UiTheme.DANGER : UiTheme.MUTED);
+		ui.painter.text(
+			text,
+			bounds().x() + UiTheme.INDENT + depth * UiTheme.INDENT,
+			bounds().y() + (bounds().height() - ui.painter.lineHeight()) / 2,
+			error ? UiTheme.DANGER : UiTheme.MUTED
+		);
 	}
 }

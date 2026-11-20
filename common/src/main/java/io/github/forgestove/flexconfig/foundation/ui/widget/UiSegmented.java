@@ -1,20 +1,17 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.IntConsumer;
-import java.util.function.IntSupplier;
+import java.util.*;
+import java.util.function.*;
 public class UiSegmented extends UiControl {
-	private final List<Component> labels;
+	private final List<UiText> labels;
 	private final IntConsumer onSelect;
 	private final UiAnim center = new UiAnim(0, UiMotion.SELECT);
 	private final List<UiTween> selectedness = new ArrayList<>();
 	private int selected;
 	private int pressedIndex = -1;
-	public UiSegmented(List<Component> labels, IntSupplier selected, IntConsumer onSelect) {
+	public UiSegmented(List<UiText> labels, IntSupplier selected, IntConsumer onSelect) {
 		this.labels = labels;
 		this.onSelect = onSelect;
 		int value = selected.getAsInt();
@@ -130,7 +127,7 @@ public class UiSegmented extends UiControl {
 		down = false;
 		var index = pressedIndex;
 		pressedIndex = -1;
-		if (button != 0 || !enabled || !bounds().contains(mouseX, mouseY)) return true;
+		if (button != 0 || !enabled || !releasedWithin(mouseX, mouseY)) return true;
 		if (index >= 0 && index != selected) {
 			UiSound.click();
 			onSelect.accept(index);

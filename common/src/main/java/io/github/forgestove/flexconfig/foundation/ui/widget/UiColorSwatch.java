@@ -29,7 +29,7 @@ public class UiColorSwatch extends UiControl {
 	public boolean mouseReleased(UiContext ctx, double mouseX, double mouseY, int button) {
 		if (!down) return false;
 		down = false;
-		if (button != 0 || !enabled || !bounds().contains(mouseX, mouseY)) return true;
+		if (button != 0 || !enabled || !releasedWithin(mouseX, mouseY)) return true;
 		UiSound.click();
 		onClick.run();
 		return true;

@@ -2,9 +2,9 @@ package io.github.forgestove.flexconfig.foundation.ui.model;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import io.github.forgestove.flexconfig.foundation.ui.factory.*;
 import io.github.forgestove.flexconfig.foundation.ui.row.ConfigRow;
-import net.minecraft.network.chat.Component;
 
 import java.util.*;
 /** 同页行间与原版按键的冲突检查。 */
@@ -22,12 +22,12 @@ public class KeybindConflictIndex {
 			localUsages.computeIfAbsent(keybind, ignored -> new ArrayList<>()).add(target);
 		}
 		var registeredCount = new HashMap<Key, Integer>();
-		var registeredUsages = new HashMap<Key, List<Component>>();
+		var registeredUsages = new HashMap<Key, List<UiText>>();
 		for (var mapping : ClientUtil.mc.options.keyMappings) {
 			var key = ClientUtil.boundKey(mapping);
 			if (key.equals(InputConstants.UNKNOWN)) continue;
 			registeredCount.merge(key, 1, Integer::sum);
-			registeredUsages.computeIfAbsent(key, ignored -> new ArrayList<>()).add(Component.translatable(mapping.getName()));
+			registeredUsages.computeIfAbsent(key, ignored -> new ArrayList<>()).add(UiText.translatable(mapping.getName()));
 		}
 		for (var target : aware) {
 			var keybind = target.keybind();
@@ -40,7 +40,7 @@ public class KeybindConflictIndex {
 				target.applyConflict(KeybindState.BOUND, List.of());
 				continue;
 			}
-			var usages = new ArrayList<Component>();
+			var usages = new ArrayList<UiText>();
 			for (var other : localUsages.getOrDefault(keybind, List.of())) if (other != target) usages.add(other.displayTitle());
 			usages.addAll(registeredUsages.getOrDefault(keybind.key(), List.of()));
 			target.applyConflict(KeybindState.CONFLICT, usages);

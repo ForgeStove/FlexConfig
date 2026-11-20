@@ -3,20 +3,19 @@ import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 public class GroupHeaderRow extends ConfigRow {
-	private final Component label;
+	private final UiText label;
 	private final String path;
 	private final @Nullable UiButton delete;
-	public GroupHeaderRow(RowContext ctx, String path, Component label, int depth, boolean canDelete, @Nullable Runnable onDelete) {
+	public GroupHeaderRow(RowContext ctx, String path, UiText label, int depth, boolean canDelete, @Nullable Runnable onDelete) {
 		super(ctx);
 		this.path = path;
 		this.label = label;
 		this.depth = depth;
-		delete = onDelete == null ? null : new UiButton(Component.literal("-"), Style.DANGER, onDelete);
+		delete = onDelete == null ? null : new UiButton(UiText.literal("-"), Style.DANGER, onDelete);
 		if (delete != null) {
 			delete.setEnabled(canDelete);
 			delete.setVisible(true);

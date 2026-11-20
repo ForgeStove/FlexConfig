@@ -62,8 +62,8 @@ public class FieldValidators {
 	}
 	private static <V> TypedValidator<V> validate(Predicate<V> belowMin, Predicate<V> aboveMax, Number min, Number max) {
 		return value -> {
-			if (belowMin.test(value)) return Translation.VALIDATOR_MIN.copy().append(String.valueOf(min));
-			if (aboveMax.test(value)) return Translation.VALIDATOR_MAX.copy().append(String.valueOf(max));
+			if (belowMin.test(value)) return Translation.toComponent(Translation.VALIDATOR_MIN.copy().append(String.valueOf(min)));
+			if (aboveMax.test(value)) return Translation.toComponent(Translation.VALIDATOR_MAX.copy().append(String.valueOf(max)));
 			return null;
 		};
 	}

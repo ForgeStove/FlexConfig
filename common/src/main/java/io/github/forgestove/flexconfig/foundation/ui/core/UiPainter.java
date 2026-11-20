@@ -1,32 +1,20 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.logging.LogUtils;
-import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
-import io.github.forgestove.flexconfig.foundation.ui.FlexGuiTextures;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
-import org.slf4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-/** 所有界面都通过这里绘制，跨版本差异和渲染顺序也在这里处理。 */
+/** 所有界面都通过这里绘制。透明度和缩放在这里统一处理，具体图形操作交给 UiRenderTarget。 */
 public class UiPainter {
-	private static final Logger LOGGER = LogUtils.getLogger();
-	private final GuiGraphics gui;
+	private final UiRenderTarget target;
 	private final ArrayDeque<Float> alphaStack = new ArrayDeque<>();
 	private float alpha = 1F;
 	private float scale = 1F;
 	private int scaleDepth;
-	public UiPainter(@NotNull GuiGraphics gui) {
-		this.gui = gui;
+	public UiPainter(UiRenderTarget target) {
+		this.target = target;
 	}
 	public void pushAlpha(float factor) {
 		alphaStack.push(alpha);
-		alpha *= Mth.clamp(factor, 0F, 1F);
+		alpha *= Math.clamp(factor, 0F, 1F);
 	}
 	public void popAlpha() {
 		if (!alphaStack.isEmpty()) alpha = alphaStack.pop();
@@ -38,9 +26,9 @@ public class UiPainter {
 	}
 	public void pushScale(float factor) {
 		flush();
-		gui.pose().pushPose();
+		target.pushPose();
 		if (factor != 1F) {
-			gui.pose().scale(factor, factor, 1F);
+			target.scale(factor, factor, 1F);
 			scale *= factor;
 		}
 		scaleDepth++;
@@ -48,55 +36,50 @@ public class UiPainter {
 	public void popScale() {
 		if (scaleDepth == 0) return;
 		flush();
-		gui.pose().popPose();
+		target.popPose();
 		scaleDepth--;
 		if (scaleDepth == 0) scale = 1F;
 	}
 	public void pushTranslate(float x, float y) {
 		flush();
-		gui.pose().pushPose();
-		gui.pose().translate(x, y, 0);
+		target.pushPose();
+		target.translate(x, y, 0);
 	}
 	public void popTranslate() {
 		flush();
-		gui.pose().popPose();
+		target.popPose();
+	}
+	public void pushZ(float z) {
+		flush();
+		target.pushPose();
+		target.translate(0, 0, z);
+	}
+	public void popZ() {
+		flush();
+		target.popPose();
 	}
 	public void rect(UiBounds bounds, int color) {
 		rect(bounds.x(), bounds.y(), bounds.width(), bounds.height(), color);
 	}
 	public void rect(int x, int y, int width, int height, int color) {
 		if (width <= 0 || height <= 0 || alpha <= 0.004F) return;
-		gui.fill(x, y, x + width, y + height, col(color));
+		target.fill(x, y, x + width, y + height, col(color));
 	}
-	private static final Map<ResourceLocation, Optional<int[]>> TEXTURE_SIZES = new HashMap<>();
-	/** 贴图的原始像素尺寸（宽、高）；缺失或读取失败返回 {@code null}。 */
-	public int @Nullable [] textureSize(@Nullable ResourceLocation texture) {
+	public int @Nullable [] textureSize(@Nullable UiTexture texture) {
 		if (texture == null) return null;
-		return TEXTURE_SIZES.computeIfAbsent(
-			texture, id -> {
-				var resource = ClientUtil.mc.getResourceManager().getResource(id);
-				if (resource.isEmpty()) {
-					LOGGER.warn("Missing texture {}", id);
-					return Optional.empty();
-				}
-				try (var image = NativeImage.read(resource.get().open())) {
-					return Optional.of(new int[]{image.getWidth(), image.getHeight()});
-				} catch (Exception e) {
-					LOGGER.warn("Failed to read texture {}", id, e);
-					return Optional.empty();
-				}
-			}
-		).orElse(null);
+		var width = texture.width();
+		var height = texture.height();
+		return width <= 0 || height <= 0 ? null : new int[]{width, height};
 	}
-	public void texture(ResourceLocation texture, UiBounds bounds) {
+	public void texture(UiTexture texture, UiBounds bounds) {
 		if (texture == null || bounds.width() <= 0 || bounds.height() <= 0 || alpha <= 0.004F) return;
 		var dims = textureSize(texture);
 		if (dims == null) return;
-		gui.blit(texture, bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0F, 0F, dims[0], dims[1], dims[0], dims[1]);
+		target.blit(texture, bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0F, 0F, dims[0], dims[1], dims[0], dims[1]);
 	}
 	public void gradient(UiBounds bounds, int top, int bottom) {
 		if (bounds.width() <= 0 || bounds.height() <= 0 || alpha <= 0.004F) return;
-		gui.fillGradient(bounds.x(), bounds.y(), bounds.right(), bounds.bottom(), col(top), col(bottom));
+		target.fillGradient(bounds.x(), bounds.y(), bounds.right(), bounds.bottom(), col(top), col(bottom));
 	}
 	public void border(UiBounds bounds, int color) {
 		border(bounds.x(), bounds.y(), bounds.width(), bounds.height(), color);
@@ -152,73 +135,65 @@ public class UiPainter {
 	/** 字体渲染会把 α 低于 4 的颜色补成不透明，淡入淡出时会在阈值附近闪一下，低于该值直接不画。 */
 	private static final int MIN_TEXT_ALPHA = 8;
 	public void text(String text, int x, int y, int color) {
-		text(text, x, y, color, false);
+		text(UiText.literal(text), x, y, color);
 	}
 	public void text(String text, int x, int y, int color, boolean shadow) {
+		text(UiText.literal(text), x, y, color, shadow);
+	}
+	public void text(UiText text, int x, int y, int color) {
+		text(text, x, y, color, false);
+	}
+	public void text(UiText text, int x, int y, int color, boolean shadow) {
 		if (text == null || text.isEmpty()) return;
 		var argb = col(color);
 		if (argb >>> 24 < MIN_TEXT_ALPHA) return;
-		gui.drawString(ClientUtil.mc.font, text, x, y, argb, shadow);
-	}
-	public void text(Component text, int x, int y, int color) {
-		text(text, x, y, color, false);
-	}
-	public void text(Component text, int x, int y, int color, boolean shadow) {
-		var argb = col(color);
-		if (argb >>> 24 < MIN_TEXT_ALPHA) return;
-		gui.drawString(ClientUtil.mc.font, text, x, y, argb, shadow);
-	}
-	public void text(FormattedCharSequence text, int x, int y, int color) {
-		var argb = col(color);
-		if (argb >>> 24 < MIN_TEXT_ALPHA) return;
-		gui.drawString(ClientUtil.mc.font, text, x, y, argb, false);
+		target.text(text, x, y, argb, shadow);
 	}
 	public void textEmphasis(String text, int x, int y, int color) {
-		text(Component.literal(text).withStyle(ChatFormatting.BOLD), x, y, color, false);
+		text(UiText.literal(text).withStyle(UiStyle.BOLD), x, y, color);
 	}
-	public void textEmphasis(Component text, int x, int y, int color) {
-		text(text.copy().withStyle(ChatFormatting.BOLD), x, y, color, false);
+	public void textEmphasis(UiText text, int x, int y, int color) {
+		text(text.copy().withStyle(UiStyle.BOLD), x, y, color);
 	}
 	public int textWidthEmphasis(String text) {
-		return textWidth(Component.literal(text).withStyle(ChatFormatting.BOLD));
+		return textWidth(UiText.literal(text).withStyle(UiStyle.BOLD));
 	}
-	public void textRight(Component text, int right, int y, int color) {
+	public void textRight(UiText text, int right, int y, int color) {
 		text(text, right - textWidth(text), y, color);
 	}
 	public int textWidth(String text) {
-		return ClientUtil.mc.font.width(text);
+		return UiTexts.width(text);
 	}
-	public int textWidth(Component text) {
-		return ClientUtil.mc.font.width(text);
+	public int textWidth(UiText text) {
+		return UiTexts.width(text);
 	}
 	public int lineHeight() {
-		return ClientUtil.mc.font.lineHeight;
+		return UiTexts.lineHeight();
 	}
 	public String trim(String text, int maxWidth) {
-		return ClientUtil.mc.font.plainSubstrByWidth(text, maxWidth);
+		return UiTexts.trim(text, maxWidth);
 	}
-	public void icon(FlexGuiTextures icon, UiBounds bounds, int argb) {
+	public List<UiText> split(UiText text, int maxWidth) {
+		return UiTexts.split(text, maxWidth);
+	}
+	public void icon(@Nullable UiTexture icon, UiBounds bounds, int argb) {
 		if (icon == null || alpha <= 0.004F) return;
 		var color = col(argb);
-		RenderSystem.setShaderColor(
-			(color >> 16 & 0xFF) / 255F,
-			(color >> 8 & 0xFF) / 255F,
-			(color & 0xFF) / 255F,
-			(color >>> 24 & 0xFF) / 255F
-		);
+		target.setShaderColor((color >> 16 & 0xFF) / 255F, (color >> 8 & 0xFF) / 255F, (color & 0xFF) / 255F,
+			(color >>> 24 & 0xFF) / 255F);
 		texture(
-			icon.texture, new UiBounds(
+			icon, new UiBounds(
 				bounds.x() + (bounds.width() - icon.width()) / 2,
 				bounds.y() + (bounds.height() - icon.height()) / 2,
 				icon.width(),
 				icon.height()
 			)
 		);
-		RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+		target.setShaderColor(1F, 1F, 1F, 1F);
 	}
 	public void scissorOn(UiBounds bounds) {
 		flush();
-		gui.enableScissor(
+		target.enableScissor(
 			Math.round(bounds.x() * scale),
 			Math.round(bounds.y() * scale),
 			Math.round(bounds.right() * scale),
@@ -227,18 +202,9 @@ public class UiPainter {
 	}
 	public void scissorOff() {
 		flush();
-		gui.disableScissor();
-	}
-	public void pushZ(float z) {
-		flush();
-		gui.pose().pushPose();
-		gui.pose().translate(0, 0, z);
-	}
-	public void popZ() {
-		flush();
-		gui.pose().popPose();
+		target.disableScissor();
 	}
 	public void flush() {
-		gui.flush();
+		target.flush();
 	}
 }

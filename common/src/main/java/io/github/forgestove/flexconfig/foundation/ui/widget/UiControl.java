@@ -1,13 +1,13 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiFocus.Target;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-public abstract class UiControl implements Target {
+public abstract class UiControl implements Target, UiPointerTarget {
 	protected boolean enabled = true, visible = true;
 	protected boolean down;
 	private UiBounds bounds = UiBounds.EMPTY;
-	private Component tooltip;
+	private UiBounds pressBounds = UiBounds.EMPTY;
+	private UiText tooltip;
 	public UiBounds bounds() {
 		return bounds;
 	}
@@ -36,10 +36,18 @@ public abstract class UiControl implements Target {
 	public boolean down() {
 		return down;
 	}
-	public void tooltip(@Nullable Component tooltip) {
+	@Override
+	public void markPressed() {
+		pressBounds = bounds;
+	}
+	/** 释放时同时检查当前 bounds 和按下时的 bounds，列表在按压期间重排也不会丢动作。 */
+	public boolean releasedWithin(double mouseX, double mouseY) {
+		return bounds.contains(mouseX, mouseY) || pressBounds.contains(mouseX, mouseY);
+	}
+	public void tooltip(@Nullable UiText tooltip) {
 		this.tooltip = tooltip;
 	}
-	public @Nullable Component tooltip() {
+	public @Nullable UiText tooltip() {
 		return tooltip;
 	}
 	public boolean hovered(UiContext ctx) {

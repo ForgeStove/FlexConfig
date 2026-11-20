@@ -3,10 +3,11 @@ import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
 import io.github.forgestove.flexconfig.api.annotation.*;
 import io.github.forgestove.flexconfig.api.registration.ConfigCondition;
 import io.github.forgestove.flexconfig.foundation.*;
+import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import io.github.forgestove.flexconfig.foundation.ui.row.*;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -17,7 +18,7 @@ public class GroupRows {
 		RowContext ctx,
 		Object target,
 		@Nullable Object defaults,
-		Component label,
+		UiText label,
 		String path,
 		String keyPrefix,
 		String lockPath,
@@ -54,7 +55,7 @@ public class GroupRows {
 					ctx,
 					childTarget,
 					childDefaults,
-					ConfigTranslation.translatable(childKey),
+					Translation.from(ConfigTranslation.translatable(childKey)),
 					"%s.%s".formatted(path, field.getName()),
 					childKey,
 					lockPath,

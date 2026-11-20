@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,7 +7,7 @@ import java.util.*;
 import java.util.function.*;
 public class UiDropdown extends UiControl implements UiPopup {
 	private static final int ROW_HEIGHT = 16, MAX_ROWS = 8, PAD = 4, FILTER_HEIGHT = 16;
-	public record Option(Object value, Component label) {}
+	public record Option(Object value, UiText label) {}
 	private final List<Option> options;
 	private final Supplier<Object> selected;
 	private final Consumer<Object> onSelect;
@@ -97,7 +96,7 @@ public class UiDropdown extends UiControl implements UiPopup {
 			pressed
 		);
 		var current = currentOption();
-		var label = current == null ? Component.empty() : current.label();
+		var label = current == null ? UiText.empty() : current.label();
 		var text = ctx.painter.trim(label.getString(), bounds().width() - 20);
 		var ink = enabled ? UiTheme.TITLE_INK : UiTheme.DISABLED;
 		ctx.painter.text(text, bounds().x() + 5, inner.y() + (inner.height() - 7) / 2, ink);
@@ -114,7 +113,7 @@ public class UiDropdown extends UiControl implements UiPopup {
 	public boolean mouseReleased(UiContext ctx, double mouseX, double mouseY, int button) {
 		if (!down) return false;
 		down = false;
-		if (button != 0 || !enabled || !bounds().contains(mouseX, mouseY)) return true;
+		if (button != 0 || !enabled || !releasedWithin(mouseX, mouseY)) return true;
 		UiSound.click();
 		opener.accept(this);
 		return true;

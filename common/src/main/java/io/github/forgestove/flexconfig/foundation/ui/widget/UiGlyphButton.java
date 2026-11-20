@@ -1,7 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-import net.minecraft.network.chat.Component;
 public class UiGlyphButton extends UiControl {
 	public enum Glyph {
 		CLOSE
@@ -12,7 +11,7 @@ public class UiGlyphButton extends UiControl {
 	public UiGlyphButton(Glyph glyph, Runnable action) {
 		this.glyph = glyph;
 		this.action = action;
-		tooltip(glyph == Glyph.CLOSE ? Translation.CLOSE_TOOLTIP : Component.empty());
+		tooltip(glyph == Glyph.CLOSE ? Translation.CLOSE_TOOLTIP : UiText.empty());
 	}
 	@Override
 	public void render(UiContext ctx) {
@@ -43,7 +42,7 @@ public class UiGlyphButton extends UiControl {
 	public boolean mouseReleased(UiContext ctx, double mouseX, double mouseY, int button) {
 		if (!down) return false;
 		down = false;
-		if (button != 0 || !enabled || !bounds().contains(mouseX, mouseY)) return true;
+		if (button != 0 || !enabled || !releasedWithin(mouseX, mouseY)) return true;
 		UiSound.click();
 		action.run();
 		return true;

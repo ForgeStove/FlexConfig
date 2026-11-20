@@ -1,8 +1,8 @@
 package io.github.forgestove.flexconfig.foundation.ui.factory;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.*;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.*;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 public record EntryKeybind(@NotNull Key key, int modifierFlags) {
@@ -76,16 +76,16 @@ public record EntryKeybind(@NotNull Key key, int modifierFlags) {
 			|| keyCode == InputConstants.KEY_LALT
 			|| keyCode == InputConstants.KEY_RALT;
 	}
-	public Component getDisplayName() {
+	public UiText getDisplayName() {
 		return buildText().withStyle(getState().color());
 	}
-	private MutableComponent buildText() {
-		var name = key.getDisplayName().copy();
+	private UiText buildText() {
+		var name = UiText.from(key.getDisplayName());
 		if (modifierFlags != NONE) {
-			var prefix = Component.literal("");
-			if ((modifierFlags & CONTROL) != 0) prefix = prefix.append(Component.literal("Ctrl+"));
-			if ((modifierFlags & SHIFT) != 0) prefix = prefix.append(Component.literal("Shift+"));
-			if ((modifierFlags & ALT) != 0) prefix = prefix.append(Component.literal("Alt+"));
+			var prefix = UiText.empty();
+			if ((modifierFlags & CONTROL) != 0) prefix = prefix.append("Ctrl+");
+			if ((modifierFlags & SHIFT) != 0) prefix = prefix.append("Shift+");
+			if ((modifierFlags & ALT) != 0) prefix = prefix.append("Alt+");
 			return prefix.append(name);
 		}
 		return name;

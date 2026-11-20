@@ -2,14 +2,11 @@ package io.github.forgestove.flexconfig.foundation.ui.core;
 import io.github.forgestove.flexconfig.api.menu.Accent;
 import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import net.minecraft.Util;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 /** 跨帧保留的界面状态：焦点、拖拽 owner、提示延迟和淡入，都由界面复用同一个实例。 */
 public class UiContext {
-	public GuiGraphics graphics;
 	public UiPainter painter;
 	public float delta;
 	public double mouseX;
@@ -17,7 +14,7 @@ public class UiContext {
 	public final UiFocus focus = new UiFocus();
 	private final UiTween tooltipFade = new UiTween(0);
 	private @Nullable Object hoveredOwner, focusedOwner, shownFor;
-	private @Nullable Supplier<Component> hoveredContent, focusedContent, shownContent;
+	private @Nullable Supplier<UiText> hoveredContent, focusedContent, shownContent;
 	private UiBounds hoveredAnchor = UiBounds.EMPTY, focusedAnchor = UiBounds.EMPTY, shownAnchor = UiBounds.EMPTY;
 	private @Nullable Object candidateOwner;
 	private long candidateSince;
@@ -34,9 +31,8 @@ public class UiContext {
 	public void setAccent(Accent accent) {
 		this.accent = accent;
 	}
-	public void beginFrame(GuiGraphics graphics, float delta, double mouseX, double mouseY) {
-		this.graphics = graphics;
-		painter = new UiPainter(graphics);
+	public void beginFrame(UiRenderTarget target, float delta, double mouseX, double mouseY) {
+		painter = new UiPainter(target);
 		this.delta = delta;
 		pointer(mouseX, mouseY);
 		hoveredOwner = null;
@@ -50,13 +46,13 @@ public class UiContext {
 		this.mouseX = mouseX;
 		this.mouseY = mouseY;
 	}
-	public void hover(Object owner, Supplier<Component> content, UiBounds anchor) {
+	public void hover(Object owner, Supplier<UiText> content, UiBounds anchor) {
 		if (hoveredOwner != null && hoveredOwner != owner) return;
 		hoveredOwner = owner;
 		hoveredContent = content;
 		hoveredAnchor = anchor;
 	}
-	public void focusTarget(Object owner, Supplier<Component> content, UiBounds anchor) {
+	public void focusTarget(Object owner, Supplier<UiText> content, UiBounds anchor) {
 		focusedOwner = owner;
 		focusedContent = content;
 		focusedAnchor = anchor;

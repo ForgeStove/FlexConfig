@@ -1,8 +1,7 @@
 package io.github.forgestove.flexconfig.foundation.tree;
 import com.google.common.collect.ImmutableList;
-import io.github.forgestove.flexconfig.api.CategoryIcon;
+import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.foundation.ConfigChangeDispatcher;
-import io.github.forgestove.flexconfig.api.RestartType;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
@@ -66,7 +65,7 @@ public class CategoryConfigNode implements ConfigNode {
 			var result = node.validate(config);
 			if (result == null) continue;
 			if (error == null) error = result;
-			else return Translation.MULTIPLE_ERRORS;
+			else return Translation.toComponent(Translation.MULTIPLE_ERRORS);
 		}
 		return error;
 	}

@@ -1,12 +1,12 @@
-package io.github.forgestove.flexconfig.foundation.ui;
+package io.github.forgestove.flexconfig.foundation.client;
 import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.api.CategoryIcon;
-import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiTexture;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.*;
-public enum FlexGuiTextures {
+/** 界面图标注册表；界面层只通过 {@link UiTexture} 使用，资源路径和精灵读取留在这里。 */
+public enum FlexGuiTextures implements UiTexture {
 	ICON_ON("icon/on"),
 	ICON_OFF("icon/off"),
 	ICON_RESET("icon/reset"),
@@ -56,11 +56,17 @@ public enum FlexGuiTextures {
 	private @NotNull SpriteContents getContents() {
 		return ClientUtil.mc.getGuiSprites().getSprite(id).contents();
 	}
+	@Override
 	public int width() {
 		return getContents().width();
 	}
+	@Override
 	public int height() {
 		return getContents().height();
+	}
+	@Override
+	public Object handle() {
+		return texture;
 	}
 	@Nullable
 	public static FlexGuiTextures of(CategoryIcon icon) {
@@ -101,8 +107,5 @@ public enum FlexGuiTextures {
 			case UI_MENU_WORLDS_TAB_ALT02 -> ICON_CATEGORY_UI_MENU_WORLDS_TAB_ALT02;
 			case NONE -> null;
 		};
-	}
-	public void render(GuiGraphics gui, int x, int y) {
-		gui.blitSprite(id, x, y, width(), height());
 	}
 }

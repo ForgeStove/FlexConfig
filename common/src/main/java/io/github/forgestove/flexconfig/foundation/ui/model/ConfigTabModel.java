@@ -1,13 +1,14 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
-import io.github.forgestove.flexconfig.foundation.ui.row.ConfigRow;
+import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.CategoryConfigNode;
-import net.minecraft.network.chat.Component;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
+import io.github.forgestove.flexconfig.foundation.ui.row.ConfigRow;
 import net.minecraft.util.Mth;
 
 import java.util.*;
 public class ConfigTabModel {
 	public final CategoryConfigNode node;
-	public final Component title;
+	public final UiText title;
 	public final List<ConfigRow> rows = new ArrayList<>();
 	public double scroll;
 	public boolean hasError;
@@ -15,7 +16,7 @@ public class ConfigTabModel {
 	public int defaultChangedCount;
 	public ConfigTabModel(CategoryConfigNode node) {
 		this.node = node;
-		title = node.getTitle();
+		title = Translation.from(node.getTitle());
 	}
 	public void build(RowContext ctx) {
 		rows.clear();

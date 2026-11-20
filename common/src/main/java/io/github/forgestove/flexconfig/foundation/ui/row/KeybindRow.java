@@ -1,23 +1,23 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.*;
-import io.github.forgestove.flexconfig.foundation.ui.core.UiTheme;
+import io.github.forgestove.flexconfig.foundation.client.Translation;
+import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
+import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.factory.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
-import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
-import net.minecraft.network.chat.Component;
 
 import java.util.List;
 public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConflictAware {
 	private final UiButton button;
 	private boolean capturing;
 	private KeybindState keyState = KeybindState.BOUND;
-	private List<Component> conflicts = List.of();
+	private List<UiText> conflicts = List.of();
 	public KeybindRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx, node);
-		button = new UiButton(Component.empty(), Style.KEYBIND, this::beginCapture);
+		button = new UiButton(UiText.empty(), Style.KEYBIND, this::beginCapture);
 		actionBar.add(button, UiTheme.CONTROL_WIDTH);
 	}
 	private Key key() {
@@ -52,12 +52,12 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 		return false;
 	}
 	/** 按键名的翻译由原版懒加载缓存提供，损坏时退回原始键名，避免一行拖垮整个界面构建。 */
-	private Component displayName() {
+	private UiText displayName() {
 		var key = key();
 		try {
-			return key.getDisplayName();
+			return UiText.from(key.getDisplayName());
 		} catch (RuntimeException ignored) {
-			return Component.translatable(key.getName());
+			return UiText.translatable(key.getName());
 		}
 	}
 	@Override
@@ -67,12 +67,12 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 		button.setLabel(displayName());
 		button.setActive(capturing);
 		if (keyState == KeybindState.CONFLICT && !conflicts.isEmpty()) {
-			var used = Component.empty();
+			var used = UiText.empty();
 			for (var i = 0; i < conflicts.size(); i++) {
-				if (i > 0) used = used.append(Component.literal(", "));
+				if (i > 0) used = used.append(", ");
 				used = used.append(conflicts.get(i));
 			}
-			button.tooltip(Component.translatable("controls.keybinds.duplicateKeybinds", used));
+			button.tooltip(UiText.translatable("controls.keybinds.duplicateKeybinds", used));
 		} else button.tooltip(null);
 	}
 	@Override
@@ -80,11 +80,11 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 		return new EntryKeybind(key(), EntryKeybind.NONE);
 	}
 	@Override
-	public Component displayTitle() {
-		return node.getTitle();
+	public UiText displayTitle() {
+		return Translation.from(node.getTitle());
 	}
 	@Override
-	public void applyConflict(KeybindState state, List<Component> usages) {
+	public void applyConflict(KeybindState state, List<UiText> usages) {
 		keyState = state;
 		conflicts = usages;
 	}

@@ -61,7 +61,7 @@ public record RootConfigNode(
 			var result = node.validate(config);
 			if (result == null) continue;
 			if (error == null) error = result;
-			else return Translation.MULTIPLE_ERRORS;
+			else return Translation.toComponent(Translation.MULTIPLE_ERRORS);
 		}
 		return error;
 	}
@@ -214,7 +214,7 @@ public record RootConfigNode(
 			var tooltip = ConfigTranslation.translatable(ConfigTranslationKeys.tooltip(titleKey));
 			if (valueField.isAnnotationPresent(WarnCheat.class)) tooltip = tooltip.copy()
 				.append(Component.literal("\n"))
-				.append(Translation.WARN_CHEAT_TOOLTIP.copy().withStyle(ChatFormatting.RED));
+				.append(Translation.toComponent(Translation.WARN_CHEAT_TOOLTIP).copy().withStyle(ChatFormatting.RED));
 			final var finalTooltip = tooltip;
 			categoryBuilder.value(valueBuilder -> valueBuilder.valueType(type)
 				.field(valueField)

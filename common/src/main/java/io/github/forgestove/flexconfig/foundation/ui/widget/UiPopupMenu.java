@@ -1,7 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
-import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 import java.util.List;
@@ -21,9 +19,8 @@ public class UiPopupMenu implements UiPopup {
 		this.onSelect = onSelect;
 	}
 	public void place(UiBounds viewport, int x, int y) {
-		var font = ClientUtil.mc.font;
 		var width = 1;
-		for (var item : items) width = Math.max(width, font.width(item.label()) + 27);
+		for (var item : items) width = Math.max(width, item.label().width() + 27);
 		var height = visibleRows() * ROW_HEIGHT + 2;
 		var px = Mth.clamp(x, viewport.x() + 2, Math.max(viewport.x() + 2, viewport.right() - width - 2));
 		var py = y + 1;
@@ -163,5 +160,5 @@ public class UiPopupMenu implements UiPopup {
 		var index = row + scrollRows;
 		return row >= 0 && row < visibleRows() && index >= 0 && index < items.size() ? index : -1;
 	}
-	public record Item(Component label, boolean enabled, boolean checked, Runnable action) {}
+	public record Item(UiText label, boolean enabled, boolean checked, Runnable action) {}
 }

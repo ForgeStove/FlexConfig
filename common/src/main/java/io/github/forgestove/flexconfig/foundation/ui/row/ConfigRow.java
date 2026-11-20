@@ -5,7 +5,7 @@ import io.github.forgestove.flexconfig.foundation.ui.widget.UiControl;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-public abstract class ConfigRow implements RowTransition {
+public abstract class ConfigRow implements RowTransition, UiPointerTarget {
 	protected final RowContext ctx;
 	protected int depth;
 	private UiBounds bounds = UiBounds.EMPTY;
@@ -90,7 +90,11 @@ public abstract class ConfigRow implements RowTransition {
 	}
 	public boolean mouseClicked(UiContext ui, double mouseX, double mouseY, int button) {
 		if (exiting) return false;
-		for (var control : controls()) if (control.mouseClicked(ui, mouseX, mouseY, button)) return true;
+		for (var control : controls())
+			if (control.mouseClicked(ui, mouseX, mouseY, button)) {
+				control.markPressed();
+				return true;
+			}
 		return false;
 	}
 	public boolean mouseReleased(UiContext ui, double mouseX, double mouseY, int button) {

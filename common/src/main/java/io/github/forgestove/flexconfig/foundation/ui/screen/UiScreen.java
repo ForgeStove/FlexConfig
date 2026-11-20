@@ -1,22 +1,21 @@
 package io.github.forgestove.flexconfig.foundation.ui.screen;
-import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
+import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiControl;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.function.Predicate;
 /** 自绘界面基类：统一处理缩放、UiContext 帧和逻辑坐标换算；子类只实现 {@link #renderUi}，输入按需转发给控件。 */
 public abstract class UiScreen extends Screen {
 	protected final UiContext ui = new UiContext();
+	protected GuiGraphics graphics;
 	protected int zoom = 1, logicalWidth, logicalHeight;
 	protected @Nullable UiControl pressedControl;
-	protected UiScreen(Component title) {
-		super(title);
+	protected UiScreen(UiText title) {
+		super(Translation.toComponent(title));
 	}
 	/** 在缩放开启前绘制屏幕级底图（模糊背景等）。 */
 	protected void renderBeforeScale(int mouseX, int mouseY, float delta) {}
@@ -27,10 +26,16 @@ public abstract class UiScreen extends Screen {
 	}
 	@Override
 	public final void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+		this.graphics = graphics;
 		zoom = UiPrefs.zoom(width, height);
 		logicalWidth = Math.max(1, width / zoom);
 		logicalHeight = Math.max(1, height / zoom);
-		ui.beginFrame(graphics, ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F, logicalX(mouseX), logicalY(mouseY));
+		ui.beginFrame(
+			new MinecraftRenderTarget(graphics),
+			ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F,
+			logicalX(mouseX),
+			logicalY(mouseY)
+		);
 		ui.viewport(logicalWidth, logicalHeight);
 		renderBeforeScale(mouseX, mouseY, delta);
 		ui.painter.pushScale(zoom);

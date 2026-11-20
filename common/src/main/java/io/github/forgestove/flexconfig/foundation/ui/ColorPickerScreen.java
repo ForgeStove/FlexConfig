@@ -6,10 +6,8 @@ import io.github.forgestove.flexconfig.foundation.ui.core.UiFocus.Target;
 import io.github.forgestove.flexconfig.foundation.ui.screen.UiScreen;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor.ARGB32;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +65,7 @@ public class ColorPickerScreen extends UiScreen {
 		}, this::alphaTrack
 		));
 		ok = new UiButton(
-			Component.translatable("gui.ok").withStyle(ChatFormatting.BOLD), Style.PRIMARY, () -> {
+			UiText.translatable("gui.ok").withStyle(UiStyle.BOLD), Style.PRIMARY, () -> {
 			onColorSelected.accept(colorFromHSB());
 			ClientUtil.mc.setScreen(parent);
 		}
@@ -99,7 +97,7 @@ public class ColorPickerScreen extends UiScreen {
 	}
 	@Override
 	protected void renderBeforeScale(int mouseX, int mouseY, float delta) {
-		renderBackground(ui.graphics, mouseX, mouseY, delta);
+		renderBackground(graphics, mouseX, mouseY, delta);
 	}
 	@Override
 	protected void renderUi(UiContext ui, int mouseX, int mouseY, float delta) {

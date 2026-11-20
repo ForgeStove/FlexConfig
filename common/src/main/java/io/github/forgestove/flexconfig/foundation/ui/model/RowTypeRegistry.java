@@ -1,8 +1,9 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
 import com.mojang.blaze3d.platform.InputConstants.Key;
+import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import io.github.forgestove.flexconfig.foundation.ui.row.*;
-import net.minecraft.network.chat.Component;
 
 import java.awt.Point;
 import java.util.*;
@@ -74,9 +75,9 @@ public class RowTypeRegistry {
 	private static ConfigRow collectionPlaceholder(RowContext ctx, ValueConfigNode node) {
 		return new InfoRow(ctx, placeholder(ctx, node), 0, false);
 	}
-	private static Component placeholder(RowContext ctx, ValueConfigNode node) {
+	private static UiText placeholder(RowContext ctx, ValueConfigNode node) {
 		var value = node.getEditingValue(ctx.config());
-		return node.getTitle().copy().append(Component.literal(": ")).append(Component.literal(String.valueOf(value)));
+		return Translation.from(node.getTitle()).append(": ").append(String.valueOf(value));
 	}
 	private static boolean isZero(String s) {
 		return s.isEmpty() || s.equals("-");

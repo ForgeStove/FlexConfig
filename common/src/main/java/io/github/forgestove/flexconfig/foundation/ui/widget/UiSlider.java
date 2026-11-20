@@ -2,12 +2,10 @@ package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.Util;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.math.*;
 import java.util.function.*;
 public class UiSlider extends UiControl {
 	private final double min, max, step;
@@ -25,7 +23,15 @@ public class UiSlider extends UiControl {
 	private double dragStart, virtualX, lastPointerX;
 	private long lastClickMs;
 	@Nullable private UiTextField editor;
-	public UiSlider(double min, double max, double step, DoubleSupplier value, DoubleConsumer onDrag, Runnable onCommit, DoubleFunction<String> format) {
+	public UiSlider(
+		double min,
+		double max,
+		double step,
+		DoubleSupplier value,
+		DoubleConsumer onDrag,
+		Runnable onCommit,
+		DoubleFunction<String> format
+	) {
 		this.min = min;
 		this.max = max;
 		this.step = step <= 0 ? 1 : step;
@@ -54,10 +60,15 @@ public class UiSlider extends UiControl {
 		var valueX = track.x() + 1 + (int) Math.round((track.width() - 2) * progress);
 		var fillX = dragging ? (int) Math.round(thumb.get()) : valueX;
 		painter.rect(track, UiTheme.WINDOW_EDGE);
-		trackPart(painter, track.x() + 1, fillX, track.y(),
+		trackPart(
+			painter,
+			track.x() + 1,
+			fillX,
+			track.y(),
 			enabled ? accent.light() : 0xFFA3A3A6,
 			enabled ? accent.base() : 0xFF8C8D90,
-			enabled ? accent.lightest() : 0xFF97989B);
+			enabled ? accent.lightest() : 0xFF97989B
+		);
 		trackPart(painter, fillX, track.right() - 1, track.y(), 0xFFA3A3A6, 0xFF8C8D90, 0xFF97989B);
 		var steps = (int) Math.round((max - min) / step);
 		var tickSteps = steps > 1 && steps <= 24 ? steps : 0;
@@ -95,7 +106,7 @@ public class UiSlider extends UiControl {
 			var text = painter.trim(format.apply(value.getAsDouble()), valueCell.width() - 2);
 			var idle = hover.get() > 0.5 ? UiTheme.TEXT : UiTheme.TEXT_2;
 			var color = !enabled ? UiTheme.DISABLED : UiTheme.fadeToward(accent.light(), idle, changedTint.value());
-			painter.textRight(Component.literal(text), valueCell.right(), valueCell.y(), color);
+			painter.textRight(UiText.literal(text), valueCell.right(), valueCell.y(), color);
 		}
 		if (dragging) {
 			var text = format.apply(value.getAsDouble());
@@ -152,7 +163,14 @@ public class UiSlider extends UiControl {
 		valueCell = cell;
 	}
 	private UiBounds valueCell() {
-		return valueCell != null ? valueCell : new UiBounds(bounds().right() - 46, bounds().y() + (bounds().height() - UiTheme.CONTROL_HEIGHT) / 2, 46, UiTheme.CONTROL_HEIGHT);
+		return valueCell != null
+			? valueCell
+			: new UiBounds(
+				bounds().right() - 46,
+				bounds().y() + (bounds().height() - UiTheme.CONTROL_HEIGHT) / 2,
+				46,
+				UiTheme.CONTROL_HEIGHT
+			);
 	}
 	private void openEditor() {
 		editor = new UiTextField(format.apply(value.getAsDouble()).replace("%", ""));

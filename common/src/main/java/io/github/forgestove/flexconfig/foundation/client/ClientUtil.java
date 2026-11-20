@@ -1,10 +1,13 @@
 package io.github.forgestove.flexconfig.foundation.client;
 import com.mojang.blaze3d.platform.InputConstants.Key;
-import io.github.forgestove.flexconfig.platform.FlexConfigClientServices;
-import io.github.forgestove.flexconfig.platform.FlexConfigServices;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiTexts;
+import io.github.forgestove.flexconfig.platform.*;
 import net.minecraft.client.*;
 import net.minecraft.network.chat.Component;
 public class ClientUtil {
+	static {
+		UiTexts.install(MinecraftTextEngine.INSTANCE);
+	}
 	public static final Minecraft mc = Minecraft.getInstance();
 	public static Component modName(String modId) {
 		var name = FlexConfigServices.PLATFORM.modDisplayName(modId);

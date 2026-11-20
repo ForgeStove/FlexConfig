@@ -1,12 +1,12 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
-import net.minecraft.network.chat.Component;
+
 import java.util.Locale;
 /** 搜索结果里的分类标题。 */
 public class SearchHeaderRow extends ConfigRow {
-	private final Component title;
-	public SearchHeaderRow(RowContext ctx, Component title, int depth) {
+	private final UiText title;
+	public SearchHeaderRow(RowContext ctx, UiText title, int depth) {
 		super(ctx);
 		this.title = title;
 		this.depth = depth;

@@ -1,14 +1,13 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
 import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
 import io.github.forgestove.flexconfig.foundation.*;
-import io.github.forgestove.flexconfig.foundation.client.ClientLockManager;
+import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
-import io.github.forgestove.flexconfig.foundation.ui.core.UiTheme;
+import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.row.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -72,7 +71,7 @@ public class CollectionRows {
 		var list = values(node, ctx);
 		if (index < 0 || index >= list.size()) return;
 		var element = list.get(index);
-		ctx.shell().exitRow(
+		ctx.exitRow(
 			elementPath(node, index), () -> {
 				// 动画期间列表可能已被别处改动，按元素引用重新定位后再删
 				var elements = values(node, ctx);
@@ -104,9 +103,14 @@ public class CollectionRows {
 			.path(elementPath(node, index))
 			.title(node.getTitle().copy().append(" #" + (index + 1)))
 			.defaultValue(defaultElement(node, index))
-			.valueReader(ignored -> index < list.size() ? list.get(index) : null)
+			// 撤销/重置会用新的列表替换编辑值，读写必须每次取当前列表，不能闭包旧的引用
+			.valueReader(ignored -> {
+				var current = values(node, ctx);
+				return index < current.size() ? current.get(index) : null;
+			})
 			.valueWriter((ignored, value) -> {
-				if (index < list.size()) list.set(index, value);
+				var current = values(node, ctx);
+				if (index < current.size()) current.set(index, value);
 			})
 			.writeThrough(true)
 			.element(true)
@@ -126,19 +130,34 @@ public class CollectionRows {
 		if (array) {
 			var componentType = raw.getComponentType();
 			var holder = new WriteBackList[1];
-			var cached = new WriteBackList(
-				FieldAccess.arrayToList(list.get(index)), () -> {
-				if (index < list.size()) list.set(index, FieldAccess.listToArray(componentType, holder[0]));
-			}
-			);
-			holder[0] = cached;
-			reader = ignored -> cached;
-			writer = (ignored, value) -> cached.replaceContents(value instanceof List<?> values ? values : List.of());
-			baseline = FieldAccess.deepCopy(cached);
+			var source = new Object[1];
+			reader = ignored -> {
+				var current = values(node, ctx);
+				var element = index < current.size() ? current.get(index) : null;
+				// 列表被整体替换后（撤销/重置），数组元素也要重新绑定一次
+				if (element != source[0]) {
+					source[0] = element;
+					holder[0] = new WriteBackList(
+						element == null ? new ArrayList<>() : FieldAccess.arrayToList(element), () -> {
+						var now = values(node, ctx);
+						if (index < now.size()) now.set(index, FieldAccess.listToArray(componentType, holder[0]));
+					}
+					);
+				}
+				return holder[0];
+			};
+			writer = (ignored, value) -> ((WriteBackList) reader.read(null)).replaceContents(value instanceof List<?> values
+				? values
+				: List.of());
+			baseline = FieldAccess.deepCopy(reader.read(null));
 		} else {
-			reader = ignored -> index < list.size() ? list.get(index) : null;
+			reader = ignored -> {
+				var current = values(node, ctx);
+				return index < current.size() ? current.get(index) : null;
+			};
 			writer = (ignored, value) -> {
-				if (index < list.size()) list.set(index, value);
+				var current = values(node, ctx);
+				if (index < current.size()) current.set(index, value);
 			};
 			baseline = FieldAccess.deepCopy(list.get(index));
 		}
@@ -184,7 +203,7 @@ public class CollectionRows {
 				ctx,
 				element,
 				defaultElement(node, i),
-				ConfigTranslation.translatable(key),
+				Translation.from(ConfigTranslation.translatable(key)),
 				path,
 				key,
 				node.getLockPath(),
@@ -196,11 +215,11 @@ public class CollectionRows {
 		}
 	}
 	private static String optionKey(RowContext ctx, ValueConfigNode node) {
-		return ConfigTranslationKeys.option(ctx.shell().root.modId(), node.getPath());
+		return ConfigTranslationKeys.option(ctx.modId(), node.getPath());
 	}
 	private static void addDelete(ConfigRow row, RowContext ctx, ValueConfigNode node, int index) {
 		if (!(row instanceof ValueRow valueRow)) return;
-		var delete = new UiButton(Component.literal("-"), Style.DANGER, () -> remove(ctx, node, index));
+		var delete = new UiButton(UiText.literal("-"), Style.DANGER, () -> remove(ctx, node, index));
 		delete.setEnabled(!isReadOnly(ctx, node));
 		valueRow.addAction(delete, UiTheme.ACTION_SIZE);
 	}

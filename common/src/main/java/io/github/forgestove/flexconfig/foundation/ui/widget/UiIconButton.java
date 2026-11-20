@@ -1,7 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
-import io.github.forgestove.flexconfig.foundation.ui.FlexGuiTextures;
+import io.github.forgestove.flexconfig.foundation.client.FlexGuiTextures;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 public class UiIconButton extends UiControl {
 	private final UiAnim hover = new UiAnim(0);
@@ -14,7 +13,7 @@ public class UiIconButton extends UiControl {
 	public void setIcon(FlexGuiTextures icon) {
 		this.icon = icon;
 	}
-	public void setTooltip(@Nullable Component tooltip) {
+	public void setTooltip(@Nullable UiText tooltip) {
 		tooltip(tooltip);
 	}
 	@Override
@@ -50,7 +49,7 @@ public class UiIconButton extends UiControl {
 	public boolean mouseReleased(UiContext ctx, double mouseX, double mouseY, int button) {
 		if (!down) return false;
 		down = false;
-		if (button != 0 || !enabled || !bounds().contains(mouseX, mouseY)) return true;
+		if (button != 0 || !enabled || !releasedWithin(mouseX, mouseY)) return true;
 		UiSound.click();
 		action.run();
 		return true;

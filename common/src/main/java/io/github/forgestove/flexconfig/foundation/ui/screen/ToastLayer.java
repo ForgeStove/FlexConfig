@@ -1,11 +1,10 @@
 package io.github.forgestove.flexconfig.foundation.ui.screen;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 /** 底部居中的提示条：左侧色条、可选的次级按钮动作，以及倒计时进度。 */
 public class ToastLayer {
 	private static final int HEIGHT = 20, PAD = 6, MAX_WIDTH = 315;
-	private record Message(Component text, @Nullable Component actionLabel, @Nullable Runnable action, boolean undo) {}
+	private record Message(UiText text, @Nullable UiText actionLabel, @Nullable Runnable action, boolean undo) {}
 	private final UiTween in = new UiTween(0);
 	private final UiTween swap = new UiTween(1);
 	private @Nullable Message current;
@@ -13,10 +12,10 @@ public class ToastLayer {
 	private UiBounds bounds = UiBounds.EMPTY;
 	private float remainingMs, totalMs;
 	private boolean leaving, pressed;
-	public void info(Component text) {
+	public void info(UiText text) {
 		show(new Message(text, null, null, false));
 	}
-	public void info(Component text, Component actionLabel, Runnable action) {
+	public void info(UiText text, UiText actionLabel, Runnable action) {
 		show(new Message(text, actionLabel, action, true));
 	}
 	private void show(Message next) {

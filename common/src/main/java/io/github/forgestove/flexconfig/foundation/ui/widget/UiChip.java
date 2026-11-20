@@ -1,24 +1,22 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
-import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-import net.minecraft.network.chat.Component;
 public class UiChip extends UiControl {
 	private final UiAnim hover = new UiAnim(0);
-	private Component label;
+	private UiText label;
 	private boolean selected;
 	private final Runnable action;
-	public UiChip(Component label, Runnable action) {
+	public UiChip(UiText label, Runnable action) {
 		this.label = label;
 		this.action = action;
 	}
-	public void setLabel(Component label) {
+	public void setLabel(UiText label) {
 		this.label = label;
 	}
 	public void setSelected(boolean selected) {
 		this.selected = selected;
 	}
 	public int preferredWidth() {
-		return ClientUtil.mc.font.width(label) + 14;
+		return label.width() + 14;
 	}
 	@Override
 	public void render(UiContext ctx) {
@@ -27,16 +25,23 @@ public class UiChip extends UiControl {
 		hover.update(ctx.delta);
 		var accent = ctx.accent();
 		var pressed = selected || down;
-		var face = !enabled ? 0xFF6E6A5C
-			: selected ? down ? accent.darkest() : hover.get() > 0.5 ? accent.base() : accent.strong()
-			: down ? UiTheme.SECONDARY_PRESSED : hover.get() > 0.5 ? UiTheme.SECONDARY_HOVER : UiTheme.SECONDARY_FACE;
+		var face = !enabled
+			? 0xFF6E6A5C
+			: selected
+				? down ? accent.darkest() : hover.get() > 0.5 ? accent.base() : accent.strong()
+				: down ? UiTheme.SECONDARY_PRESSED : hover.get() > 0.5 ? UiTheme.SECONDARY_HOVER : UiTheme.SECONDARY_FACE;
 		var highlight = selected ? accent.light() : UiTheme.SECONDARY_TOP;
 		var shine = selected ? 0xFFF7F7F9 : UiTheme.SECONDARY_SHINE;
 		var depth = selected ? accent.darkest() : UiTheme.SECONDARY_LIP;
 		var inner = ctx.painter.bevel(bounds(), UiTheme.WINDOW_EDGE, face, highlight, shine, depth, 2, pressed);
 		var text = ctx.painter.trim(label.getString(), bounds().width() - 10);
 		var ink = selected ? accent.ink() : UiTheme.TITLE_INK;
-		ctx.painter.text(text, bounds().x() + (bounds().width() - ctx.painter.textWidth(text)) / 2, inner.y() + (inner.height() - 7) / 2, ink);
+		ctx.painter.text(
+			text,
+			bounds().x() + (bounds().width() - ctx.painter.textWidth(text)) / 2,
+			inner.y() + (inner.height() - 7) / 2,
+			ink
+		);
 		showTooltip(ctx);
 	}
 	@Override
@@ -50,7 +55,7 @@ public class UiChip extends UiControl {
 	public boolean mouseReleased(UiContext ctx, double mouseX, double mouseY, int button) {
 		if (!down) return false;
 		down = false;
-		if (button != 0 || !enabled || !bounds().contains(mouseX, mouseY)) return true;
+		if (button != 0 || !enabled || !releasedWithin(mouseX, mouseY)) return true;
 		UiSound.click();
 		action.run();
 		return true;

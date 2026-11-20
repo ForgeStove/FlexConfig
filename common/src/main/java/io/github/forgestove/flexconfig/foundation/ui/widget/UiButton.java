@@ -1,7 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.api.menu.Accent;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -15,17 +14,17 @@ public class UiButton extends UiControl {
 		KEYBIND
 	}
 	private final UiAnim hover = new UiAnim(0);
-	private Component label;
+	private UiText label;
 	private boolean active;
 	private static final Palette PRIMARY_DISABLED = new Palette(0xFF6E6A5C, 0xFF6E6A5C, 0xFF6E6A5C, 0xFF58585A, 0xFF6E6A5C, 0xFF6E6A5C);
 	private final Style style;
 	private final Runnable action;
-	public UiButton(@NotNull Component label, @NotNull Style style, @NotNull Runnable action) {
+	public UiButton(@NotNull UiText label, @NotNull Style style, @NotNull Runnable action) {
 		this.label = label;
 		this.style = style;
 		this.action = action;
 	}
-	public void setLabel(Component label) {
+	public void setLabel(UiText label) {
 		this.label = label;
 	}
 	/** 仅按键绑定样式使用：捕获中时把凹槽描边换成主题色。 */
@@ -75,13 +74,11 @@ public class UiButton extends UiControl {
 		}
 		showTooltip(ctx);
 	}
-	private Component displayLabel(UiPainter painter) {
-		var component = style == Style.PRIMARY
-			? Component.literal(label.getString().toUpperCase(Locale.ROOT)).withStyle(label.getStyle())
-			: label;
+	private UiText displayLabel(UiPainter painter) {
+		var text = style == Style.PRIMARY ? label.replaceText(label.getString().toUpperCase(Locale.ROOT)) : label;
 		var max = bounds().width() - 8;
-		if (painter.textWidth(component) <= max) return component;
-		return Component.literal(painter.trim(component.getString(), max)).withStyle(component.getStyle());
+		if (painter.textWidth(text) <= max) return text;
+		return text.replaceText(painter.trim(text.getString(), max));
 	}
 	/** 按键绑定：输入框式凹槽里居中显示键名，捕获中把描边换成主题色。 */
 	private void drawKeybind(UiContext ctx) {
@@ -139,7 +136,7 @@ public class UiButton extends UiControl {
 	public boolean mouseReleased(UiContext ctx, double mouseX, double mouseY, int button) {
 		if (!down) return false;
 		down = false;
-		if (button != 0 || !enabled || !bounds().contains(mouseX, mouseY)) return true;
+		if (button != 0 || !enabled || !releasedWithin(mouseX, mouseY)) return true;
 		UiSound.click();
 		action.run();
 		return true;

@@ -1,12 +1,9 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
 import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
-import io.github.forgestove.flexconfig.foundation.ui.FlexGuiTextures;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -16,8 +13,8 @@ public abstract class ValueRow extends ConfigRow {
 	protected final UiActionBar actionBar = new UiActionBar();
 	protected final UiActionBar buttons = new UiActionBar();
 	protected final UiIconButton reset, lock;
-	private final Component label;
-	private final @Nullable Component tooltip;
+	private final UiText label;
+	private final @Nullable UiText tooltip;
 	private final UiAnim hoverAnim = new UiAnim(0, UiMotion.HOVER_IN);
 	private final UiTween dot = new UiTween(0);
 	private final UiTween wash = new UiTween(1);
@@ -27,8 +24,8 @@ public abstract class ValueRow extends ConfigRow {
 	public ValueRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx);
 		this.node = node;
-		label = node.getTitle().copy();
-		tooltip = node.getTooltip();
+		label = Translation.from(node.getTitle());
+		tooltip = Translation.from(node.getTooltip());
 		reset = new UiIconButton(FlexGuiTextures.ICON_RESET, this::resetToDefault);
 		reset.tooltip(Translation.RESET_TOOLTIP);
 		lock = new UiIconButton(FlexGuiTextures.ICON_UNLOCK, this::toggleLock);
@@ -63,7 +60,7 @@ public abstract class ValueRow extends ConfigRow {
 	public boolean canReset() {
 		return !state.readOnly && !node.isDefaultValue(ctx.config());
 	}
-	public Component resetLabel() {
+	public UiText resetLabel() {
 		return Translation.resetTo(defaultText());
 	}
 	private boolean focusedWithin(UiContext ui) {
@@ -87,12 +84,12 @@ public abstract class ValueRow extends ConfigRow {
 	}
 	protected int descriptionLineCount(int width) {
 		if (tooltip == null || !showDescription()) return 0;
-		return ClientUtil.mc.font.split(tooltip, descriptionWidth(width)).size();
+		return UiTexts.split(tooltip, descriptionWidth(width)).size();
 	}
 	/** 描述文本的可用宽度；高度计算和绘制共用，避免换行行数与实际渲染不一致。 */
 	private int descriptionWidth(int width) {
 		var inset = UiTheme.INDENT + depth * UiTheme.INDENT + titleRightInset() + UiTheme.PADDING * 2;
-		if (dot.value() > 0.01 || isChanged()) inset += 6;
+		if (dot.value() > 0.01 || !isDefaultValue()) inset += 6;
 		if (!controlBelow) inset += actionBar.usedWidth();
 		return Math.max(20, width - inset);
 	}
@@ -110,23 +107,23 @@ public abstract class ValueRow extends ConfigRow {
 		if (hasError()) return UiTheme.DANGER_LIGHT;
 		return UiTheme.TEXT;
 	}
-	protected @Nullable Component tooltip() {
+	protected @Nullable UiText tooltip() {
 		var out = label.copy();
 		var hasBody = false;
 		if (tooltip != null) {
-			out.append(Component.literal("\n")).append(tooltip);
+			out = out.append("\n").append(tooltip);
 			hasBody = true;
 		}
 		var defaultValue = defaultText();
 		if (!defaultValue.isEmpty()) {
-			var hint = Translation.tooltipDefault(defaultValue).copy().withStyle(ChatFormatting.GRAY);
-			out.append(Component.literal("\n")).append(hint);
+			var hint = Translation.tooltipDefault(defaultValue).copy().withStyle(UiStyle.GRAY);
+			out = out.append("\n").append(hint);
 			hasBody = true;
 			if (!node.isDefaultValue(ctx.config()))
-				out.append(Component.literal("\n")).append(Translation.TOOLTIP_CHANGED.copy().withStyle(ChatFormatting.GRAY));
+				out = out.append("\n").append(Translation.TOOLTIP_CHANGED.copy().withStyle(UiStyle.GRAY));
 		}
 		if (state.validationError != null) {
-			out.append(Component.literal("\n")).append(state.validationError.copy().withStyle(ChatFormatting.RED));
+			out = out.append("\n").append(state.validationError.copy().withStyle(UiStyle.RED));
 			hasBody = true;
 		}
 		return hasBody ? out : null;
@@ -183,11 +180,12 @@ public abstract class ValueRow extends ConfigRow {
 			hoverWas = hot;
 		}
 		hoverAnim.update(ui.delta);
-		var dotTarget = isChanged() ? 1F : 0F;
+		var altered = !isDefaultValue();
+		var dotTarget = altered ? 1F : 0F;
 		if (dot.target() != dotTarget) dot.start(dotTarget, UiMotion.DOT);
 		dot.update(ui.delta);
 		wash.update(ui.delta);
-		reset.setVisible(isChanged() && !state.readOnly);
+		reset.setVisible(altered && !state.readOnly);
 		lock.setVisible(hot && state.showLock && allowLock());
 	}
 	@Override
@@ -242,7 +240,7 @@ public abstract class ValueRow extends ConfigRow {
 		}
 		if (tooltip != null && showDescription()) {
 			var lineY = titleY + 11;
-			for (var line : ClientUtil.mc.font.split(tooltip, available)) {
+			for (var line : UiTexts.split(tooltip, available)) {
 				painter.text(line, left, lineY, UiTheme.TEXT_2);
 				lineY += 12;
 			}

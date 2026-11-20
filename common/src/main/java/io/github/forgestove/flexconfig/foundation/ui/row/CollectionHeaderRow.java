@@ -1,15 +1,14 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
-import io.github.forgestove.flexconfig.foundation.ui.core.UiTheme;
+import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
+import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
-import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
-import net.minecraft.network.chat.Component;
 public class CollectionHeaderRow extends ValueRow {
 	private final UiButton add;
 	public CollectionHeaderRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx, node);
-		add = new UiButton(Component.literal("+"), Style.PRIMARY, () -> CollectionRows.add(ctx, node));
+		add = new UiButton(UiText.literal("+"), Style.PRIMARY, () -> CollectionRows.add(ctx, node));
 		actionBar.add(add, UiTheme.ACTION_SIZE);
 	}
 	@Override
@@ -20,7 +19,7 @@ public class CollectionHeaderRow extends ValueRow {
 	@Override
 	public void resetToDefault() {
 		if (state.readOnly) return;
-		ctx.shell().exitElements(
+		ctx.exitElements(
 			node.getPath(), () -> {
 				super.resetToDefault();
 				ctx.handler().clearElementKeybinds(node.getPath());
@@ -29,7 +28,7 @@ public class CollectionHeaderRow extends ValueRow {
 	}
 	@Override
 	public void resetToActive() {
-		ctx.shell().exitElements(
+		ctx.exitElements(
 			node.getPath(), () -> {
 				super.resetToActive();
 				ctx.handler().clearElementKeybinds(node.getPath());
