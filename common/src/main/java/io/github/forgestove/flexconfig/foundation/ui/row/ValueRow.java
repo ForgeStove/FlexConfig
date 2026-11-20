@@ -1,4 +1,7 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
+import com.mojang.blaze3d.platform.InputConstants.Key;
+import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
+import io.github.forgestove.flexconfig.foundation.ConfigTranslation;
 import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
@@ -6,6 +9,7 @@ import io.github.forgestove.flexconfig.foundation.ui.model.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.Point;
 import java.util.*;
 public abstract class ValueRow extends ConfigRow {
 	protected final ValueConfigNode node;
@@ -30,6 +34,13 @@ public abstract class ValueRow extends ConfigRow {
 		reset.tooltip(Translation.RESET_TOOLTIP);
 		lock = new UiIconButton(FlexGuiTextures.ICON_UNLOCK, this::toggleLock);
 		buttons.add(lock, UiTheme.ACTION_SIZE).add(reset, UiTheme.ACTION_SIZE);
+	}
+	private static boolean hasCustomToString(Class<?> type) {
+		try {
+			return type.getMethod("toString").getDeclaringClass() != Object.class;
+		} catch (NoSuchMethodException ignored) {
+			return false;
+		}
 	}
 	protected Object value() {
 		return node.getEditingValue(ctx.config());
@@ -58,7 +69,9 @@ public abstract class ValueRow extends ConfigRow {
 		return value == null ? "" : String.valueOf(value);
 	}
 	public boolean canReset() {
-		return !state.readOnly && node.hasDefault() && !node.isDefaultValue(ctx.config());
+		return !state.readOnly && (
+			this instanceof TriggerKeybindAware aware && aware.hasTriggerKeybind() || !node.isDefaultValue(ctx.config())
+		);
 	}
 	public UiText resetLabel() {
 		return Translation.resetTo(defaultText());
@@ -108,14 +121,11 @@ public abstract class ValueRow extends ConfigRow {
 		return UiTheme.TEXT;
 	}
 	protected @Nullable UiText tooltip() {
+		// 描述已经画在行内，悬浮提示不再重复
 		var out = label.copy();
 		var hasBody = false;
-		if (tooltip != null) {
-			out = out.append("\n").append(tooltip);
-			hasBody = true;
-		}
 		var defaultValue = defaultText();
-		if (node.hasDefault() && !defaultValue.isEmpty()) {
+		if (!defaultValue.isEmpty()) {
 			var hint = Translation.tooltipDefault(defaultValue).copy().withStyle(UiStyle.GRAY);
 			out = out.append("\n").append(hint);
 			hasBody = true;
@@ -129,10 +139,43 @@ public abstract class ValueRow extends ConfigRow {
 		return hasBody ? out : null;
 	}
 	protected String defaultText() {
-		var value = node.getDefaultValue();
-		if (value == null) return "";
-		if (value instanceof Enum<?> constant) return constant.name();
-		return String.valueOf(value);
+		return displayValue(node.getDefaultValue());
+	}
+	/** 值的显示文本：集合递归、枚举用翻译、按键用显示名、布尔用开关标记。 */
+	protected String displayValue(@Nullable Object value) {
+		switch (value) {
+			case null -> {
+				return "";
+			}
+			case List<?> list -> {
+				var parts = new ArrayList<String>(list.size());
+				for (var element : list) parts.add(displayValue(element));
+				return "[" + String.join(", ", parts) + "]";
+			}
+			case Enum<?> constant -> {
+				return Translation.from(ConfigTranslation.translatable(ConfigTranslationKeys.enumValue(ctx.modId(), constant))).getString();
+			}
+			case Key key -> {
+				try {
+					return key.getDisplayName().getString();
+				} catch (RuntimeException ignored) {
+					return UiText.translatable(key.getName()).getString();
+				}
+			}
+			case Boolean bool -> {
+				return (bool ? Translation.ON_LABEL : Translation.OFF_LABEL).getString();
+			}
+			case Point point -> {
+				return point.x + ", " + point.y;
+			}
+			default -> {
+			}
+		}
+		// 没有自定义 toString 的对象只显示类型名，避免默认值提示里出现 Class@hash
+		if (hasCustomToString(value.getClass())) try {
+			return value.toString();
+		} catch (RuntimeException ignored) {}
+		return value.getClass().getSimpleName();
 	}
 	public void resetToDefault() {
 		if (state.readOnly) return;

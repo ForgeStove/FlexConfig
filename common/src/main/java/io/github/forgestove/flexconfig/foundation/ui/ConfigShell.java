@@ -727,31 +727,28 @@ public final class ConfigShell implements UiView, RowContext {
 		// 刚处理过删除/重置时，旧行的收缩比例属于已被移除的项，不能套到同路径的新行上
 		var quiet = suppressRebuildFx || hadPending;
 		var tab = model.activeTab();
-		var oldRows = tab == null ? List.<ConfigRow>of() : List.copyOf(tab.rows);
+		// 筛选列表横跨所有分类，元素的进入/恢复动画和分页判断都要覆盖全部行
 		var oldIds = new HashSet<>();
+		var activeOldIds = new HashSet<>();
 		var expanding = new HashMap<Object, Float>();
-		for (var row : oldRows) {
-			var id = row.identity();
-			if (id == null) continue;
-			oldIds.add(id);
-			if (row.heightScale() < 1) expanding.put(id, row.heightScale());
-		}
+		for (var each : model.tabs())
+			for (var row : each.rows) {
+				var id = row.identity();
+				if (id == null) continue;
+				oldIds.add(id);
+				if (each == tab) activeOldIds.add(id);
+				if (row.heightScale() < 1) expanding.put(id, row.heightScale());
+			}
 		model.rebuildAll();
 		modelVersion++;
-		if (tab != null) {
-			var newRows = tab.rows;
+		var activeNewIds = new HashSet<>();
+		for (var each : model.tabs()) {
 			var newIds = new HashSet<>();
-			for (var row : newRows) {
+			for (var row : each.rows) {
 				var id = row.identity();
 				if (id != null) newIds.add(id);
 			}
-			var removed = false;
-			for (var id : oldIds)
-				if (!newIds.contains(id)) {
-					removed = true;
-					break;
-				}
-			for (var row : newRows) {
+			for (var row : each.rows) {
 				var id = row.identity();
 				if (id == null) continue;
 				if (!oldIds.contains(id)) {
@@ -761,7 +758,17 @@ public final class ConfigShell implements UiView, RowContext {
 					if (scale != null) row.expandFrom(scale);
 				}
 			}
-			if (removed && !quiet) pageIn.start(0.5F, 1, UiMotion.TAB_ROWS_IN);
+			if (each == tab) activeNewIds = newIds;
+		}
+		if (!quiet && tab != null) {
+			for (var id : activeOldIds)
+				if (!activeNewIds.contains(id)) {
+					pageIn.start(0.5F, 1, UiMotion.TAB_ROWS_IN);
+					break;
+				}
+		}
+		// 筛选时列表滚动属于筛选结果，不能换成当前分类的存档位置
+		if (tab != null && !search.filtering()) {
 			tab.clampScroll(layout.content.height(), layout.content.width());
 			contentPane.setScroll(tab.scroll);
 		}

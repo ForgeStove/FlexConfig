@@ -8,7 +8,7 @@ import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
 
 import java.util.List;
-public class BooleanRow extends ValueRow implements KeybindConflictAware {
+public class BooleanRow extends ValueRow implements KeybindConflictAware, TriggerKeybindAware {
 	private final TriggerKeybindSupport keybind;
 	private final UiButton trigger;
 	private KeybindState keyState = KeybindState.BOUND;
@@ -45,7 +45,10 @@ public class BooleanRow extends ValueRow implements KeybindConflictAware {
 		if (keyState == KeybindState.CONFLICT && !conflictUsages.isEmpty()) trigger.tooltip(conflictTooltip(conflictUsages));
 		else trigger.tooltip(null);
 		if (keybind.changed() && !state.readOnly) state.changed = true;
-		if (keybind.serialized() != null && !state.readOnly) reset.setEnabled(true);
+	}
+	@Override
+	public boolean hasTriggerKeybind() {
+		return keybind.serialized() != null;
 	}
 	private static UiText conflictTooltip(List<UiText> usages) {
 		var used = UiText.empty();

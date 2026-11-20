@@ -13,7 +13,7 @@ import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-public class EnumRow extends ValueRow implements KeybindConflictAware {
+public class EnumRow extends ValueRow implements KeybindConflictAware, TriggerKeybindAware {
 	private static final int TRIGGER_WIDTH = 96;
 	private final TriggerKeybindSupport keybind;
 	private final UiButton trigger;
@@ -64,11 +64,6 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 		return (Enum<?>) constants[(current.ordinal() + 1) % constants.length];
 	}
 	@Override
-	protected String defaultText() {
-		var value = node.getDefaultValue();
-		return value instanceof Enum<?> constant ? label(constant).getString() : super.defaultText();
-	}
-	@Override
 	public void refresh() {
 		super.refresh();
 		if (segmented != null) segmented.show(((Enum<?>) value()).ordinal(), true);
@@ -78,7 +73,10 @@ public class EnumRow extends ValueRow implements KeybindConflictAware {
 		if (keyState == KeybindState.CONFLICT && !conflictUsages.isEmpty()) trigger.tooltip(conflictTooltip(conflictUsages));
 		else trigger.tooltip(null);
 		if (keybind.changed() && !state.readOnly) state.changed = true;
-		if (keybind.serialized() != null && !state.readOnly) reset.setEnabled(true);
+	}
+	@Override
+	public boolean hasTriggerKeybind() {
+		return keybind.serialized() != null;
 	}
 	private static UiText conflictTooltip(List<UiText> usages) {
 		var used = UiText.empty();

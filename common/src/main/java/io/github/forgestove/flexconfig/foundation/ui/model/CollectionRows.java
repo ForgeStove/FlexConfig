@@ -57,10 +57,9 @@ public class CollectionRows {
 	public static void add(RowContext ctx, ValueConfigNode node) {
 		var shape = node.getElementType();
 		if (shape == null || isReadOnly(ctx, node)) return;
-		var template = defaultElement(node, 0);
-		var element = shape.isCollection()
-			? newNestedElement(shape)
-			: shape.raw().isInstance(template) ? FieldAccess.deepCopy(template) : defaultValueOf(shape.raw());
+		var element = shape.isCollection() ? newNestedElement(shape) : defaultValueOf(shape.raw());
+		// 没有无参构造、无法新建的类型，只能复制第一个默认元素
+		if (element == null) element = FieldAccess.deepCopy(defaultElement(node, 0));
 		if (element == null) return;
 		var list = values(node, ctx);
 		list.add(element);
