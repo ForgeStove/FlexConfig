@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.api;
-/** 配置翻译键的统一格式；外部适配器（如 Catnip 配置）也用它生成键，避免与内置配置的键规范分叉。 */
 public class ConfigTranslationKeys {
 	public static String category(String modId, String path) {
 		return "%s.config.category.%s".formatted(modId, path);

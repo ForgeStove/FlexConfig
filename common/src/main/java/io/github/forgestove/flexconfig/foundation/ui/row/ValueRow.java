@@ -1,16 +1,15 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
 import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.FlexGuiTextures;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
-import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-/** 值行基类：标签、状态样式、reset/undo/lock 和行尾控件布局。 */
 public abstract class ValueRow extends ConfigRow {
 	protected final ValueConfigNode node;
 	protected final ValueRowState state = new ValueRowState();
@@ -42,44 +41,14 @@ public abstract class ValueRow extends ConfigRow {
 		node.setEditingValue(value);
 		ctx.refresh();
 	}
-	/** 拖动等高频路径：只写编辑值，不触发整页刷新。 */
 	protected void writeValue(Object value) {
 		node.setEditingValue(value);
 	}
-	/** 元素行等需要在行尾追加控件（例如删除按钮）。 */
 	public void addAction(UiControl control, int width) {
 		actionBar.add(control, width);
 	}
 	public ValueConfigNode node() {
 		return node;
-	}
-	@Override
-	public void prepare(UiContext ui) {
-		var hot = hovered(ui) || focusedWithin(ui);
-		if (hot != hoverWas) {
-			hoverAnim.retune(hot ? UiMotion.HOVER_IN : UiMotion.HOVER_OUT);
-			hoverAnim.target(hot ? 1 : 0);
-			hoverWas = hot;
-		}
-		hoverAnim.update(ui.delta);
-		var dotTarget = isChanged() ? 1F : 0F;
-		if (dot.target() != dotTarget) dot.start(dotTarget, UiMotion.DOT);
-		dot.update(ui.delta);
-		wash.update(ui.delta);
-		reset.setVisible(isChanged() && !state.readOnly);
-		lock.setVisible(hot && state.showLock && allowLock());
-	}
-	@Override
-	public void onEnter() {
-		expand();
-	}
-	@Override
-	public void onExit() {
-		collapse();
-	}
-	@Override
-	public boolean exited() {
-		return exiting() && heightSettled();
 	}
 	public void wash() {
 		wash.start(0, 1, UiMotion.RESET_WASH.durationMs(), UiMotion.RESET_WASH.easing(), 0);
@@ -130,15 +99,96 @@ public abstract class ValueRow extends ConfigRow {
 	protected int descriptionExtra(int width) {
 		return Math.max(0, descriptionLineCount(width) - 1) * 12;
 	}
+	private boolean needsControlBelow(int width) {
+		var used = actionBar.usedWidth();
+		var available = width - UiTheme.INDENT - depth * UiTheme.INDENT - used - UiTheme.PADDING * 2;
+		return used > width * 0.4F && available < 110;
+	}
+	private int titleColor() {
+		if (state.locked) return UiTheme.LOCKED;
+		if (state.readOnly) return UiTheme.DISABLED;
+		if (hasError()) return UiTheme.DANGER_LIGHT;
+		return UiTheme.TEXT;
+	}
+	protected @Nullable Component tooltip() {
+		var out = label.copy();
+		var hasBody = false;
+		if (tooltip != null) {
+			out.append(Component.literal("\n")).append(tooltip);
+			hasBody = true;
+		}
+		var defaultValue = defaultText();
+		if (!defaultValue.isEmpty()) {
+			var hint = Translation.tooltipDefault(defaultValue).copy().withStyle(ChatFormatting.GRAY);
+			out.append(Component.literal("\n")).append(hint);
+			hasBody = true;
+			if (!node.isDefaultValue(ctx.config()))
+				out.append(Component.literal("\n")).append(Translation.TOOLTIP_CHANGED.copy().withStyle(ChatFormatting.GRAY));
+		}
+		if (state.validationError != null) {
+			out.append(Component.literal("\n")).append(state.validationError.copy().withStyle(ChatFormatting.RED));
+			hasBody = true;
+		}
+		return hasBody ? out : null;
+	}
+	protected String defaultText() {
+		var value = node.getDefaultValue();
+		if (value == null) return "";
+		if (value instanceof Enum<?> constant) return constant.name();
+		return String.valueOf(value);
+	}
+	public void resetToDefault() {
+		if (state.readOnly) return;
+		if (!node.isElement()) ClientLockManager.clearPendingLock(ctx.fileKey(), node.getLockPath());
+		node.resetToDefault();
+		wash();
+		ctx.refresh();
+	}
+	public void resetToActive() {
+		if (!node.isElement()) ClientLockManager.clearPendingLock(ctx.fileKey(), node.getLockPath());
+		node.resetToActive(ctx.config());
+		ctx.refresh();
+	}
+	private void toggleLock() {
+		ClientLockManager.setPendingLock(ctx.fileKey(), node.getLockPath(), !state.locked);
+		ctx.refresh();
+	}
+	@Override
+	public String configPath() {
+		return node.getPath();
+	}
+	@Override
+	public void onEnter() {
+		expand();
+	}
+	@Override
+	public void onExit() {
+		collapse();
+	}
+	@Override
+	public boolean exited() {
+		return exiting() && heightSettled();
+	}
 	@Override
 	public int heightFor(int width) {
 		controlBelow = needsControlBelow(width);
 		return UiTheme.ROW_HEIGHT + (controlBelow ? UiTheme.CONTROL_HEIGHT + 6 : 0) + descriptionExtra(width);
 	}
-	private boolean needsControlBelow(int width) {
-		var used = actionBar.usedWidth();
-		var available = width - UiTheme.INDENT - depth * UiTheme.INDENT - used - UiTheme.PADDING * 2;
-		return used > width * 0.4F && available < 110;
+	@Override
+	public void prepare(UiContext ui) {
+		var hot = hovered(ui) || focusedWithin(ui);
+		if (hot != hoverWas) {
+			hoverAnim.retune(hot ? UiMotion.HOVER_IN : UiMotion.HOVER_OUT);
+			hoverAnim.target(hot ? 1 : 0);
+			hoverWas = hot;
+		}
+		hoverAnim.update(ui.delta);
+		var dotTarget = isChanged() ? 1F : 0F;
+		if (dot.target() != dotTarget) dot.start(dotTarget, UiMotion.DOT);
+		dot.update(ui.delta);
+		wash.update(ui.delta);
+		reset.setVisible(isChanged() && !state.readOnly);
+		lock.setVisible(hot && state.showLock && allowLock());
 	}
 	@Override
 	public void layout() {
@@ -201,39 +251,6 @@ public abstract class ValueRow extends ConfigRow {
 		buttons.render(ui);
 		if (!exiting() && hovered(ui)) ui.hover(this, this::tooltip, bounds());
 	}
-	private int titleColor() {
-		if (state.locked) return UiTheme.LOCKED;
-		if (state.readOnly) return UiTheme.DISABLED;
-		if (hasError()) return UiTheme.DANGER_LIGHT;
-		return UiTheme.TEXT;
-	}
-	protected @Nullable Component tooltip() {
-		var out = label.copy();
-		var hasBody = false;
-		if (tooltip != null) {
-			out.append(Component.literal("\n")).append(tooltip);
-			hasBody = true;
-		}
-		var defaultValue = defaultText();
-		if (!defaultValue.isEmpty()) {
-			var hint = Translation.tooltipDefault(defaultValue).copy().withStyle(ChatFormatting.GRAY);
-			out.append(Component.literal("\n")).append(hint);
-			hasBody = true;
-			if (!node.isDefaultValue(ctx.config()))
-				out.append(Component.literal("\n")).append(Translation.TOOLTIP_CHANGED.copy().withStyle(ChatFormatting.GRAY));
-		}
-		if (state.validationError != null) {
-			out.append(Component.literal("\n")).append(state.validationError.copy().withStyle(ChatFormatting.RED));
-			hasBody = true;
-		}
-		return hasBody ? out : null;
-	}
-	protected String defaultText() {
-		var value = node.getDefaultValue();
-		if (value == null) return "";
-		if (value instanceof Enum<?> constant) return constant.name();
-		return String.valueOf(value);
-	}
 	@Override
 	public List<UiControl> controls() {
 		var controls = new ArrayList<>(actionBar.controls());
@@ -248,22 +265,6 @@ public abstract class ValueRow extends ConfigRow {
 		lock.setIcon(state.locked ? FlexGuiTextures.ICON_LOCK : FlexGuiTextures.ICON_UNLOCK);
 		lock.setTooltip(state.locked ? Translation.LOCKED_TOOLTIP : Translation.UNLOCK_TOOLTIP);
 	}
-	public void resetToDefault() {
-		if (state.readOnly) return;
-		if (!node.isElement()) ClientLockManager.clearPendingLock(ctx.fileKey(), node.getLockPath());
-		node.resetToDefault();
-		wash();
-		ctx.refresh();
-	}
-	public void resetToActive() {
-		if (!node.isElement()) ClientLockManager.clearPendingLock(ctx.fileKey(), node.getLockPath());
-		node.resetToActive(ctx.config());
-		ctx.refresh();
-	}
-	private void toggleLock() {
-		ClientLockManager.setPendingLock(ctx.fileKey(), node.getLockPath(), !state.locked);
-		ctx.refresh();
-	}
 	@Override
 	public boolean hasError() {
 		return state.validationError != null;
@@ -273,7 +274,7 @@ public abstract class ValueRow extends ConfigRow {
 		return state.changed;
 	}
 	@Override
-	public String configPath() {
-		return node.getPath();
+	public boolean isDefaultValue() {
+		return node.isDefaultValue(ctx.config());
 	}
 }

@@ -53,4 +53,9 @@ public class ConfigUiModel {
 		for (var tab : tabs) count += tab.changedCount;
 		return count;
 	}
+	public int defaultChangedCount() {
+		var count = 0;
+		for (var tab : tabs) count += tab.defaultChangedCount;
+		return count;
+	}
 }

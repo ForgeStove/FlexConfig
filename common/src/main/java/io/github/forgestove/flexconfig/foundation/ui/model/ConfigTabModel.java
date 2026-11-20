@@ -12,6 +12,7 @@ public class ConfigTabModel {
 	public double scroll;
 	public boolean hasError;
 	public int changedCount;
+	public int defaultChangedCount;
 	public ConfigTabModel(CategoryConfigNode node) {
 		this.node = node;
 		title = node.getTitle();
@@ -24,12 +25,14 @@ public class ConfigTabModel {
 	public void refresh() {
 		hasError = false;
 		changedCount = 0;
+		defaultChangedCount = 0;
 		for (var row : rows) row.refresh();
 		KeybindConflictIndex.apply(rows);
 		for (var row : rows) {
 			if (row instanceof KeybindConflictAware) row.refresh();
 			if (row.hasError()) hasError = true;
 			if (row.isChanged()) changedCount++;
+			if (!row.isDefaultValue()) defaultChangedCount++;
 		}
 	}
 	public int contentHeight(int width) {

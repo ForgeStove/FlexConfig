@@ -987,7 +987,7 @@ public final class ConfigShell<C, V> {
 		var changed = model.changedCount();
 		undoButton.setVisible(changed > 0 && isEditable());
 		undoButton.setLabel(Translation.undoChanges(changed));
-		changedChip.setLabel(Translation.searchChanged(changed));
+		changedChip.setLabel(Translation.searchChanged(model.defaultChangedCount()));
 		changedChip.setSelected(changedOnly);
 	}
 	public void undoAll() {

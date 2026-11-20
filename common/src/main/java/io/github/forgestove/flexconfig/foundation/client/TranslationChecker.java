@@ -11,14 +11,12 @@ import java.util.function.Supplier;
 public class TranslationChecker {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final Map<String, Supplier<Collection<String>>> SOURCES = new ConcurrentHashMap<>();
-	/** 注册外部翻译键来源；同一名称重复注册会覆盖。需在客户端首次扫描语言前完成注册。 */
 	public static void registerSource(String name, Supplier<Collection<String>> keys) {
 		SOURCES.put(name, keys);
 	}
 	public static void unregisterSource(String name) {
 		SOURCES.remove(name);
 	}
-	/** 缺失的键按行打印，便于直接照抄进语言文件。 */
 	public static void check(RootConfigNode root) {
 		report("Config '" + root.fileName() + "'", root.translationKeys());
 	}
@@ -44,7 +42,8 @@ public class TranslationChecker {
 		if (missing.isEmpty()) return;
 		var language = ClientUtil.mc.getLanguageManager().getSelected();
 		LOGGER.warn(
-			"{} is missing {} translation key(s) for language '{}'; the UI will show the raw keys:", source,
+			"{} is missing {} translation key(s) for language '{}'; the UI will show the raw keys:",
+			source,
 			missing.size(),
 			language
 		);

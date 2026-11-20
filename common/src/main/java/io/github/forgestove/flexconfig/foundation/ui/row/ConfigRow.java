@@ -3,8 +3,8 @@ import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiControl;
 import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
-/** 一行配置：布局和绘制每帧进行，命中用上一帧末或当帧开头写入的 bounds。 */
 public abstract class ConfigRow implements RowTransition {
 	protected final RowContext ctx;
 	protected int depth;
@@ -114,5 +114,8 @@ public abstract class ConfigRow implements RowTransition {
 	}
 	public boolean isChanged() {
 		return false;
+	}
+	public boolean isDefaultValue() {
+		return true;
 	}
 }
