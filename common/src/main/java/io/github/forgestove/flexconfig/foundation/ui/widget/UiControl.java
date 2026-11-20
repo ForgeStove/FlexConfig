@@ -54,13 +54,8 @@ public abstract class UiControl implements Target, UiPointerTarget {
 		return visible && bounds.contains(ctx.mouseX, ctx.mouseY);
 	}
 	public abstract void render(UiContext ctx);
+	@Override
 	public boolean mouseClicked(UiContext ctx, double mouseX, double mouseY, int button) {
-		return false;
-	}
-	public boolean mouseDragged(UiContext ctx, double mouseX, double mouseY, int button, double dragX, double dragY) {
-		return false;
-	}
-	public boolean mouseReleased(UiContext ctx, double mouseX, double mouseY, int button) {
 		return false;
 	}
 	public boolean keyPressed(UiContext ctx, int keyCode, int scanCode, int modifiers) {

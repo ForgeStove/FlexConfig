@@ -2,7 +2,7 @@ package io.github.forgestove.flexconfig.foundation.ui.model;
 import io.github.forgestove.flexconfig.foundation.tree.CategoryConfigNode;
 
 import java.util.*;
-public class ConfigUiModel {
+public class ConfigUiModel implements ConfigStatus {
 	private final RowContext ctx;
 	private final List<ConfigTabModel> tabs = new ArrayList<>();
 	private int active;
@@ -44,9 +44,18 @@ public class ConfigUiModel {
 		var tab = activeTab();
 		if (tab != null) tab.build(ctx);
 	}
+	@Override
 	public boolean hasError() {
-		for (var tab : tabs) if (tab.hasError) return true;
+		for (var tab : tabs) if (tab.hasError()) return true;
 		return false;
+	}
+	@Override
+	public boolean isChanged() {
+		return changedCount() > 0;
+	}
+	@Override
+	public boolean isDefaultValue() {
+		return defaultChangedCount() == 0;
 	}
 	public int changedCount() {
 		var count = 0;

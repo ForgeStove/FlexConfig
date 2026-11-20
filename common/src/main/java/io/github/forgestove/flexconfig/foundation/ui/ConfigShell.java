@@ -104,7 +104,7 @@ public final class ConfigShell implements UiView, RowContext {
 	private void openPageMenu() {
 		var items = new ArrayList<Item>();
 		var tab = model.activeTab();
-		items.add(new Item(Translation.PAGE_RESET, tab != null && tab.defaultChangedCount > 0, false, this::resetPage));
+		items.add(new Item(Translation.PAGE_RESET, tab != null && !tab.isDefaultValue(), false, this::resetPage));
 		var menu = new UiPopupMenu(items, index -> items.get(index).action().run());
 		menu.place(layout.panel, header.pageMenuBounds().x(), header.pageMenuBounds().bottom() + 2);
 		openPopup(menu);
@@ -420,7 +420,7 @@ public final class ConfigShell implements UiView, RowContext {
 			session.restartType() != null,
 			search.filtering(),
 			search.count(),
-			!search.filtering() && tab != null && tab.defaultChangedCount > 0
+			!search.filtering() && tab != null && !tab.isDefaultValue()
 		);
 	}
 	private void renderOutgoing(UiContext ui, List<ConfigRow> rows, double scroll) {

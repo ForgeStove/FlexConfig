@@ -6,12 +6,12 @@ import io.github.forgestove.flexconfig.foundation.ui.row.ConfigRow;
 import net.minecraft.util.Mth;
 
 import java.util.*;
-public class ConfigTabModel {
+public class ConfigTabModel implements ConfigStatus {
 	public final CategoryConfigNode node;
 	public final UiText title;
 	public final List<ConfigRow> rows = new ArrayList<>();
 	public double scroll;
-	public boolean hasError;
+	private boolean error;
 	public int changedCount;
 	public int defaultChangedCount;
 	public ConfigTabModel(CategoryConfigNode node) {
@@ -24,17 +24,29 @@ public class ConfigTabModel {
 		refresh();
 	}
 	public void refresh() {
-		hasError = false;
+		error = false;
 		changedCount = 0;
 		defaultChangedCount = 0;
 		for (var row : rows) row.refresh();
 		KeybindConflictIndex.apply(rows);
 		for (var row : rows) {
 			if (row instanceof KeybindConflictAware) row.refresh();
-			if (row.hasError()) hasError = true;
+			if (row.hasError()) error = true;
 			if (row.isChanged()) changedCount++;
 			if (!row.isDefaultValue()) defaultChangedCount++;
 		}
+	}
+	@Override
+	public boolean hasError() {
+		return error;
+	}
+	@Override
+	public boolean isChanged() {
+		return changedCount > 0;
+	}
+	@Override
+	public boolean isDefaultValue() {
+		return defaultChangedCount == 0;
 	}
 	public int contentHeight(int width) {
 		var height = 0;

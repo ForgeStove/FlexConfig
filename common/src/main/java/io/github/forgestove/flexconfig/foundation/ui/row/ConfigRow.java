@@ -1,16 +1,17 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
+import io.github.forgestove.flexconfig.foundation.ui.model.ConfigStatus;
 import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiControl;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-public abstract class ConfigRow implements RowTransition, UiPointerTarget {
+public abstract class ConfigRow implements RowTransition, UiPointerTarget, ConfigStatus {
 	protected final RowContext ctx;
-	protected int depth;
-	private UiBounds bounds = UiBounds.EMPTY;
 	private final UiTween reveal = new UiTween(1);
 	private final UiTween heightAnim = new UiTween(1);
+	protected int depth;
+	private UiBounds bounds = UiBounds.EMPTY;
 	private boolean exiting;
 	protected ConfigRow(RowContext ctx) {
 		this.ctx = ctx;
@@ -88,6 +89,7 @@ public abstract class ConfigRow implements RowTransition, UiPointerTarget {
 	public List<UiControl> controls() {
 		return List.of();
 	}
+	@Override
 	public boolean mouseClicked(UiContext ui, double mouseX, double mouseY, int button) {
 		if (exiting) return false;
 		for (var control : controls())
@@ -97,6 +99,7 @@ public abstract class ConfigRow implements RowTransition, UiPointerTarget {
 			}
 		return false;
 	}
+	@Override
 	public boolean mouseReleased(UiContext ui, double mouseX, double mouseY, int button) {
 		if (exiting) return false;
 		for (var control : controls()) if (control.mouseReleased(ui, mouseX, mouseY, button)) return true;
@@ -113,12 +116,15 @@ public abstract class ConfigRow implements RowTransition, UiPointerTarget {
 		return false;
 	}
 	public void refresh() {}
+	@Override
 	public boolean hasError() {
 		return false;
 	}
+	@Override
 	public boolean isChanged() {
 		return false;
 	}
+	@Override
 	public boolean isDefaultValue() {
 		return true;
 	}

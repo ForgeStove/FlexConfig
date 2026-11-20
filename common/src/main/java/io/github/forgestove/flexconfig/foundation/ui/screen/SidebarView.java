@@ -47,7 +47,6 @@ public class SidebarView extends UiScrollPane {
 				ui.painter.rect(item.x(), item.y() + 1, item.width(), item.height() - 2, UiTheme.PANEL);
 				ui.painter.rect(item.x(), item.bottom() - 1, item.width(), 1, UiTheme.SEP_DARK);
 			} else if (hover.get() > 0.01) ui.painter.rect(item, UiTheme.mulAlpha(UiTheme.ROW_HOVER, 0.6F * (float) hover.get()));
-			// 按压底色放在分类背景之后，激活行也有同样的变暗反馈
 			if (pressedIndex == i) ui.painter.rect(item, UiTheme.ROW_PRESS);
 			var nudge = active ? 0F : (float) hover.get();
 			if (nudge != 0F) ui.painter.pushTranslate(nudge, 0F);
@@ -62,8 +61,8 @@ public class SidebarView extends UiScrollPane {
 				active || hover.get() > 0.5 ? UiTheme.TEXT : UiTheme.TEXT_2
 			);
 			var dotY = item.y() + item.height() / 2 - 1;
-			if (tab.hasError) ui.painter.rect(item.right() - 9, dotY, 2, 2, UiTheme.DANGER);
-			else if (tab.defaultChangedCount > 0) ui.painter.rect(item.right() - 9, dotY, 2, 2, ui.accent().bright());
+			if (tab.hasError()) ui.painter.rect(item.right() - 9, dotY, 2, 2, UiTheme.DANGER);
+			else if (tab.isChanged()) ui.painter.rect(item.right() - 9, dotY, 2, 2, ui.accent().bright());
 			if (nudge != 0F) ui.painter.popTranslate();
 		}
 		var activeIndex = model.activeIndex();
