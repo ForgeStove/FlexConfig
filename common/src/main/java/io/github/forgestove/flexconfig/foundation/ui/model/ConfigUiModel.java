@@ -40,9 +40,9 @@ public class ConfigUiModel implements ConfigStatus {
 	public void refreshAll() {
 		for (var tab : tabs) tab.refresh();
 	}
-	public void rebuildActive() {
-		var tab = activeTab();
-		if (tab != null) tab.build(ctx);
+	/** 结构变化可能发生在任意分类（筛选列表跨分类），所以总是全部重建。 */
+	public void rebuildAll() {
+		for (var tab : tabs) tab.build(ctx);
 	}
 	@Override
 	public boolean hasError() {

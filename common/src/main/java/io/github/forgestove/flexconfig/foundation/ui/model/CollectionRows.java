@@ -50,6 +50,10 @@ public class CollectionRows {
 		var shape = node.getElementType();
 		return shape == null || shape.isCollection() ? null : defaultValueOf(shape.raw());
 	}
+	/** 默认列表里存在同索引的元素才算有默认值；超出的元素是新增的，重置值只是兜底。 */
+	private static boolean hasDefaultElement(ValueConfigNode node, int index) {
+		return node.getDefaultValue() instanceof List<?> list && index < list.size();
+	}
 	public static void add(RowContext ctx, ValueConfigNode node) {
 		var shape = node.getElementType();
 		if (shape == null || isReadOnly(ctx, node)) return;
@@ -103,6 +107,7 @@ public class CollectionRows {
 			.path(elementPath(node, index))
 			.title(node.getTitle().copy().append(" #" + (index + 1)))
 			.defaultValue(defaultElement(node, index))
+			.hasDefault(hasDefaultElement(node, index))
 			// 撤销/重置会用新的列表替换编辑值，读写必须每次取当前列表，不能闭包旧的引用
 			.valueReader(ignored -> {
 				var current = values(node, ctx);
@@ -168,6 +173,7 @@ public class CollectionRows {
 			.path(elementPath(node, index))
 			.title(node.getTitle().copy().append(" #" + (index + 1)))
 			.defaultValue(defaultValue)
+			.hasDefault(hasDefaultElement(node, index))
 			.elementType(shape.element())
 			.writeThrough(true)
 			.element(true)

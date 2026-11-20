@@ -58,7 +58,7 @@ public abstract class ValueRow extends ConfigRow {
 		return value == null ? "" : String.valueOf(value);
 	}
 	public boolean canReset() {
-		return !state.readOnly && !node.isDefaultValue(ctx.config());
+		return !state.readOnly && node.hasDefault() && !node.isDefaultValue(ctx.config());
 	}
 	public UiText resetLabel() {
 		return Translation.resetTo(defaultText());
@@ -115,7 +115,7 @@ public abstract class ValueRow extends ConfigRow {
 			hasBody = true;
 		}
 		var defaultValue = defaultText();
-		if (!defaultValue.isEmpty()) {
+		if (node.hasDefault() && !defaultValue.isEmpty()) {
 			var hint = Translation.tooltipDefault(defaultValue).copy().withStyle(UiStyle.GRAY);
 			out = out.append("\n").append(hint);
 			hasBody = true;
@@ -136,15 +136,22 @@ public abstract class ValueRow extends ConfigRow {
 	}
 	public void resetToDefault() {
 		if (state.readOnly) return;
-		if (!node.isElement()) ClientLockManager.clearPendingLock(ctx.fileKey(), node.getLockPath());
-		node.resetToDefault();
+		writeDefault();
 		wash();
 		ctx.refresh();
 	}
 	public void resetToActive() {
+		writeActive();
+		ctx.refresh();
+	}
+	/** 只改节点、不刷新；集合行要等重建出新行之后再刷新。 */
+	protected void writeDefault() {
+		if (!node.isElement()) ClientLockManager.clearPendingLock(ctx.fileKey(), node.getLockPath());
+		node.resetToDefault();
+	}
+	protected void writeActive() {
 		if (!node.isElement()) ClientLockManager.clearPendingLock(ctx.fileKey(), node.getLockPath());
 		node.resetToActive(ctx.config());
-		ctx.refresh();
 	}
 	private void toggleLock() {
 		ClientLockManager.setPendingLock(ctx.fileKey(), node.getLockPath(), !state.locked);
@@ -185,7 +192,7 @@ public abstract class ValueRow extends ConfigRow {
 		if (dot.target() != dotTarget) dot.start(dotTarget, UiMotion.DOT);
 		dot.update(ui.delta);
 		wash.update(ui.delta);
-		reset.setVisible(altered && !state.readOnly);
+		reset.setVisible(canReset());
 		lock.setVisible(hot && state.showLock && allowLock());
 	}
 	@Override
@@ -258,7 +265,7 @@ public abstract class ValueRow extends ConfigRow {
 	@Override
 	public void refresh() {
 		state.refresh(node, ctx);
-		reset.setEnabled(!state.readOnly && !node.isDefaultValue(ctx.config()));
+		reset.setEnabled(canReset());
 		lock.setEnabled(state.showLock && state.canLock);
 		lock.setIcon(state.locked ? FlexGuiTextures.ICON_LOCK : FlexGuiTextures.ICON_UNLOCK);
 		lock.setTooltip(state.locked ? Translation.LOCKED_TOOLTIP : Translation.UNLOCK_TOOLTIP);

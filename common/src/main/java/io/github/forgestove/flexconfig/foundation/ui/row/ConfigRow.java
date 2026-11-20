@@ -53,6 +53,11 @@ public abstract class ConfigRow implements RowTransition, UiPointerTarget, Confi
 		exiting = true;
 		heightAnim.start(1, 0, UiMotion.CONTENT_ROWS_IN);
 	}
+	/** 行只是暂时离开筛选结果、仍属于配置树时，退出动画结束后恢复正常高度。 */
+	public void cancelExit() {
+		exiting = false;
+		heightAnim.snap(1);
+	}
 	public boolean exiting() {
 		return exiting;
 	}

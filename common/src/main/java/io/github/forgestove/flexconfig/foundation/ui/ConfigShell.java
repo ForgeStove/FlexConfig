@@ -36,6 +36,8 @@ public final class ConfigShell implements UiView, RowContext {
 	private final UiPopupHost popups = new UiPopupHost();
 	private final SearchSession search;
 	private final RemovalQueue removals = new RemovalQueue();
+	/** 已被筛掉的旧结果行：先播完收起动画，再从列表里移除。 */
+	private final List<LeavingRow> leaving = new ArrayList<>();
 	private byte pageDirection = 1;
 	private ScreenLayout layout;
 	private ConfigUiModel model;
@@ -57,6 +59,8 @@ public final class ConfigShell implements UiView, RowContext {
 	private boolean suppressRebuildFx;
 	private boolean ready;
 	private boolean closed;
+	/** {@code anchor} 是旧列表里排在它后面且仍然存在的行，用来在合并视图里保持原位。 */
+	private record LeavingRow(ConfigRow row, ConfigRow anchor) {}
 	public ConfigShell(ConfigHost host, ConfigHandler<?, ?> handler) {
 		this.host = host;
 		session = new EditingSession<>(handler);
@@ -83,12 +87,62 @@ public final class ConfigShell implements UiView, RowContext {
 	}
 	private void updateSearch(String query) {
 		if (!removals.isEmpty()) rebuildActiveTab();
+		dropLeavingRows();
 		search.setQuery(query);
 		search.rebuild(model, modelVersion);
 		var tab = model.activeTab();
 		contentPane.setScroll(!search.filtering() && tab != null ? tab.scroll : 0);
 		pageIn.start(0, 1, UiMotion.TAB_ROWS_IN);
 		revealRows(search.rows());
+	}
+	private void rebuildSearchResults() {
+		var before = search.filtering() ? List.copyOf(search.rows()) : null;
+		search.rebuild(model, modelVersion);
+		if (before == null || !search.filtering()) {
+			dropLeavingRows();
+			return;
+		}
+		startLeavingRows(before, search.rows());
+	}
+	/** 结果里消失的值行先收起；合并视图会在动画结束前继续渲染它们。 */
+	private void startLeavingRows(List<ConfigRow> before, List<ConfigRow> after) {
+		var afterById = new HashMap<Object, ConfigRow>();
+		var afterSet = Collections.newSetFromMap(new IdentityHashMap<ConfigRow, Boolean>());
+		for (var row : after) {
+			afterSet.add(row);
+			var id = row.identity();
+			if (id != null) afterById.put(id, row);
+		}
+		// 撤销等操作可能让正在退出的行重新回到结果里
+		leaving.removeIf(item -> {
+			var row = item.row();
+			var id = row.identity();
+			if (!afterSet.contains(row) && (id == null || !afterById.containsKey(id))) return false;
+			row.cancelExit();
+			return true;
+		});
+		for (var i = 0; i < before.size(); i++) {
+			var row = before.get(i);
+			if (!(row instanceof ValueRow) || row.exiting()) continue;
+			var id = row.identity();
+			if (id != null && afterById.containsKey(id) || afterSet.contains(row)) continue;
+			ConfigRow anchor = null;
+			for (var j = i + 1; j < before.size() && anchor == null; j++) {
+				var next = before.get(j);
+				var nextId = next.identity();
+				if (nextId != null) anchor = afterById.get(nextId);
+				if (anchor == null && afterSet.contains(next)) anchor = next;
+			}
+			// 结果清空时提示行是新实例，把离开的行放在它上方
+			if (anchor == null && after.size() == 1 && after.getFirst() instanceof SearchEmptyRow) anchor = after.get(0);
+			row.onExit();
+			leaving.add(new LeavingRow(row, anchor));
+		}
+	}
+	/** 待离开的行只是暂时不显示，清空时要把行本身恢复到正常状态。 */
+	private void dropLeavingRows() {
+		for (var item : leaving) item.row().cancelExit();
+		leaving.clear();
 	}
 	private void clearSearch() {
 		search.clear();
@@ -124,8 +178,9 @@ public final class ConfigShell implements UiView, RowContext {
 		refresh();
 		toast.info(
 			Translation.pageResetToast(restores.size()), Translation.UNDO_TOOLTIP, () -> {
+				removals.flush();   // 先执行挂起的集合重置，否则恢复出的列表会被随后执行的重置覆盖
 				for (var restore : restores) restore.run();
-				refresh();
+				rebuildActiveTab();
 				toast.info(Translation.TOAST_UNDONE);
 			}
 		);
@@ -141,32 +196,37 @@ public final class ConfigShell implements UiView, RowContext {
 	private void selectTab(int index) {
 		if (!removals.isEmpty()) rebuildActiveTab();
 		closeDropdown();
-		var sameTab = index == model.activeIndex();
 		var wasFiltering = search.filtering();
-		// 点当前分类且没有搜索条件时什么都不用重放，否则整页会再刷一次动画
-		if (sameTab && !wasFiltering) {
+		if (index == model.activeIndex()) {
 			ui.focus.clear();
 			return;
 		}
 		var currentTab = model.activeTab();
-		if (currentTab != null && !wasFiltering) {
+		if (!wasFiltering) {
 			pageDirection = (byte) Integer.signum(index - model.activeIndex());
 			if (pageDirection == 0) pageDirection = 1;
-			outgoingRows = currentTab.rows;
-			outgoingScroll = contentPane.scroll();
-			pageOut.start(1, 0, UiMotion.TAB_ROWS_IN);
-			pageIn.start(0, 1, UiMotion.TAB_ROWS_IN);
+			if (currentTab != null) {
+				outgoingRows = currentTab.rows;
+				outgoingScroll = contentPane.scroll();
+				currentTab.scroll = contentPane.scroll();
+				pageOut.start(1, 0, UiMotion.TAB_ROWS_IN);
+				pageIn.start(0, 1, UiMotion.TAB_ROWS_IN);
+			}
+			header.searchField().setValue("");
+			dropLeavingRows();
+			search.clear();
+			search.rebuild(model, modelVersion);
+			header.setChangedSelected(false);
 		}
-		header.searchField().setValue("");
-		search.clear();
-		search.rebuild(model, modelVersion);
-		header.setChangedSelected(false);
-		var current = model.activeTab();
-		if (current != null && !wasFiltering) current.scroll = contentPane.scroll();
 		model.setActive(index);
 		var next = model.activeTab();
-		if (next != null) {
-			lastSelectedCategory = next.node;
+		if (next == null) {
+			ui.focus.clear();
+			return;
+		}
+		lastSelectedCategory = next.node;
+		// 筛选结果跨分类，只改当前分类，保留筛选条件和列表位置
+		if (!wasFiltering) {
 			next.clampScroll(layout.content.height(), layout.content.width());
 			contentPane.setScroll(next.scroll);
 			revealRows(next.rows);
@@ -239,7 +299,7 @@ public final class ConfigShell implements UiView, RowContext {
 		header.render(ui, layout, headerInfo());
 		showcase.render(ui, layout.showcase);
 		sidebar.render(ui);
-		if (search.needsRebuild(modelVersion) && ui.dragOwner() == null) search.rebuild(model, modelVersion);
+		if (search.needsRebuild(modelVersion) && ui.dragOwner() == null) rebuildSearchResults();
 		var tab = model.activeTab();
 		contentPane.updateContentHeight();
 		pageOut.update(seconds);
@@ -248,6 +308,12 @@ public final class ConfigShell implements UiView, RowContext {
 		ui.painter.pushAlpha(pageIn.value());
 		ui.painter.pushTranslate((1F - pageIn.value()) * UiMotion.PAGE_SLIDE_IN * pageDirection, 0);
 		contentPane.render(ui);
+		for (var iterator = leaving.iterator(); iterator.hasNext(); ) {
+			var row = iterator.next().row();
+			if (!row.exited()) continue;
+			row.cancelExit();
+			iterator.remove();
+		}
 		ui.painter.popTranslate();
 		ui.painter.popAlpha();
 		var focusables = new ArrayList<Target>();
@@ -344,6 +410,7 @@ public final class ConfigShell implements UiView, RowContext {
 		pointer.clear();
 		popups.clear();
 		removals.flush();
+		dropLeavingRows();
 		suppressRebuildFx = false;
 		outgoingRows = List.of();
 		ui.setDragOwner(null);
@@ -475,7 +542,7 @@ public final class ConfigShell implements UiView, RowContext {
 			closeDropdown();
 			if (layout.content.contains(mouseX, mouseY)) {
 				var row = contentPane.rowAt(ui, mouseY);
-				if (row instanceof ValueRow valueRow) {
+				if (row instanceof ValueRow valueRow && !row.exiting()) {
 					openRowMenu(valueRow, mouseX, mouseY);
 					return true;
 				}
@@ -569,9 +636,21 @@ public final class ConfigShell implements UiView, RowContext {
 		return true;
 	}
 	private List<ConfigRow> activeRows() {
-		if (search.filtering()) return search.rows();
-		var tab = model.activeTab();
-		return tab == null ? List.of() : tab.rows;
+		List<ConfigRow> rows;
+		if (search.filtering()) rows = search.rows();
+		else {
+			var tab = model.activeTab();
+			rows = tab == null ? List.of() : tab.rows;
+		}
+		if (leaving.isEmpty()) return rows;
+		var merged = new ArrayList<ConfigRow>(rows.size() + leaving.size());
+		merged.addAll(rows);
+		for (var item : leaving) {
+			if (rows.contains(item.row())) continue;
+			var index = item.anchor() == null ? -1 : merged.indexOf(item.anchor());
+			merged.add(index < 0 ? merged.size() : index, item.row());
+		}
+		return merged;
 	}
 	private void showDialog(Runnable action) {
 		closeDropdown();
@@ -622,7 +701,7 @@ public final class ConfigShell implements UiView, RowContext {
 	}
 	private void undoAll() {
 		session.resetAll();
-		refresh();
+		rebuildActiveTab();
 		for (var tab : model.tabs()) for (var row : tab.rows) if (row instanceof ValueRow valueRow) valueRow.wash();
 		toast.info(Translation.TOAST_UNDONE);
 	}
@@ -642,6 +721,7 @@ public final class ConfigShell implements UiView, RowContext {
 	public void rebuildActiveTab() {
 		if (model == null) return;
 		closeDropdown();
+		dropLeavingRows();
 		var hadPending = !removals.isEmpty();
 		var expansions = removals.flush();
 		// 刚处理过删除/重置时，旧行的收缩比例属于已被移除的项，不能套到同路径的新行上
@@ -656,7 +736,7 @@ public final class ConfigShell implements UiView, RowContext {
 			oldIds.add(id);
 			if (row.heightScale() < 1) expanding.put(id, row.heightScale());
 		}
-		model.rebuildActive();
+		model.rebuildAll();
 		modelVersion++;
 		if (tab != null) {
 			var newRows = tab.rows;

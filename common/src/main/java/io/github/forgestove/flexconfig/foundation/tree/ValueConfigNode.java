@@ -24,7 +24,10 @@ public class ValueConfigNode implements ConfigNode {
 	private ValueValidator validator;
 	private ConfigChangeCallback changeCallback;
 	private Object defaultValue;
+	/** 默认列表里没有这个索引时，元素本身没有默认值，只有用于重置的兜底值。 */
+	private boolean hasDefault = true;
 	private Object editingValue;
+	private boolean editingInitialized;
 	private Object baselineValue;
 	/** 绑定在集合元素上：值直接读写目标对象，不保存独立编辑副本。 */
 	private boolean writeThrough;
@@ -79,7 +82,10 @@ public class ValueConfigNode implements ConfigNode {
 	}
 	@Override
 	public boolean isDefaultValue(Object config) {
-		return FieldAccess.deepEquals(getDefaultValue(), getEditingValue(config));
+		return hasDefault && FieldAccess.deepEquals(getDefaultValue(), getEditingValue(config));
+	}
+	public boolean hasDefault() {
+		return hasDefault;
 	}
 	@Override
 	public boolean isActiveValue(Object config) {
@@ -135,6 +141,7 @@ public class ValueConfigNode implements ConfigNode {
 			return;
 		}
 		editingValue = value;
+		editingInitialized = true;
 	}
 	public Object getDefaultValue() {
 		return defaultValue;
@@ -147,7 +154,11 @@ public class ValueConfigNode implements ConfigNode {
 	}
 	public Object getEditingValue(Object config) {
 		if (writeThrough) return valueReader.read(config);
-		if (editingValue == null) editingValue = copyForEditing(currentBase(config));
+		// null 也是合法编辑值（如默认为 null 的字段），不能用它判断是否初始化
+		if (!editingInitialized) {
+			editingValue = copyForEditing(currentBase(config));
+			editingInitialized = true;
+		}
 		return editingValue;
 	}
 	/**
@@ -233,6 +244,10 @@ public class ValueConfigNode implements ConfigNode {
 		}
 		public Builder defaultValue(Object defaultValue) {
 			node.defaultValue = defaultValue;
+			return this;
+		}
+		public Builder hasDefault(boolean hasDefault) {
+			node.hasDefault = hasDefault;
 			return this;
 		}
 		public Builder restartType(@Nullable RestartType requiredRestart) {

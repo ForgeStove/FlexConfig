@@ -21,7 +21,7 @@ public class CollectionHeaderRow extends ValueRow {
 		if (state.readOnly) return;
 		ctx.exitElements(
 			node.getPath(), () -> {
-				super.resetToDefault();
+				writeDefault();
 				ctx.handler().clearElementKeybinds(node.getPath());
 			}
 		);
@@ -30,7 +30,7 @@ public class CollectionHeaderRow extends ValueRow {
 	public void resetToActive() {
 		ctx.exitElements(
 			node.getPath(), () -> {
-				super.resetToActive();
+				writeActive();
 				ctx.handler().clearElementKeybinds(node.getPath());
 			}
 		);
