@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
+import com.demonwav.mcdev.annotations.Translatable;
 /**
  * 界面层使用的文本对象。内部保存实现提供的文本引用；翻译、度量、换行和样式修改都交给
  * {@link UiTexts} 的实现，界面代码不接触 Component。
@@ -18,10 +19,10 @@ public final class UiText {
 	public static UiText literal(String text) {
 		return UiTexts.engine().literal(text);
 	}
-	public static UiText translatable(String key, Object... args) {
+	public static UiText translatable(@Translatable(foldMethod = true) String key, Object... args) {
 		return UiTexts.engine().translatable(key, args);
 	}
-	public static UiText translatableWithFallback(String fallback, String key, Object... args) {
+	public static UiText translatableWithFallback(String fallback, @Translatable(foldMethod = true) String key, Object... args) {
 		return UiTexts.engine().translatableWithFallback(fallback, key, args);
 	}
 	public static UiText from(Object component) {

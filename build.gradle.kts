@@ -18,6 +18,9 @@ subprojects {
 		}
 		tasks.named<Jar>("jar") { from(rootProject.file("LICENSE")) }
 		tasks.named<Test>("test") { failOnNoDiscoveredTests.set(false) }
+		dependencies {
+			add("compileOnly", "com.demonwav.mcdev:annotations:${p("mcdevAnnotationsVersion")}")
+		}
 		if(path == ":common") return@withId
 		val commonJava = configurations.create("commonJava") { isCanBeResolved = true }
 		val commonResources = configurations.create("commonResources") { isCanBeResolved = true }
