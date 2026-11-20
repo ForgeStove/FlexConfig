@@ -12,10 +12,7 @@ public class ShowcaseView {
 		var painter = ui.painter;
 		painter.gradient(bounds, UiTheme.TRACK_LIGHT, UiTheme.WELL);
 		painter.border(bounds, UiTheme.WINDOW_EDGE);
-		renderIcon(ui, bounds);
-	}
-	private void renderIcon(UiContext ui, UiBounds bounds) {
-		var painter = ui.painter;
+		var painter1 = ui.painter;
 		var area = bounds.inset(4, 4);
 		var width = icon.width();
 		var height = icon.height();
@@ -26,8 +23,8 @@ public class ShowcaseView {
 		var drawHeight = Math.max(1, Math.round(height * scale));
 		var x = area.x() + (area.width() - drawWidth) / 2;
 		var y = area.y() + (area.height() - drawHeight) / 2;
-		painter.rect(x, y, drawWidth, drawHeight, UiTheme.WELL);
-		painter.texture(icon, new UiBounds(x, y, drawWidth, drawHeight));
-		painter.border(x, y, drawWidth, drawHeight, UiTheme.WINDOW_EDGE);
+		painter1.rect(x, y, drawWidth, drawHeight, UiTheme.WELL);
+		painter1.texture(icon, new UiBounds(x, y, drawWidth, drawHeight));
+		painter1.border(x, y, drawWidth, drawHeight, UiTheme.WINDOW_EDGE);
 	}
 }

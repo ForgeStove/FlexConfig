@@ -73,7 +73,7 @@ public class Translation {
 		return I18n.exists(key) ? I18n.get(key) : null;
 	}
 	/** 树和 API 返回 Component，进入界面前转成 UiText。 */
-	public static @Nullable UiText from(@Nullable Component component) {
+	public static UiText from(Component component) {
 		return UiText.from(component);
 	}
 	/** 交给原版界面前转回 Component。 */

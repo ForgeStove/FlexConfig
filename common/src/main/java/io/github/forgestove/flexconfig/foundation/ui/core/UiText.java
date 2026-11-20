@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
-import org.jetbrains.annotations.Nullable;
 /**
  * 界面层使用的文本对象。内部保存实现提供的文本引用；翻译、度量、换行和样式修改都交给
  * {@link UiTexts} 的实现，界面代码不接触 Component。
@@ -13,9 +12,6 @@ public final class UiText {
 	public static UiText of(Object handle) {
 		return new UiText(handle);
 	}
-	public Object handle() {
-		return handle;
-	}
 	public static UiText empty() {
 		return UiTexts.engine().literal("");
 	}
@@ -28,8 +24,11 @@ public final class UiText {
 	public static UiText translatableWithFallback(String fallback, String key, Object... args) {
 		return UiTexts.engine().translatableWithFallback(fallback, key, args);
 	}
-	public static @Nullable UiText from(@Nullable Object component) {
+	public static UiText from(Object component) {
 		return component == null ? null : UiTexts.engine().fromComponent(component);
+	}
+	public Object handle() {
+		return handle;
 	}
 	public UiText copy() {
 		return UiTexts.engine().copy(this);
