@@ -1,23 +1,17 @@
 package io.github.forgestove.flexconfig.foundation.ui.factory;
-import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.InputConstants.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
-import net.minecraft.client.gui.screens.Screen;
-import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
-public record EntryKeybind(@NotNull Key key, int modifierFlags) {
-	public static final EntryKeybind UNBOUND = new EntryKeybind(InputConstants.UNKNOWN, 0);
+/** 平台无关的按键绑定：类型、编码和修饰键，解释与显示交给 {@link Keybinds} 当前的实现。 */
+public record EntryKeybind(Type type, int code, int modifierFlags) {
+	public enum Type {
+		KEYSYM,
+		SCANCODE,
+		MOUSE
+	}
 	public static final int NONE = 0;
 	public static final int SHIFT = 1;
 	public static final int CONTROL = 1 << 1;
 	public static final int ALT = 1 << 2;
-	public static int getActiveModifierFlags() {
-		var flags = NONE;
-		if (Screen.hasShiftDown()) flags |= SHIFT;
-		if (Screen.hasControlDown()) flags |= CONTROL;
-		if (Screen.hasAltDown()) flags |= ALT;
-		return flags;
-	}
+	public static final EntryKeybind UNBOUND = new EntryKeybind(Type.KEYSYM, -1, NONE);
 	public static EntryKeybind deserialize(String str) {
 		if (str == null || str.isEmpty()) return UNBOUND;
 		var parts = str.split("\\+");
@@ -41,60 +35,20 @@ public record EntryKeybind(@NotNull Key key, int modifierFlags) {
 				type = Type.SCANCODE;
 				codeStr = codeStr.substring(5);
 			}
-			return new EntryKeybind(type.getOrCreate(Integer.parseInt(codeStr)), flags);
+			return new EntryKeybind(type, Integer.parseInt(codeStr), flags);
 		} catch (NumberFormatException e) {
 			return UNBOUND;
 		}
 	}
-	/** 未绑定修饰键时要求当前没有修饰键按下，否则 Ctrl+S 也会触发绑定为 S 的动作。 */
-	public static boolean isKeyPressed(long window, EntryKeybind keybind) {
-		var key = keybind.key();
-		if (key.equals(InputConstants.UNKNOWN)) return false;
-		var keyDown = switch (key.getType()) {
-			case KEYSYM, SCANCODE -> InputConstants.isKeyDown(window, key.getValue());
-			case MOUSE -> GLFW.glfwGetMouseButton(window, key.getValue()) == GLFW.GLFW_PRESS;
-		};
-		if (!keyDown) return false;
-		if (keybind.modifierFlags() == NONE) return !isAnyModifierDown(window);
-		if ((keybind.modifierFlags() & SHIFT) != 0 && !Screen.hasShiftDown()) return false;
-		if ((keybind.modifierFlags() & CONTROL) != 0 && !Screen.hasControlDown()) return false;
-		return (keybind.modifierFlags() & ALT) == 0 || Screen.hasAltDown();
+	public boolean isUnbound() {
+		return type == Type.KEYSYM && code == -1;
 	}
-	private static boolean isAnyModifierDown(long window) {
-		return InputConstants.isKeyDown(window, 340)
-			|| InputConstants.isKeyDown(window, 344)
-			|| InputConstants.isKeyDown(window, 341)
-			|| InputConstants.isKeyDown(window, 345)
-			|| InputConstants.isKeyDown(window, 342)
-			|| InputConstants.isKeyDown(window, 346);
-	}
-	public static boolean isModifier(int keyCode) {
-		return keyCode == InputConstants.KEY_LSHIFT
-			|| keyCode == InputConstants.KEY_RSHIFT
-			|| keyCode == InputConstants.KEY_LCONTROL
-			|| keyCode == InputConstants.KEY_RCONTROL
-			|| keyCode == InputConstants.KEY_LALT
-			|| keyCode == InputConstants.KEY_RALT;
+	/** 冲突判断只看物理按键，不区分修饰键。 */
+	public EntryKeybind physicalKey() {
+		return modifierFlags == NONE ? this : new EntryKeybind(type, code, NONE);
 	}
 	public UiText getDisplayName() {
-		return buildText().withStyle(getState().color());
-	}
-	private UiText buildText() {
-		var name = UiText.from(key.getDisplayName());
-		if (modifierFlags != NONE) {
-			var prefix = UiText.empty();
-			if ((modifierFlags & CONTROL) != 0) prefix = prefix.append("Ctrl+");
-			if ((modifierFlags & SHIFT) != 0) prefix = prefix.append("Shift+");
-			if ((modifierFlags & ALT) != 0) prefix = prefix.append("Alt+");
-			return prefix.append(name);
-		}
-		return name;
-	}
-	private KeybindState getState() {
-		return isUnbound() ? KeybindState.UNBOUND : KeybindState.BOUND;
-	}
-	public boolean isUnbound() {
-		return key.equals(InputConstants.UNKNOWN);
+		return Keybinds.support().displayName(this);
 	}
 	/**
 	 * 序列化为 {@code "[modifiers+]code"}，修饰键记单字母 {@code c}/{@code s}/{@code a}，如 {@code "c+s+83"}；鼠标与扫描码分别带 {@code mouse:}、{@code scan:}
@@ -106,12 +60,12 @@ public record EntryKeybind(@NotNull Key key, int modifierFlags) {
 		if ((modifierFlags & CONTROL) != 0) sb.append("c+");
 		if ((modifierFlags & SHIFT) != 0) sb.append("s+");
 		if ((modifierFlags & ALT) != 0) sb.append("a+");
-		var typePrefix = switch (key.getType()) {
+		var typePrefix = switch (type) {
 			case MOUSE -> "mouse:";
 			case SCANCODE -> "scan:";
 			default -> "";
 		};
-		sb.append(typePrefix).append(key.getValue());
+		sb.append(typePrefix).append(code);
 		return sb.toString();
 	}
 }

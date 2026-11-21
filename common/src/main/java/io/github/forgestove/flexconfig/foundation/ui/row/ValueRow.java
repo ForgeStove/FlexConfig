@@ -1,10 +1,9 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
-import com.mojang.blaze3d.platform.InputConstants.Key;
 import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
-import io.github.forgestove.flexconfig.foundation.ConfigTranslation;
 import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
+import io.github.forgestove.flexconfig.foundation.ui.factory.Keybinds;
 import io.github.forgestove.flexconfig.foundation.ui.model.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +27,8 @@ public abstract class ValueRow extends ConfigRow {
 	public ValueRow(RowContext ctx, ValueConfigNode node) {
 		super(ctx);
 		this.node = node;
-		label = Translation.from(node.getTitle());
-		tooltip = Translation.from(node.getTooltip());
+		label = node.getTitle();
+		tooltip = node.getTooltip();
 		reset = new UiIconButton(FlexGuiTextures.ICON_RESET, this::resetToDefault);
 		reset.tooltip(Translation.RESET_TOOLTIP);
 		lock = new UiIconButton(FlexGuiTextures.ICON_UNLOCK, this::toggleLock);
@@ -143,6 +142,8 @@ public abstract class ValueRow extends ConfigRow {
 	}
 	/** 值的显示文本：集合递归、枚举用翻译、按键用显示名、布尔用开关标记。 */
 	protected String displayValue(@Nullable Object value) {
+		var keybindName = value == null ? null : Keybinds.support().displayValue(value);
+		if (keybindName != null) return keybindName.getString();
 		switch (value) {
 			case null -> {
 				return "";
@@ -153,14 +154,7 @@ public abstract class ValueRow extends ConfigRow {
 				return "[" + String.join(", ", parts) + "]";
 			}
 			case Enum<?> constant -> {
-				return Translation.from(ConfigTranslation.translatable(ConfigTranslationKeys.enumValue(ctx.modId(), constant))).getString();
-			}
-			case Key key -> {
-				try {
-					return key.getDisplayName().getString();
-				} catch (RuntimeException ignored) {
-					return UiText.translatable(key.getName()).getString();
-				}
+				return UiText.translatable(ConfigTranslationKeys.enumValue(ctx.modId(), constant)).getString();
 			}
 			case Boolean bool -> {
 				return (bool ? Translation.ON_LABEL : Translation.OFF_LABEL).getString();

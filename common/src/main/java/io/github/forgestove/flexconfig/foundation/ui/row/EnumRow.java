@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
 import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
-import io.github.forgestove.flexconfig.foundation.ConfigTranslation;
 import io.github.forgestove.flexconfig.foundation.client.*;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
@@ -45,7 +44,7 @@ public class EnumRow extends ValueRow implements KeybindConflictAware, TriggerKe
 			var next = nextValue();
 			writeValue(next);
 			if (ClientUtil.mc.player == null) return;
-			var title = Translation.from(node.getTitle()).withStyle(UiStyle.WHITE);
+			var title = node.getTitle().withStyle(UiStyle.WHITE);
 			var valueText = label(next).copy().withStyle(UiStyle.UNDERLINE).withStyle(UiStyle.BOLD);
 			ClientUtil.mc.player.displayClientMessage(Translation.toComponent(title.append(": ").append(valueText)), true);
 		});
@@ -57,7 +56,7 @@ public class EnumRow extends ValueRow implements KeybindConflictAware, TriggerKe
 		return Math.max(TRIGGER_WIDTH, widest + 20);
 	}
 	private UiText label(Enum<?> value) {
-		return Translation.from(ConfigTranslation.translatable(ConfigTranslationKeys.enumValue(ctx.modId(), value)));
+		return UiText.translatable(ConfigTranslationKeys.enumValue(ctx.modId(), value));
 	}
 	private Enum<?> nextValue() {
 		var current = (Enum<?>) value();
@@ -92,7 +91,7 @@ public class EnumRow extends ValueRow implements KeybindConflictAware, TriggerKe
 	}
 	@Override
 	public UiText displayTitle() {
-		return Translation.from(node.getTitle());
+		return node.getTitle();
 	}
 	@Override
 	public void applyConflict(KeybindState state, List<UiText> usages) {

@@ -2,25 +2,35 @@ package io.github.forgestove.flexconfig.foundation.ui.screen;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton;
+import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 /** 确认对话框。保存标题、正文和确认后的动作，打开期间由 ConfigShell 拦截其余输入。 */
-public final class DialogView {
+public class DialogView {
 	private static final int MAX_WIDTH = 300, PAD = 8, BUTTON_WIDTH = 70, BUTTON_HEIGHT = 18;
+	private final UiButton confirm, cancel;
 	private boolean open;
 	private UiText title = UiText.empty(), body = UiText.empty();
 	private Runnable action = () -> {};
-	private final UiButton confirm, cancel;
+	private @Nullable Runnable cancelAction;
 	public DialogView() {
-		confirm = new UiButton(Translation.QUIT_CONFIRM_LABEL.copy().withStyle(UiStyle.BOLD), UiButton.Style.PRIMARY, this::confirm);
-		cancel = new UiButton(Translation.CANCEL_LABEL, UiButton.Style.SECONDARY, this::cancel);
+		confirm = new UiButton(Translation.QUIT_CONFIRM_LABEL.copy().withStyle(UiStyle.BOLD), Style.PRIMARY, this::confirm);
+		cancel = new UiButton(Translation.CANCEL_LABEL, Style.SECONDARY, this::cancel);
 	}
 	public boolean open() {
 		return open;
 	}
 	public void open(UiText title, UiText body, Runnable action) {
+		open(title, body, Translation.QUIT_CONFIRM_LABEL, Translation.CANCEL_LABEL, action, null);
+	}
+	public void open(UiText title, UiText body, UiText confirmLabel, UiText cancelLabel, Runnable action,
+		@Nullable Runnable cancelAction) {
 		this.title = title;
 		this.body = body;
 		this.action = action;
+		this.cancelAction = cancelAction;
+		confirm.setLabel(confirmLabel.copy().withStyle(UiStyle.BOLD));
+		cancel.setLabel(cancelLabel);
 		open = true;
 	}
 	public void mouseDown(UiContext ui, UiPointerRouter pointer, double mouseX, double mouseY, int button) {
@@ -68,12 +78,16 @@ public final class DialogView {
 	private void confirm() {
 		if (!open) return;
 		open = false;
+		cancelAction = null;
 		UiSound.click();
 		action.run();
 	}
 	private void cancel() {
 		if (!open) return;
 		open = false;
+		var run = cancelAction;
+		cancelAction = null;
 		UiSound.click();
+		if (run != null) run.run();
 	}
 }

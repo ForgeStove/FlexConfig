@@ -3,20 +3,20 @@ import com.google.common.collect.ImmutableList;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.foundation.ConfigChangeDispatcher;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
-import net.minecraft.network.chat.Component;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import org.jetbrains.annotations.*;
 
 import java.util.function.UnaryOperator;
 public class CategoryConfigNode implements ConfigNode {
-	private Component title;
-	private Component tooltip;
+	private UiText title;
+	private UiText tooltip;
 	private CategoryIcon icon = CategoryIcon.NONE;
 	private ImmutableList<ConfigNode> children;
 	public static Builder builder() {
 		return new Builder();
 	}
 	@NotNull
-	public Component getTitle() {
+	public UiText getTitle() {
 		return title;
 	}
 	@NotNull
@@ -25,7 +25,7 @@ public class CategoryConfigNode implements ConfigNode {
 	}
 	@Nullable
 	@Override
-	public Component getTooltip() {
+	public UiText getTooltip() {
 		return tooltip;
 	}
 	@Override
@@ -59,13 +59,13 @@ public class CategoryConfigNode implements ConfigNode {
 	}
 	@Nullable
 	@Override
-	public Component validate(Object config) {
-		Component error = null;
+	public UiText validate(Object config) {
+		UiText error = null;
 		for (var node : children) {
 			var result = node.validate(config);
 			if (result == null) continue;
 			if (error == null) error = result;
-			else return Translation.toComponent(Translation.MULTIPLE_ERRORS);
+			else return Translation.MULTIPLE_ERRORS;
 		}
 		return error;
 	}
@@ -111,11 +111,11 @@ public class CategoryConfigNode implements ConfigNode {
 			node = new CategoryConfigNode();
 			childrenBuilder = ImmutableList.builder();
 		}
-		public Builder title(Component title) {
+		public Builder title(UiText title) {
 			node.title = title;
 			return this;
 		}
-		public Builder tooltip(Component tooltip) {
+		public Builder tooltip(UiText tooltip) {
 			node.tooltip = tooltip;
 			return this;
 		}

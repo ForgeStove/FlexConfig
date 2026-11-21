@@ -1,12 +1,9 @@
 package io.github.forgestove.flexconfig.foundation.ui;
-import net.minecraft.client.gui.screens.Screen;
-import org.jetbrains.annotations.Nullable;
-/** 界面需要的 Screen 环境：尺寸、父屏、切屏和 Shift 状态。 */
+import io.github.forgestove.flexconfig.api.menu.Accent;
 public interface ConfigHost {
 	int guiWidth();
 	int guiHeight();
 	boolean shiftDown();
-	Screen parentScreen();
-	void setScreen(@Nullable Screen screen);
-	void copyToClipboard(String text);
+	void close();
+	Accent accent();
 }

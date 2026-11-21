@@ -208,7 +208,7 @@ public class CollectionRows {
 				ctx,
 				element,
 				defaultElement(node, i),
-				Translation.from(ConfigTranslation.translatable(key)),
+				UiText.translatable(key),
 				path,
 				key,
 				node.getLockPath(),

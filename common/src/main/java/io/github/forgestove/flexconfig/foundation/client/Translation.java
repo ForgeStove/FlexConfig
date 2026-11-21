@@ -4,11 +4,8 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.*;
-/** 界面文本。对界面返回 UiText；树和 API 仍然使用 Component，二者的转换集中在 from 和 toComponent。 */
+/** 客户端文本常量与 UiText、Component 的转换入口。 */
 public class Translation {
-	static {
-		UiTexts.install(MinecraftTextEngine.INSTANCE);
-	}
 	public static final UiText ON_LABEL = UiText.literal("✔");
 	public static final UiText OFF_LABEL = UiText.literal("❌");
 	public static final UiText RESET_TOOLTIP = UiText.translatable("controls.reset");
@@ -71,10 +68,6 @@ public class Translation {
 	}
 	public static @Nullable String getString(String key) {
 		return I18n.exists(key) ? I18n.get(key) : null;
-	}
-	/** 树和 API 返回 Component，进入界面前转成 UiText。 */
-	public static UiText from(Component component) {
-		return UiText.from(component);
 	}
 	/** 交给原版界面前转回 Component。 */
 	public static Component toComponent(UiText text) {

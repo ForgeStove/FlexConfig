@@ -1,7 +1,4 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
-import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.InputConstants.Key;
-import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import io.github.forgestove.flexconfig.foundation.ui.factory.*;
 import io.github.forgestove.flexconfig.foundation.ui.row.ConfigRow;
@@ -18,16 +15,9 @@ public class KeybindConflictIndex {
 		for (var target : aware) {
 			var keybind = target.keybind();
 			if (keybind.isUnbound()) continue;
-			localCount.merge(keybind, 1, Integer::sum);
-			localUsages.computeIfAbsent(keybind, ignored -> new ArrayList<>()).add(target);
-		}
-		var registeredCount = new HashMap<Key, Integer>();
-		var registeredUsages = new HashMap<Key, List<UiText>>();
-		for (var mapping : ClientUtil.mc.options.keyMappings) {
-			var key = ClientUtil.boundKey(mapping);
-			if (key.equals(InputConstants.UNKNOWN)) continue;
-			registeredCount.merge(key, 1, Integer::sum);
-			registeredUsages.computeIfAbsent(key, ignored -> new ArrayList<>()).add(UiText.translatable(mapping.getName()));
+			var physical = keybind.physicalKey();
+			localCount.merge(physical, 1, Integer::sum);
+			localUsages.computeIfAbsent(physical, ignored -> new ArrayList<>()).add(target);
 		}
 		for (var target : aware) {
 			var keybind = target.keybind();
@@ -35,14 +25,16 @@ public class KeybindConflictIndex {
 				target.applyConflict(KeybindState.UNBOUND, List.of());
 				continue;
 			}
-			var conflict = localCount.getOrDefault(keybind, 0) > 1 || registeredCount.getOrDefault(keybind.key(), 0) > 1;
+			var physical = keybind.physicalKey();
+			var registered = Keybinds.support().registeredUsages(physical);
+			var conflict = localCount.getOrDefault(physical, 0) > 1 || registered.size() > 1;
 			if (!conflict) {
 				target.applyConflict(KeybindState.BOUND, List.of());
 				continue;
 			}
 			var usages = new ArrayList<UiText>();
-			for (var other : localUsages.getOrDefault(keybind, List.of())) if (other != target) usages.add(other.displayTitle());
-			usages.addAll(registeredUsages.getOrDefault(keybind.key(), List.of()));
+			for (var other : localUsages.getOrDefault(physical, List.of())) if (other != target) usages.add(other.displayTitle());
+			usages.addAll(registered);
 			target.applyConflict(KeybindState.CONFLICT, usages);
 		}
 	}

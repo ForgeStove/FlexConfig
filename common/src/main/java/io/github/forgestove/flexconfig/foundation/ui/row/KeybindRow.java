@@ -1,13 +1,11 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
-import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.InputConstants.*;
-import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.factory.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConflictAware {
@@ -20,8 +18,8 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 		button = new UiButton(UiText.empty(), Style.KEYBIND, this::beginCapture);
 		actionBar.add(button, UiTheme.CONTROL_WIDTH);
 	}
-	private Key key() {
-		return (Key) value();
+	private Object key() {
+		return value();
 	}
 	private void beginCapture() {
 		capturing = true;
@@ -31,15 +29,15 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 	@Override
 	public boolean captureKey(int keyCode) {
 		if (!capturing) return false;
-		if (keyCode == InputConstants.KEY_ESCAPE) writeValue(InputConstants.UNKNOWN);
-		else writeValue(Type.KEYSYM.getOrCreate(keyCode));
+		if (keyCode == GLFW.GLFW_KEY_ESCAPE) writeValue(Keybinds.support().unboundRawKey());
+		else writeValue(Keybinds.support().rawKey(Keybinds.support().captureKey(keyCode)));
 		finish();
 		return true;
 	}
 	@Override
 	public void captureMouse(int button) {
 		if (!capturing) return;
-		writeValue(Type.MOUSE.getOrCreate(button));
+		writeValue(Keybinds.support().rawKey(Keybinds.support().captureMouse(button)));
 		finish();
 	}
 	private void finish() {
@@ -50,15 +48,6 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 	@Override
 	protected boolean allowLock() {
 		return false;
-	}
-	/** 按键名的翻译由原版懒加载缓存提供，损坏时退回原始键名，避免一行拖垮整个界面构建。 */
-	private UiText displayName() {
-		var key = key();
-		try {
-			return UiText.from(key.getDisplayName());
-		} catch (RuntimeException ignored) {
-			return UiText.translatable(key.getName());
-		}
 	}
 	@Override
 	public void refresh() {
@@ -75,13 +64,18 @@ public class KeybindRow extends ValueRow implements CaptureTarget, KeybindConfli
 			button.tooltip(UiText.translatable("controls.keybinds.duplicateKeybinds", used));
 		} else button.tooltip(null);
 	}
+	/** 按键名的翻译由实现提供，损坏时退回原始键名，避免一行拖垮整个界面构建。 */
+	private UiText displayName() {
+		var name = Keybinds.support().displayValue(key());
+		return name != null ? name : UiText.literal(String.valueOf(key()));
+	}
 	@Override
 	public EntryKeybind keybind() {
-		return new EntryKeybind(key(), EntryKeybind.NONE);
+		return Keybinds.support().fromRaw(key());
 	}
 	@Override
 	public UiText displayTitle() {
-		return Translation.from(node.getTitle());
+		return node.getTitle();
 	}
 	@Override
 	public void applyConflict(KeybindState state, List<UiText> usages) {

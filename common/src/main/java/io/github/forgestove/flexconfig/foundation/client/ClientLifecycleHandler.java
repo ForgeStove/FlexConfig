@@ -1,7 +1,7 @@
 package io.github.forgestove.flexconfig.foundation.client;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.foundation.*;
-import io.github.forgestove.flexconfig.foundation.ui.ConfigScreen;
+import io.github.forgestove.flexconfig.foundation.client.screen.ConfigScreen;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import net.minecraft.client.resources.language.I18n;
 

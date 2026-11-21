@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
-import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.CategoryConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import io.github.forgestove.flexconfig.foundation.ui.row.ConfigRow;
@@ -11,12 +10,12 @@ public class ConfigTabModel implements ConfigStatus {
 	public final UiText title;
 	public final List<ConfigRow> rows = new ArrayList<>();
 	public double scroll;
-	private boolean error;
 	public int changedCount;
 	public int defaultChangedCount;
+	private boolean error;
 	public ConfigTabModel(CategoryConfigNode node) {
 		this.node = node;
-		title = Translation.from(node.getTitle());
+		title = node.getTitle();
 	}
 	public void build(RowContext ctx) {
 		rows.clear();

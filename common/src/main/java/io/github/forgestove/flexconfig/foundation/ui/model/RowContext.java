@@ -2,6 +2,8 @@ package io.github.forgestove.flexconfig.foundation.ui.model;
 import io.github.forgestove.flexconfig.api.FileKey;
 import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiDropdown;
+
+import java.util.function.IntConsumer;
 /** 行访问配置和界面动作的接口。行只依赖这里的方法，不直接依赖 ConfigShell。 */
 public interface RowContext {
 	ConfigHandler<?, ?> handler();
@@ -15,6 +17,7 @@ public interface RowContext {
 	void beginCapture(CaptureTarget target);
 	void endCapture(CaptureTarget target);
 	void saveByKeybind();
+	void openColorPicker(int color, boolean alpha, IntConsumer onSelected);
 	void exitRow(Object identity, Runnable action);
 	void exitElements(String collectionPath, Runnable action);
 	void openDropdown(UiDropdown dropdown);

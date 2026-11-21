@@ -1,9 +1,8 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
-import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.InputConstants.Type;
-import io.github.forgestove.flexconfig.foundation.ui.factory.EntryKeybind;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
+import io.github.forgestove.flexconfig.foundation.ui.factory.*;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.Objects;
 /** 可捕获行（Boolean/Enum）的触发键位：注册、捕获、重置与撤销快照。 */
@@ -58,26 +57,17 @@ public class TriggerKeybindSupport implements CaptureTarget {
 	@Override
 	public boolean captureKey(int keyCode) {
 		if (!capturing) return false;
-		if (EntryKeybind.isModifier(keyCode)) return true;
+		if (Keybinds.support().isModifier(keyCode)) return true;
 		var handler = ctx.handler();
-		if (keyCode == InputConstants.KEY_ESCAPE) handler.setTriggerKeybind(node.getPath(), null, null);
-		else handler.setTriggerKeybind(
-			node.getPath(),
-			new EntryKeybind(Type.KEYSYM.getOrCreate(keyCode), EntryKeybind.getActiveModifierFlags()).serialize(),
-			null
-		);
+		if (keyCode == GLFW.GLFW_KEY_ESCAPE) handler.setTriggerKeybind(node.getPath(), null, null);
+		else handler.setTriggerKeybind(node.getPath(), Keybinds.support().captureKey(keyCode).serialize(), null);
 		finishCapture();
 		return true;
 	}
 	@Override
 	public void captureMouse(int button) {
 		if (!capturing) return;
-		ctx.handler()
-			.setTriggerKeybind(
-				node.getPath(),
-				new EntryKeybind(Type.MOUSE.getOrCreate(button), EntryKeybind.getActiveModifierFlags()).serialize(),
-				null
-			);
+		ctx.handler().setTriggerKeybind(node.getPath(), Keybinds.support().captureMouse(button).serialize(), null);
 		finishCapture();
 	}
 	public void resetToDefault() {

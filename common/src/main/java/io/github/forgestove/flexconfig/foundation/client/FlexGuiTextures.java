@@ -1,7 +1,7 @@
 package io.github.forgestove.flexconfig.foundation.client;
-import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.api.CategoryIcon;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiTexture;
+import io.github.forgestove.flexconfig.platform.FlexResources;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.*;
@@ -50,8 +50,8 @@ public enum FlexGuiTextures implements UiTexture {
 	ICON_CATEGORY_WORK_BENCH("icon/category/work-bench");
 	public final ResourceLocation id, texture;
 	FlexGuiTextures(String path) {
-		id = FlexConfig.getFlexRes(path);
-		texture = FlexConfig.getFlexRes("textures/gui/sprites/" + path + ".png");
+		id = FlexResources.getFlexRes(path);
+		texture = FlexResources.getFlexRes("textures/gui/sprites/" + path + ".png");
 	}
 	private @NotNull SpriteContents getContents() {
 		return ClientUtil.mc.getGuiSprites().getSprite(id).contents();

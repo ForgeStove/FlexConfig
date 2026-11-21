@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.client;
-import io.github.forgestove.flexconfig.FlexConfig;
-import io.github.forgestove.flexconfig.platform.NetworkPayload;
+import io.github.forgestove.flexconfig.platform.*;
 import io.github.forgestove.flexconfig.platform.services.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context;
@@ -10,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 public class FabricClientPayloadReceiver implements ClientPayloadReceiver {
 	@Override
 	public <P extends NetworkPayload> void serverToClient(String channel, Class<P> type, PayloadHandler<P> handler) {
-		var registered = new Type<P>(FlexConfig.getFlexRes(channel));
+		var registered = new Type<P>(FlexResources.getFlexRes(channel));
 		ClientPlayNetworking.registerGlobalReceiver(
 			registered,
 			(payload, context) -> handler.handle(payload, new FabricClientContext(context))

@@ -1,10 +1,9 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
-import io.github.forgestove.flexconfig.foundation.client.*;
-import io.github.forgestove.flexconfig.foundation.ui.ColorPickerScreen;
+import io.github.forgestove.flexconfig.foundation.client.Translation;
+import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiTheme;
 import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
-import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 
 import java.util.regex.Pattern;
 public class ColorRow extends ValueRow {
@@ -38,7 +37,7 @@ public class ColorRow extends ValueRow {
 		} catch (NumberFormatException ignored) {}
 	}
 	private void openPicker() {
-		ClientUtil.mc.setScreen(new ColorPickerScreen(ClientUtil.mc.screen, colorValue(), alpha, this::accept));
+		ctx.openColorPicker(colorValue(), alpha, this::accept);
 	}
 	private void accept(int color) {
 		setValue(color);

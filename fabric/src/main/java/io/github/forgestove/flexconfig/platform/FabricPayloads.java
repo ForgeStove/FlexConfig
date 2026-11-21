@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.platform;
-import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.platform.services.*;
 import net.fabricmc.fabric.api.networking.v1.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context;
@@ -14,7 +13,7 @@ import java.util.function.Function;
  * Fabric 的包注册。C2S 类型、服务端接收器和 S2C 类型在这里注册；
  * S2C 接收器依赖客户端类，由 {@code FabricClientPayloadReceiver} 在客户端初始化时注册。
  */
-public class FabricPayloads implements PayloadRegistrar {
+public class FabricPayloads implements PayloadRegistrarService {
 	private static <P extends NetworkPayload> StreamCodec<FriendlyByteBuf, P> codec(Function<FriendlyByteBuf, P> decoder) {
 		return StreamCodec.of((buf, payload) -> payload.encode(buf), decoder::apply);
 	}
@@ -25,7 +24,7 @@ public class FabricPayloads implements PayloadRegistrar {
 		Function<FriendlyByteBuf, P> decoder,
 		PayloadHandler<P> handler
 	) {
-		var registered = new Type<P>(FlexConfig.getFlexRes(channel));
+		var registered = new Type<P>(FlexResources.getFlexRes(channel));
 		PayloadTypeRegistry.playC2S().register(registered, codec(decoder));
 		ServerPlayNetworking.registerGlobalReceiver(
 			registered,
@@ -39,7 +38,7 @@ public class FabricPayloads implements PayloadRegistrar {
 		Function<FriendlyByteBuf, P> decoder,
 		PayloadHandler<P> handler
 	) {
-		var registered = new Type<P>(FlexConfig.getFlexRes(channel));
+		var registered = new Type<P>(FlexResources.getFlexRes(channel));
 		PayloadTypeRegistry.playS2C().register(registered, codec(decoder));
 	}
 	/** 服务端侧实现；接收器回调在网络线程，用 {@code server().execute} 切回主线程。 */

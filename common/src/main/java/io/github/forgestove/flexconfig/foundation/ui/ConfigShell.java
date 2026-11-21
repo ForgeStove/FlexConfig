@@ -1,7 +1,7 @@
 package io.github.forgestove.flexconfig.foundation.ui;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
-import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.CategoryConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
@@ -13,14 +13,14 @@ import io.github.forgestove.flexconfig.foundation.ui.screen.HeaderBar.Info;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiPopupMenu.Item;
-import net.minecraft.client.gui.screens.*;
 import org.jetbrains.annotations.*;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
-public final class ConfigShell implements UiView, RowContext {
+import java.util.function.IntConsumer;
+public class ConfigShell implements UiView, RowContext {
 	public static CategoryConfigNode lastSelectedCategory;
-	private final ConfigHost host;
+	private final ConfigActions host;
 	private final EditingSession<?, ?> session;
 	private final UiContext ui = new UiContext();
 	private final UiTween backdropAnim = new UiTween(0);
@@ -59,16 +59,10 @@ public final class ConfigShell implements UiView, RowContext {
 	private boolean suppressRebuildFx;
 	private boolean ready;
 	private boolean closed;
-	/** {@code anchor} 是旧列表里排在它后面且仍然存在的行，用来在合并视图里保持原位。 */
-	private record LeavingRow(ConfigRow row, ConfigRow anchor) {}
-	public ConfigShell(ConfigHost host, ConfigHandler<?, ?> handler) {
+	public ConfigShell(ConfigActions host, ConfigHandler<?, ?> handler) {
 		this.host = host;
 		session = new EditingSession<>(handler);
 		search = new SearchSession(this, this::clearSearch);
-	}
-	@Override
-	public boolean closed() {
-		return closed;
 	}
 	private void revealRows(List<ConfigRow> rows) {
 		for (var i = 0; i < rows.size(); i++) {
@@ -134,7 +128,7 @@ public final class ConfigShell implements UiView, RowContext {
 				if (anchor == null && afterSet.contains(next)) anchor = next;
 			}
 			// 结果清空时提示行是新实例，把离开的行放在它上方
-			if (anchor == null && after.size() == 1 && after.getFirst() instanceof SearchEmptyRow) anchor = after.get(0);
+			if (anchor == null && after.size() == 1 && after.get(0) instanceof SearchEmptyRow) anchor = after.getFirst();
 			row.onExit();
 			leaving.add(new LeavingRow(row, anchor));
 		}
@@ -238,10 +232,129 @@ public final class ConfigShell implements UiView, RowContext {
 		logicalWidth = Math.max(1, host.guiWidth() / zoom);
 		logicalHeight = Math.max(1, host.guiHeight() / zoom);
 	}
+	private boolean key(int keyCode, int scanCode, int modifiers) {
+		if (closing) return true;
+		if (dialog.open()) return dialog.keyPressed(keyCode);
+		if (capture != null && capture.captureKey(keyCode)) return true;
+		var popup = activePopup();
+		if (popup != null && popup.popupKeyPressed(ui, keyCode, scanCode, modifiers)) return true;
+		if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+			var focused = ui.focus.current();
+			if (focused instanceof UiTextField field) {
+				if (field != header.searchField()) {
+					field.keyPressed(ui, keyCode, scanCode, modifiers);   // 编辑中先退出编辑
+					return true;
+				}
+				if (!field.value().isEmpty() || search.changedOnly()) {
+					clearSearch();
+					return true;
+				}
+				onClose();
+				return true;
+			}
+			onClose();
+			return true;
+		}
+		if (keyCode == GLFW.GLFW_KEY_TAB) {
+			ui.setFocusVisible(true);
+			ui.focus.move(host.shiftDown() ? -1 : 1);
+			return true;
+		}
+		if (header.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
+		switch (keyCode) {
+			case GLFW.GLFW_KEY_UP, GLFW.GLFW_KEY_DOWN, GLFW.GLFW_KEY_HOME, GLFW.GLFW_KEY_END -> {
+				if (navigateRow(keyCode)) return true;
+			}
+			default -> {}
+		}
+		if (keyCode == GLFW.GLFW_KEY_PAGE_UP || keyCode == GLFW.GLFW_KEY_PAGE_DOWN) {
+			var delta = keyCode == GLFW.GLFW_KEY_PAGE_UP ? -layout.content.height() : layout.content.height();
+			contentPane.scrollBy(delta);
+			return true;
+		}
+		if (header.closeKeyPressed(ui, keyCode, scanCode, modifiers)) return true;
+		for (var row : activeRows()) if (row.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
+		for (var control : footer.controls()) if (control.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
+		if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+			onClose();
+			return true;
+		}
+		return false;
+	}
 	@Override
-	public void frame(@NotNull UiRenderTarget target, int mouseX, int mouseY, float delta) {
+	public void init() {
+		capture = null;
+		pointer.clear();
+		popups.clear();
+		removals.flush();
+		dropLeavingRows();
+		suppressRebuildFx = false;
+		outgoingRows = List.of();
+		ui.setDragOwner(null);
+		ui.focus.clear();
+		ui.setAccent(session.handler().getAccent());
+		session.begin();
+		if (!opened) {
+			opened = true;
+			backdropAnim.start(0, 1, UiMotion.BACKDROP_IN);
+			windowAnim.start(0, 1, UiMotion.ENTER);
+			riseAnim.start(UiMotion.RISE, 0, UiMotion.ENTER);
+		} else {
+			closing = false;
+			closed = false;
+			closeAction = null;
+			backdropAnim.snap(1);
+			closeAnim.snap(1);
+			windowAnim.snap(1);
+			riseAnim.snap(0);
+		}
+		recomputeZoom();
+		layout = new ScreenLayout(logicalWidth, logicalHeight, session.handler().getMenuOptions().icon() != null);
+		lastWidth = host.guiWidth();
+		lastHeight = host.guiHeight();
+		session.buildKeybindCategory();
+		model = new ConfigUiModel(this);
+		model.build(session.categories());
+		modelVersion++;
+		selectRememberedTab();
+		doneButton = new UiButton(Translation.DONE_LABEL.copy().withStyle(UiStyle.BOLD), Style.PRIMARY, this::done);
+		header = new HeaderBar(this::onClose, this::undoAll, this::openPageMenu, this::updateSearch, this::toggleChanged);
+		sidebar = new SidebarView(model, this::selectTab);
+		showcase = new ShowcaseView(Translation.texture(session.handler().getMenuOptions().icon()));
+		sidebar.setBounds(layout.tabs);
+		footer = new FooterView(doneButton);
+		footer.setBounds(layout.footer);
+		contentPane = new RowListView(layout.content, this::activeRows);
+		contentPane.setBounds(contentPaneBounds());
+		contentPane.setPitch(UiTheme.ROW_HEIGHT + UiTheme.ROW_GAP);
+		search.clearQuery();
+		search.rebuild(model, modelVersion);
+		refresh();
+		if (search.changedOnly()) updateSearch("");
+		var activeTab = model.activeTab();
+		revealRows(activeTab == null ? List.of() : activeTab.rows);
+		ready = true;
+	}
+	@Override
+	public void resize() {
+		if (model == null) return;
+		recomputeZoom();
+		layout = new ScreenLayout(logicalWidth, logicalHeight, session.handler().getMenuOptions().icon() != null);
+		lastWidth = host.guiWidth();
+		lastHeight = host.guiHeight();
+		sidebar.setBounds(layout.tabs);
+		footer.setBounds(layout.footer);
+		contentPane.setBounds(contentPaneBounds());
+		contentPane.setContent(layout.content);
+		var tab = model.activeTab();
+		if (tab != null) {
+			tab.clampScroll(layout.content.height(), layout.content.width());
+			contentPane.setScroll(tab.scroll);
+		}
+	}
+	@Override
+	public void frame(@NotNull UiRenderTarget target, int mouseX, int mouseY, float seconds) {
 		if (!ready) return;
-		var seconds = ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F;
 		ui.onRefresh(this::refresh);
 		var virtualX = mouseX / (double) zoom;
 		var virtualY = mouseY / (double) zoom;
@@ -335,54 +448,21 @@ public final class ConfigShell implements UiView, RowContext {
 		if (!closing) ui.renderTooltip();
 		painter.popScale();
 	}
-	private boolean key(int keyCode, int scanCode, int modifiers) {
-		if (closing) return true;
-		if (dialog.open()) return dialog.keyPressed(keyCode);
-		if (capture != null && capture.captureKey(keyCode)) return true;
-		var popup = activePopup();
-		if (popup != null && popup.popupKeyPressed(ui, keyCode, scanCode, modifiers)) return true;
-		if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-			var focused = ui.focus.current();
-			if (focused instanceof UiTextField field) {
-				if (field != header.searchField()) {
-					field.keyPressed(ui, keyCode, scanCode, modifiers);   // 编辑中先退出编辑
-					return true;
-				}
-				if (!field.value().isEmpty() || search.changedOnly()) {
-					clearSearch();
-					return true;
-				}
-				onClose();
-				return true;
-			}
-			onClose();
+	@Override
+	public boolean input(ConfigInput event) {
+		// 初始化失败时控件不完整，只放行 Esc 退回上一屏
+		if (!ready) {
+			if (event instanceof Key key && key.keyCode() == GLFW.GLFW_KEY_ESCAPE) host.close();
 			return true;
 		}
-		if (keyCode == GLFW.GLFW_KEY_TAB) {
-			ui.setFocusVisible(true);
-			ui.focus.move(host.shiftDown() ? -1 : 1);
-			return true;
-		}
-		if (header.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
-		switch (keyCode) {
-			case GLFW.GLFW_KEY_UP, GLFW.GLFW_KEY_DOWN, GLFW.GLFW_KEY_HOME, GLFW.GLFW_KEY_END -> {
-				if (navigateRow(keyCode)) return true;
-			}
-			default -> {}
-		}
-		if (keyCode == GLFW.GLFW_KEY_PAGE_UP || keyCode == GLFW.GLFW_KEY_PAGE_DOWN) {
-			var delta = keyCode == GLFW.GLFW_KEY_PAGE_UP ? -layout.content.height() : layout.content.height();
-			contentPane.scrollBy(delta);
-			return true;
-		}
-		if (header.closeKeyPressed(ui, keyCode, scanCode, modifiers)) return true;
-		for (var row : activeRows()) if (row.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
-		for (var control : footer.controls()) if (control.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
-		if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
-			onClose();
-			return true;
-		}
-		return false;
+		return switch (event) {
+			case MouseDown e -> mouseDown(e.x(), e.y(), e.button());
+			case MouseUp e -> mouseUp(e.x(), e.y(), e.button());
+			case MouseDrag e -> mouseDrag(e.x(), e.y(), e.button(), e.dragX(), e.dragY());
+			case Scroll e -> scroll(e.x(), e.y(), e.scrollY());
+			case Key e -> key(e.keyCode(), e.scanCode(), e.modifiers());
+			case Char e -> charType(e.codePoint());
+		};
 	}
 	@Override
 	public void onClose() {
@@ -390,12 +470,12 @@ public final class ConfigShell implements UiView, RowContext {
 		closeDropdown();
 		capture = null;
 		if (isActiveValue()) {
-			beginClose(() -> host.setScreen(host.parentScreen()));
+			beginClose(host::close);
 			return;
 		}
 		showDialog(() -> {
 			session.restoreTriggerKeybinds();
-			beginClose(() -> host.setScreen(host.parentScreen()));
+			beginClose(host::close);
 		});
 	}
 	@Override
@@ -405,75 +485,19 @@ public final class ConfigShell implements UiView, RowContext {
 		ui.clearTooltip();
 	}
 	@Override
-	public void init() {
-		capture = null;
-		pointer.clear();
-		popups.clear();
-		removals.flush();
-		dropLeavingRows();
-		suppressRebuildFx = false;
-		outgoingRows = List.of();
-		ui.setDragOwner(null);
-		ui.focus.clear();
-		ui.setAccent(session.handler().getAccent());
-		session.begin();
-		if (!opened) {
-			opened = true;
-			backdropAnim.start(0, 1, UiMotion.BACKDROP_IN);
-			windowAnim.start(0, 1, UiMotion.ENTER);
-			riseAnim.start(UiMotion.RISE, 0, UiMotion.ENTER);
-		} else {
-			closing = false;
-			closed = false;
-			closeAction = null;
-			backdropAnim.snap(1);
-			closeAnim.snap(1);
-			windowAnim.snap(1);
-			riseAnim.snap(0);
-		}
-		recomputeZoom();
-		layout = new ScreenLayout(logicalWidth, logicalHeight, session.handler().getMenuOptions().icon() != null);
-		lastWidth = host.guiWidth();
-		lastHeight = host.guiHeight();
-		session.buildKeybindCategory();
-		model = new ConfigUiModel(this);
-		model.build(session.categories());
-		modelVersion++;
-		selectRememberedTab();
-		doneButton = new UiButton(Translation.DONE_LABEL.copy().withStyle(UiStyle.BOLD), Style.PRIMARY, this::done);
-		header = new HeaderBar(this::onClose, this::undoAll, this::openPageMenu, this::updateSearch, this::toggleChanged);
-		sidebar = new SidebarView(model, this::selectTab);
-		showcase = new ShowcaseView(Translation.texture(session.handler().getMenuOptions().icon()));
-		sidebar.setBounds(layout.tabs);
-		footer = new FooterView(doneButton);
-		footer.setBounds(layout.footer);
-		contentPane = new RowListView(layout.content, this::activeRows);
-		contentPane.setBounds(contentPaneBounds());
-		contentPane.setPitch(UiTheme.ROW_HEIGHT + UiTheme.ROW_GAP);
-		search.clearQuery();
-		search.rebuild(model, modelVersion);
-		refresh();
-		if (search.changedOnly()) updateSearch("");
-		var activeTab = model.activeTab();
-		revealRows(activeTab == null ? List.of() : activeTab.rows);
-		ready = true;
+	public void refresh() {
+		if (model == null) return;
+		model.refreshAll();
+		if (doneButton == null) return;
+		search.markDirty();
+		doneButton.tooltip(doneBlockedReason());
+		var changed = model.changedCount();
+		header.setUndo(changed, session.editable());
+		header.setChanged(model.defaultChangedCount(), search.changedOnly());
 	}
 	@Override
-	public void resize() {
-		if (model == null) return;
-		recomputeZoom();
-		layout = new ScreenLayout(logicalWidth, logicalHeight, session.handler().getMenuOptions().icon() != null);
-		lastWidth = host.guiWidth();
-		lastHeight = host.guiHeight();
-		sidebar.setBounds(layout.tabs);
-		footer.setBounds(layout.footer);
-		contentPane.setBounds(contentPaneBounds());
-		contentPane.setContent(layout.content);
-		var tab = model.activeTab();
-		if (tab != null) {
-			tab.clampScroll(layout.content.height(), layout.content.width());
-			contentPane.setScroll(tab.scroll);
-		}
+	public boolean closed() {
+		return closed;
 	}
 	private UiBounds contentPaneBounds() {
 		var content = layout.content;
@@ -506,22 +530,6 @@ public final class ConfigShell implements UiView, RowContext {
 		ui.painter.scissorOff();
 		ui.painter.popTranslate();
 		ui.painter.popAlpha();
-	}
-	@Override
-	public boolean input(ConfigInput event) {
-		// 初始化失败时控件不完整，只放行 Esc 退回上一屏
-		if (!ready) {
-			if (event instanceof Key key && key.keyCode() == GLFW.GLFW_KEY_ESCAPE) host.setScreen(host.parentScreen());
-			return true;
-		}
-		return switch (event) {
-			case MouseDown e -> mouseDown(e.x(), e.y(), e.button());
-			case MouseUp e -> mouseUp(e.x(), e.y(), e.button());
-			case MouseDrag e -> mouseDrag(e.x(), e.y(), e.button(), e.dragX(), e.dragY());
-			case Scroll e -> scroll(e.x(), e.y(), e.scrollY());
-			case Key e -> key(e.keyCode(), e.scanCode(), e.modifiers());
-			case Char e -> charType(e.codePoint());
-		};
 	}
 	private boolean mouseDown(double mouseX, double mouseY, int button) {
 		if (closing) return true;
@@ -667,36 +675,32 @@ public final class ConfigShell implements UiView, RowContext {
 		if (!session.editable()) return;
 		var restartType = session.restartType();
 		if (!session.save()) return;
-		var screen = restartScreen(restartType);
-		beginClose(() -> host.setScreen(screen));
-	}
-	private Screen restartScreen(@Nullable RestartType restartType) {
-		if (restartType == null) return host.parentScreen();
-		var mc = ClientUtil.mc;
-		if (restartType == RestartType.WORLD) {
-			if (mc.level == null) return host.parentScreen();
-			return new ConfirmScreen(
-				confirmed -> {
-					if (confirmed) mc.disconnect();
-					else host.setScreen(host.parentScreen());
-				},
-				Translation.toComponent(Translation.RESTART_REQUIRED_TITLE),
-				Translation.toComponent(Translation.RESTART_REQUIRED_WORLD),
-				mc.isLocalServer()
-					? Translation.toComponent(Translation.RETURN_TO_MENU)
-					: Translation.toComponent(UiText.translatable("menu.disconnect")),
-				Translation.toComponent(Translation.IGNORE_RESTART_LABEL)
-			);
+		if (restartType == RestartType.WORLD && !host.inWorld()) restartType = null;
+		if (restartType == null) {
+			beginClose(host::close);
+			return;
 		}
-		return new ConfirmScreen(
-			confirmed -> {
-				if (confirmed) mc.stop();
-				else host.setScreen(host.parentScreen());
-			},
-			Translation.toComponent(Translation.RESTART_REQUIRED_TITLE),
-			Translation.toComponent(Translation.RESTART_REQUIRED_LABEL),
-			Translation.toComponent(Translation.QUIT_GAME),
-			Translation.toComponent(Translation.IGNORE_RESTART_LABEL)
+		if (restartType == RestartType.WORLD) {
+			showRestartDialog(
+				Translation.RESTART_REQUIRED_WORLD,
+				host.localServer() ? Translation.RETURN_TO_MENU : UiText.translatable("menu.disconnect"),
+				() -> beginClose(host::disconnectGame)
+			);
+			return;
+		}
+		showRestartDialog(Translation.RESTART_REQUIRED_LABEL, Translation.QUIT_GAME, () -> beginClose(host::stopGame));
+	}
+	private void showRestartDialog(UiText body, UiText confirmLabel, Runnable confirmAction) {
+		closeDropdown();
+		capture = null;
+		ui.focus.clear();
+		dialog.open(
+			Translation.RESTART_REQUIRED_TITLE,
+			body,
+			confirmLabel,
+			Translation.IGNORE_RESTART_LABEL,
+			confirmAction,
+			() -> beginClose(host::close)
 		);
 	}
 	private void undoAll() {
@@ -760,13 +764,11 @@ public final class ConfigShell implements UiView, RowContext {
 			}
 			if (each == tab) activeNewIds = newIds;
 		}
-		if (!quiet && tab != null) {
-			for (var id : activeOldIds)
-				if (!activeNewIds.contains(id)) {
-					pageIn.start(0.5F, 1, UiMotion.TAB_ROWS_IN);
-					break;
-				}
-		}
+		if (!quiet && tab != null) for (var id : activeOldIds)
+			if (!activeNewIds.contains(id)) {
+				pageIn.start(0.5F, 1, UiMotion.TAB_ROWS_IN);
+				break;
+			}
 		// 筛选时列表滚动属于筛选结果，不能换成当前分类的存档位置
 		if (tab != null && !search.filtering()) {
 			tab.clampScroll(layout.content.height(), layout.content.width());
@@ -820,17 +822,6 @@ public final class ConfigShell implements UiView, RowContext {
 		return session.lockable();
 	}
 	@Override
-	public void refresh() {
-		if (model == null) return;
-		model.refreshAll();
-		if (doneButton == null) return;
-		search.markDirty();
-		doneButton.tooltip(doneBlockedReason());
-		var changed = model.changedCount();
-		header.setUndo(changed, session.editable());
-		header.setChanged(model.defaultChangedCount(), search.changedOnly());
-	}
-	@Override
 	public void rebuildTab() {
 		rebuildActiveTab();
 	}
@@ -847,6 +838,10 @@ public final class ConfigShell implements UiView, RowContext {
 	@Override
 	public void saveByKeybind() {
 		session.saveByKeybind();
+	}
+	@Override
+	public void openColorPicker(int color, boolean alpha, IntConsumer onSelected) {
+		host.openColorPicker(color, alpha, onSelected);
 	}
 	@Override
 	public void exitRow(Object identity, Runnable action) {
@@ -876,4 +871,6 @@ public final class ConfigShell implements UiView, RowContext {
 	private void openPopup(UiPopup popup) {
 		popups.open(popup);
 	}
+	/** {@code anchor} 是旧列表里排在它后面且仍然存在的行，用来在合并视图里保持原位。 */
+	private record LeavingRow(ConfigRow row, ConfigRow anchor) {}
 }

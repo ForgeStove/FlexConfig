@@ -16,7 +16,7 @@ public class ValueRowState {
 		locked = pending != null ? pending : ClientLockManager.isLocked(file, path);
 		readOnly = locked || !ctx.editable();
 		hasPendingLock = Boolean.TRUE.equals(pending);
-		validationError = Translation.from(node.validate(ctx.config()));
+		validationError = node.validate(ctx.config());
 		changed = hasPendingLock || !readOnly && !node.isActiveValue(ctx.config());
 		canLock = ClientUtil.mc.player != null && ClientUtil.mc.player.hasPermissions(2);
 		showLock = shouldShowLockButton(node, ctx);

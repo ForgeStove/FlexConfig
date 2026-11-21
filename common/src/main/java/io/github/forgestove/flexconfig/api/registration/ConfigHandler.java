@@ -5,7 +5,7 @@ import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.api.menu.*;
 import io.github.forgestove.flexconfig.foundation.*;
 import io.github.forgestove.flexconfig.foundation.tree.RootConfigNode;
-import io.github.forgestove.flexconfig.foundation.ui.factory.EntryKeybind;
+import io.github.forgestove.flexconfig.foundation.ui.factory.*;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -271,7 +271,7 @@ public class ConfigHandler<C, V> {
 		triggerKeybinds.forEach((path, value) -> {
 			var keybind = EntryKeybind.deserialize(value);
 			if (keybind.isUnbound()) return;
-			var isPressed = EntryKeybind.isKeyPressed(window, keybind);
+			var isPressed = Keybinds.support().isPressed(window, keybind);
 			var wasPressed = previousStates.getOrDefault(path, false);
 			previousStates.put(path, isPressed);
 			if (isPressed && !wasPressed) {

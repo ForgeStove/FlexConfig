@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 /** 待移除行队列。行先播放退出动画，动画结束后执行删除动作并重建列表。 */
-public final class RemovalQueue {
+public class RemovalQueue {
 	private record Pending(List<ConfigRow> rows, Runnable action, @Nullable String expandPath) {
 		boolean finished() {
 			for (var row : rows) if (!row.exited()) return false;

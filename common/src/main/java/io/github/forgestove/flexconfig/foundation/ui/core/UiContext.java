@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import io.github.forgestove.flexconfig.api.menu.Accent;
-import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import net.minecraft.Util;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,16 +130,7 @@ public class UiContext {
 		}
 		if (tooltipFade.value() <= 0.01F || painter == null) return;
 		painter.pushAlpha(tooltipFade.value());
-		UiTooltipRenderer.render(
-			painter,
-			text,
-			shownAnchor,
-			(int) mouseX,
-			(int) mouseY,
-			viewportWidth > 0 ? viewportWidth : ClientUtil.mc.getWindow().getGuiScaledWidth(),
-			viewportHeight > 0 ? viewportHeight : ClientUtil.mc.getWindow().getGuiScaledHeight(),
-			!candidateByFocus
-		);
+		UiTooltipRenderer.render(painter, text, shownAnchor, (int) mouseX, (int) mouseY, viewportWidth, viewportHeight, !candidateByFocus);
 		painter.popAlpha();
 	}
 }

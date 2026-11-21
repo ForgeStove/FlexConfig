@@ -1,48 +1,44 @@
 package io.github.forgestove.flexconfig.foundation.ui.screen;
-import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.foundation.ui.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiControl;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.function.Predicate;
-/** 自绘界面基类：统一处理缩放、UiContext 帧和逻辑坐标换算；子类只实现 {@link #renderUi}，输入按需转发给控件。 */
-public abstract class UiScreen extends Screen {
+/** 自绘界面视图基类：统一处理缩放、逻辑坐标和控件输入分派；子类只实现 {@link #renderUi}。 */
+public abstract class UiScreenView implements UiView {
 	protected final UiContext ui = new UiContext();
-	protected GuiGraphics graphics;
+	protected final ConfigHost host;
 	protected int zoom = 1, logicalWidth, logicalHeight;
 	protected @Nullable UiControl pressedControl;
-	protected UiScreen(UiText title) {
-		super(Translation.toComponent(title));
+	private final UiText title;
+	protected UiScreenView(ConfigHost host, UiText title) {
+		this.host = host;
+		this.title = title;
 	}
-	/** 在缩放开启前绘制屏幕级底图（模糊背景等）。 */
-	protected void renderBeforeScale(int mouseX, int mouseY, float delta) {}
+	public final UiText title() {
+		return title;
+	}
+	@Override
+	public final void frame(@NotNull UiRenderTarget target, int mouseX, int mouseY, float seconds) {
+		zoom = UiPrefs.zoom(host.guiWidth(), host.guiHeight());
+		logicalWidth = Math.max(1, host.guiWidth() / zoom);
+		logicalHeight = Math.max(1, host.guiHeight() / zoom);
+		ui.beginFrame(target, seconds, logicalX(mouseX), logicalY(mouseY));
+		ui.viewport(logicalWidth, logicalHeight);
+		ui.painter.pushScale(zoom);
+		renderUi(ui, mouseX, mouseY, seconds);
+		if (showTooltip()) ui.renderTooltip();
+		ui.painter.popScale();
+	}
 	/** 在逻辑坐标下绘制整屏；缩放已开启，tooltip 由基类最后绘制。 */
-	protected abstract void renderUi(UiContext ui, int mouseX, int mouseY, float delta);
+	protected abstract void renderUi(UiContext ui, int mouseX, int mouseY, float seconds);
 	protected boolean showTooltip() {
 		return true;
 	}
 	@Override
-	public final void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-		this.graphics = graphics;
-		zoom = UiPrefs.zoom(width, height);
-		logicalWidth = Math.max(1, width / zoom);
-		logicalHeight = Math.max(1, height / zoom);
-		ui.beginFrame(
-			new MinecraftRenderTarget(graphics),
-			ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F,
-			logicalX(mouseX),
-			logicalY(mouseY)
-		);
-		ui.viewport(logicalWidth, logicalHeight);
-		renderBeforeScale(mouseX, mouseY, delta);
-		ui.painter.pushScale(zoom);
-		renderUi(ui, mouseX, mouseY, delta);
-		if (showTooltip()) ui.renderTooltip();
-		ui.painter.popScale();
-	}
+	public void resize() {}
 	protected final double logicalX(double mouseX) {
 		return mouseX / zoom;
 	}

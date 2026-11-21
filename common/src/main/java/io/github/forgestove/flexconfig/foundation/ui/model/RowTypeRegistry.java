@@ -1,6 +1,4 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
-import com.mojang.blaze3d.platform.InputConstants.Key;
-import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import io.github.forgestove.flexconfig.foundation.ui.row.*;
@@ -42,7 +40,6 @@ public class RowTypeRegistry {
 		register(Character.class, RowTypeRegistry::characterRow);
 		register(Enum.class, RowTypeRegistry::enumRow);
 		register(String.class, (ctx, node) -> new TextRow(ctx, node, s -> s, s -> true, String::valueOf));
-		register(Key.class, KeybindRow::new);
 		register(Point.class, PointRow::new);
 		register(List.class, RowTypeRegistry::collectionPlaceholder);
 	}
@@ -77,7 +74,7 @@ public class RowTypeRegistry {
 	}
 	private static UiText placeholder(RowContext ctx, ValueConfigNode node) {
 		var value = node.getEditingValue(ctx.config());
-		return Translation.from(node.getTitle()).append(": ").append(String.valueOf(value));
+		return node.getTitle().append(": ").append(String.valueOf(value));
 	}
 	private static boolean isZero(String s) {
 		return s.isEmpty() || s.equals("-");

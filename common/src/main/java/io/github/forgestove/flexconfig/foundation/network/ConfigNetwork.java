@@ -3,8 +3,8 @@ import com.mojang.logging.LogUtils;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.foundation.*;
 import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.foundation.client.screen.ConfigScreen;
 import io.github.forgestove.flexconfig.foundation.server.*;
-import io.github.forgestove.flexconfig.foundation.ui.ConfigScreen;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 import io.github.forgestove.flexconfig.platform.services.*;
 import net.minecraft.server.MinecraftServer;
@@ -17,7 +17,7 @@ public class ConfigNetwork {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/** 每个 (模组, 配置文件) 一份锁定存储。 */
 	private static final Map<FileKey, ServerConfigLockStore> lockStores = new HashMap<>();
-	public static void register(PayloadRegistrar payloads) {
+	public static void register(PayloadRegistrarService payloads) {
 		payloads.clientToServer(
 			ConfigLockPayload.CHANNEL,
 			ConfigLockPayload.class,

@@ -33,7 +33,7 @@ public class BooleanRow extends ValueRow implements KeybindConflictAware, Trigge
 	}
 	private void feedback(boolean value) {
 		if (ClientUtil.mc.player == null) return;
-		var title = Translation.from(node.getTitle()).withStyle(UiStyle.WHITE);
+		var title = node.getTitle().withStyle(UiStyle.WHITE);
 		ClientUtil.mc.player.displayClientMessage(Translation.toComponent(title.append(": ").append(label(value))), true);
 	}
 	@Override
@@ -64,7 +64,7 @@ public class BooleanRow extends ValueRow implements KeybindConflictAware, Trigge
 	}
 	@Override
 	public UiText displayTitle() {
-		return Translation.from(node.getTitle());
+		return node.getTitle();
 	}
 	@Override
 	public void applyConflict(KeybindState state, List<UiText> usages) {

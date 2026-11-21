@@ -1,16 +1,16 @@
 package io.github.forgestove.flexconfig.foundation.tree;
 import io.github.forgestove.flexconfig.api.RestartType;
-import net.minecraft.network.chat.Component;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import org.jetbrains.annotations.Nullable;
 /** 节点的运行期视图：配置实例与值都按 Object 存取，构建期的具体类型不进入这里的签名。 */
 public interface ConfigNode {
-	@Nullable Component getTooltip();
+	@Nullable UiText getTooltip();
 	void resetToDefault();
 	void resetToActive(Object config);
 	@Nullable RestartType restartType(Object config);
 	boolean isDefaultValue(Object config);
 	boolean isActiveValue(Object config);
-	@Nullable Component validate(Object config);
+	@Nullable UiText validate(Object config);
 	void copy(Object from, Object to);
 	/** 把 from 复制到运行时对象 to，跳过「已改动但尚未生效」的延迟项，它们的运行时值要等重启才更新。 */
 	void copyForRuntime(Object from, Object to);

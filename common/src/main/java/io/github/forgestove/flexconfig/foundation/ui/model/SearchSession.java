@@ -4,7 +4,7 @@ import io.github.forgestove.flexconfig.foundation.ui.row.*;
 
 import java.util.List;
 /** 筛选状态。查询词、已修改开关和结果集只在这里修改，界面读取结果并负责动画和滚动。 */
-public final class SearchSession {
+public class SearchSession {
 	private final RowContext ctx;
 	private final Runnable clearAction;
 	private String query = "";

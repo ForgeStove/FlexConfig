@@ -2,7 +2,7 @@ package io.github.forgestove.flexconfig.foundation.tree;
 import io.github.forgestove.flexconfig.api.RestartType;
 import io.github.forgestove.flexconfig.api.annotation.ColorValue;
 import io.github.forgestove.flexconfig.foundation.*;
-import net.minecraft.network.chat.Component;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
@@ -10,8 +10,8 @@ import java.util.*;
 public class ValueConfigNode implements ConfigNode {
 	private String name;
 	private String path;
-	private Component title;
-	private Component tooltip;
+	private UiText title;
+	private UiText tooltip;
 	private Class<?> valueType;
 	private Field field;
 	private ElementType elementType;
@@ -56,7 +56,7 @@ public class ValueConfigNode implements ConfigNode {
 		return lockPath != null ? lockPath : path;
 	}
 	@NotNull
-	public Component getTitle() {
+	public UiText getTitle() {
 		return title;
 	}
 	@NotNull
@@ -65,7 +65,7 @@ public class ValueConfigNode implements ConfigNode {
 	}
 	@Nullable
 	@Override
-	public Component getTooltip() {
+	public UiText getTooltip() {
 		return tooltip;
 	}
 	@Override
@@ -84,15 +84,12 @@ public class ValueConfigNode implements ConfigNode {
 	public boolean isDefaultValue(Object config) {
 		return hasDefault && FieldAccess.deepEquals(getDefaultValue(), getEditingValue(config));
 	}
-	public boolean hasDefault() {
-		return hasDefault;
-	}
 	@Override
 	public boolean isActiveValue(Object config) {
 		return FieldAccess.deepEquals(writeThrough ? baselineValue : currentBase(config), getEditingValue(config));
 	}
 	@Override
-	public @Nullable Component validate(Object config) {
+	public @Nullable UiText validate(Object config) {
 		return validator == null ? null : validator.validate(getEditingValue(config));
 	}
 	@Override
@@ -198,7 +195,7 @@ public class ValueConfigNode implements ConfigNode {
 		void write(Object source, Object value);
 	}
 	public interface ValueValidator {
-		@Nullable Component validate(Object value);
+		@Nullable UiText validate(Object value);
 	}
 	@FunctionalInterface
 	public interface ConfigChangeCallback {
@@ -234,11 +231,11 @@ public class ValueConfigNode implements ConfigNode {
 			node.path = path;
 			return this;
 		}
-		public Builder title(Component title) {
+		public Builder title(UiText title) {
 			node.title = title;
 			return this;
 		}
-		public Builder tooltip(Component tooltip) {
+		public Builder tooltip(UiText tooltip) {
 			node.tooltip = tooltip;
 			return this;
 		}

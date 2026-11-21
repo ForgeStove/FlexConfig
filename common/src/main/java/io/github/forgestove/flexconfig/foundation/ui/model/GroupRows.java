@@ -3,7 +3,6 @@ import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
 import io.github.forgestove.flexconfig.api.annotation.*;
 import io.github.forgestove.flexconfig.api.registration.ConfigCondition;
 import io.github.forgestove.flexconfig.foundation.*;
-import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
@@ -55,7 +54,7 @@ public class GroupRows {
 					ctx,
 					childTarget,
 					childDefaults,
-					Translation.from(ConfigTranslation.translatable(childKey)),
+					UiText.translatable(childKey),
 					"%s.%s".formatted(path, field.getName()),
 					childKey,
 					lockPath,
@@ -113,8 +112,8 @@ public class GroupRows {
 			.field(field)
 			.name(field.getName())
 			.path("%s.%s".formatted(path, field.getName()))
-			.title(ConfigTranslation.translatable(fieldKey))
-			.tooltip(ConfigTranslation.translatable(ConfigTranslationKeys.tooltip(fieldKey)))
+			.title(UiText.translatable(fieldKey))
+			.tooltip(UiText.translatable(ConfigTranslationKeys.tooltip(fieldKey)))
 			.defaultValue(defaultValue)
 			.elementType(elementType)
 			.colorValue(field.getAnnotation(ColorValue.class))

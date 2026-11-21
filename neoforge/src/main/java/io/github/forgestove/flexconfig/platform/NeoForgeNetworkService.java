@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.platform;
-import io.github.forgestove.flexconfig.FlexConfig;
 import io.github.forgestove.flexconfig.platform.services.NetworkService;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.server.MinecraftServer;
@@ -20,6 +19,6 @@ public class NeoForgeNetworkService implements NetworkService {
 	}
 	@Override
 	public boolean canSendToPlayer(ServerPlayer player, String channel) {
-		return player.connection.hasChannel(new Type<>(FlexConfig.getFlexRes(channel)));
+		return player.connection.hasChannel(new Type<>(FlexResources.getFlexRes(channel)));
 	}
 }

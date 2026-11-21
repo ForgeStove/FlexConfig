@@ -7,10 +7,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
-public record NeoForgePayloads(net.neoforged.neoforge.network.registration.PayloadRegistrar registrar) implements PayloadRegistrar {
+public record NeoForgePayloads(PayloadRegistrar registrar) implements PayloadRegistrarService {
 	public static NeoForgePayloads create(RegisterPayloadHandlersEvent event) {
 		return new NeoForgePayloads(event.registrar(FlexConfig.NETWORK_VERSION).optional());
 	}
@@ -24,7 +25,7 @@ public record NeoForgePayloads(net.neoforged.neoforge.network.registration.Paylo
 		Function<FriendlyByteBuf, P> decoder,
 		PayloadHandler<P> handler
 	) {
-		var registered = new Type<P>(FlexConfig.getFlexRes(channel));
+		var registered = new Type<P>(FlexResources.getFlexRes(channel));
 		registrar.playToServer(registered, codec(decoder), (payload, context) -> handler.handle(payload, new NeoForgeContext(context)));
 	}
 	@Override
@@ -34,7 +35,7 @@ public record NeoForgePayloads(net.neoforged.neoforge.network.registration.Paylo
 		Function<FriendlyByteBuf, P> decoder,
 		PayloadHandler<P> handler
 	) {
-		var registered = new Type<P>(FlexConfig.getFlexRes(channel));
+		var registered = new Type<P>(FlexResources.getFlexRes(channel));
 		registrar.playToClient(registered, codec(decoder), (payload, context) -> handler.handle(payload, new NeoForgeContext(context)));
 	}
 	private record NeoForgeContext(IPayloadContext context) implements PayloadContext {

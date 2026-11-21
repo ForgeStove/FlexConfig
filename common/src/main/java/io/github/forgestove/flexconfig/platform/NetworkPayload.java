@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.platform;
-import io.github.forgestove.flexconfig.FlexConfig;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +10,6 @@ public interface NetworkPayload extends CustomPacketPayload {
 	void encode(FriendlyByteBuf buf);
 	@Override
 	default @NotNull Type<? extends CustomPacketPayload> type() {
-		return new Type<>(FlexConfig.getFlexRes(channel()));
+		return new Type<>(FlexResources.getFlexRes(channel()));
 	}
 }

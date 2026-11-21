@@ -18,6 +18,17 @@ public record UiStyle(
 	public static final UiStyle RED = EMPTY.withColor(0xFF5555);
 	public static final UiStyle GREEN = EMPTY.withColor(0x55FF55);
 	public static final UiStyle YELLOW = EMPTY.withColor(0xFFFF55);
+	/** 后设置的样式覆盖已有值，null 保持原值。 */
+	public UiStyle merge(UiStyle other) {
+		return new UiStyle(
+			other.color != null ? other.color : color,
+			other.bold != null ? other.bold : bold,
+			other.italic != null ? other.italic : italic,
+			other.underlined != null ? other.underlined : underlined,
+			other.strikethrough != null ? other.strikethrough : strikethrough,
+			other.obfuscated != null ? other.obfuscated : obfuscated
+		);
+	}
 	public UiStyle withColor(int rgb) {
 		return new UiStyle(rgb & 0xFFFFFF, bold, italic, underlined, strikethrough, obfuscated);
 	}

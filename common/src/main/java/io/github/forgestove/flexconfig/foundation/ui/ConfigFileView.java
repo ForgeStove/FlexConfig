@@ -1,45 +1,50 @@
 package io.github.forgestove.flexconfig.foundation.ui;
 import io.github.forgestove.flexconfig.api.client.FlexConfigScreenFactory;
 import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
-import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.foundation.client.Translation;
+import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.Char;
+import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.Key;
+import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.MouseDown;
+import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.MouseDrag;
+import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.MouseUp;
+import io.github.forgestove.flexconfig.foundation.ui.ConfigInput.Scroll;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiFocus.Target;
-import io.github.forgestove.flexconfig.foundation.ui.screen.UiScreen;
+import io.github.forgestove.flexconfig.foundation.ui.screen.UiScreenView;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
-import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
-/** 单份配置的模组不经过本界面，由 {@link FlexConfigScreenFactory} 直接打开 {@link ConfigScreen}。 */
-public class ConfigFileScreen extends UiScreen {
+/** 单份配置的模组不经过本界面，由 {@link FlexConfigScreenFactory} 直接打开配置界面。 */
+public class ConfigFileView extends UiScreenView {
 	private static final int BUTTON_HEIGHT = 20, SPACING = 6;
+	private final ConfigActions actions;
 	private final String modId;
 	private final List<ConfigHandler<?, ?>> handlers;
-	private final @Nullable Screen parent;
 	private final List<UiButton> fileButtons = new ArrayList<>();
-	private UiButton doneButton;
-	private UiBounds panel = UiBounds.EMPTY;
 	private final UiTween backdropAnim = new UiTween(0);
 	private final UiTween windowAnim = new UiTween(0);
 	private final UiTween riseAnim = new UiTween(UiMotion.RISE);
 	private final UiTween closeAnim = new UiTween(1);
+	private UiButton doneButton;
+	private UiBounds panel = UiBounds.EMPTY;
 	private boolean opened, closing;
 	private @Nullable Runnable closeAction;
-	public ConfigFileScreen(String modId, List<ConfigHandler<?, ?>> handlers) {
-		super(UiText.from(ClientUtil.modName(modId)));
+	public ConfigFileView(ConfigActions host, UiText title, String modId, List<ConfigHandler<?, ?>> handlers) {
+		super(host, title);
+		actions = host;
 		this.modId = modId;
 		this.handlers = handlers;
-		parent = ClientUtil.mc.screen;
 	}
 	@Override
-	protected void init() {
+	public void init() {
 		fileButtons.clear();
 		if (!handlers.isEmpty()) ui.setAccent(handlers.get(0).getAccent());
 		for (var handler : handlers) {
 			var available = FlexConfigScreenFactory.available(handler);
-			var button = new UiButton(label(handler), Style.SECONDARY, () -> open(handler));
+			var button = new UiButton(label(handler), Style.SECONDARY, () -> actions.openConfig(handler));
 			button.setEnabled(available);
 			if (!available)
 				button.tooltip(Translation.tooltip(Translation.SERVER_CONFIG_UNAVAILABLE, Translation.SERVER_CONFIG_UNAVAILABLE_TOOLTIP));
@@ -59,10 +64,37 @@ public class ConfigFileScreen extends UiScreen {
 			riseAnim.snap(0);
 			closeAnim.snap(1);
 		}
-		zoom = UiPrefs.zoom(width, height);
-		logicalWidth = Math.max(1, width / zoom);
-		logicalHeight = Math.max(1, height / zoom);
-		updatePanel();
+	}
+	@Override
+	public boolean input(ConfigInput event) {
+		return switch (event) {
+			case MouseDown e -> {
+				if (closing) yield false;
+				var controls = new ArrayList<UiControl>(fileButtons);
+				controls.add(doneButton);
+				yield pressControl(controls, e.x(), e.y(), e.button());
+			}
+			case MouseUp e -> !closing && releaseControl(e.x(), e.y(), e.button());
+			case Key e -> key(e.keyCode(), e.scanCode(), e.modifiers());
+			case MouseDrag ignored -> false;
+			case Scroll ignored -> false;
+			case Char ignored -> false;
+		};
+	}
+	@Override
+	public void onClose() {
+		if (closing) return;
+		closing = true;
+		closeAction = actions::close;
+		closeAnim.start(1, 0, UiMotion.EXIT);
+	}
+	@Override
+	public void onRemoved() {}
+	@Override
+	public void refresh() {}
+	@Override
+	public boolean closed() {
+		return closing;
 	}
 	private void updatePanel() {
 		var width = 300;
@@ -73,12 +105,8 @@ public class ConfigFileScreen extends UiScreen {
 		var key = "%s.config.file.%s".formatted(modId, handler.getType().extension());
 		return UiText.translatableWithFallback(handler.getFileName(), key);
 	}
-	private void open(ConfigHandler<?, ?> handler) {
-		ClientUtil.mc.setScreen(new ConfigScreen<>(handler));
-	}
 	@Override
-	protected void renderUi(UiContext ui, int mouseX, int mouseY, float delta) {
-		var seconds = ui.delta;
+	protected void renderUi(UiContext ui, int mouseX, int mouseY, float seconds) {
 		ui.onRefresh(() -> {});
 		backdropAnim.update(seconds);
 		windowAnim.update(seconds);
@@ -91,7 +119,6 @@ public class ConfigFileScreen extends UiScreen {
 			if (action != null) action.run();
 			return;
 		}
-		renderBackground(graphics, mouseX, mouseY, delta);
 		updatePanel();
 		var painter = ui.painter;
 		var closeFactor = closeAnim.value();
@@ -107,7 +134,7 @@ public class ConfigFileScreen extends UiScreen {
 		painter.rect(titleBar.x(), titleBar.bottom() - 2, titleBar.width(), 1, UiTheme.TITLEBAR_EDGE);
 		painter.rect(titleBar.x(), titleBar.bottom() - 1, titleBar.width(), 1, UiTheme.WINDOW_EDGE);
 		painter.rect(panel.x(), titleBar.bottom(), panel.width(), panel.height() - titleBar.height(), UiTheme.PANEL);
-		var heading = title.getString().toUpperCase(Locale.ROOT);
+		var heading = title().getString().toUpperCase(Locale.ROOT);
 		painter.textEmphasis(
 			heading,
 			titleBar.x() + (titleBar.width() - painter.textWidthEmphasis(heading)) / 2,
@@ -134,20 +161,7 @@ public class ConfigFileScreen extends UiScreen {
 	protected boolean showTooltip() {
 		return !closing;
 	}
-	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (closing) return false;
-		var controls = new ArrayList<UiControl>(fileButtons);
-		controls.add(doneButton);
-		return pressControl(controls, mouseX, mouseY, button);
-	}
-	@Override
-	public boolean mouseReleased(double mouseX, double mouseY, int button) {
-		if (closing) return false;
-		return releaseControl(mouseX, mouseY, button);
-	}
-	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	private boolean key(int keyCode, int scanCode, int modifiers) {
 		if (closing) return true;
 		if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_BACKSPACE) {
 			onClose();
@@ -155,17 +169,10 @@ public class ConfigFileScreen extends UiScreen {
 		}
 		if (keyCode == GLFW.GLFW_KEY_TAB) {
 			ui.setFocusVisible(true);
-			ui.focus.move(hasShiftDown() ? -1 : 1);
+			ui.focus.move(host.shiftDown() ? -1 : 1);
 			return true;
 		}
 		for (var fileButton : fileButtons) if (fileButton.keyPressed(ui, keyCode, scanCode, modifiers)) return true;
 		return doneButton.keyPressed(ui, keyCode, scanCode, modifiers);
-	}
-	@Override
-	public void onClose() {
-		if (closing) return;
-		closing = true;
-		closeAction = () -> ClientUtil.mc.setScreen(parent);
-		closeAnim.start(1, 0, UiMotion.EXIT);
 	}
 }

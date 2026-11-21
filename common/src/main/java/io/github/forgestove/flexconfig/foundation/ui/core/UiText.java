@@ -1,59 +1,89 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
-import com.demonwav.mcdev.annotations.Translatable;
+import org.jetbrains.annotations.Nullable;
 /**
- * 界面层使用的文本对象。内部保存实现提供的文本引用；翻译、度量、换行和样式修改都交给
- * {@link UiTexts} 的实现，界面代码不接触 Component。
+ * 界面层使用的文本。内部只保存平台无关的文本描述，翻译、度量、换行和绘制由 {@link UiTexts}
+ * 当前的实现按需解释，因此文本在何时创建与实现何时安装无关。
  */
-public final class UiText {
-	private final Object handle;
-	private UiText(Object handle) {
-		this.handle = handle;
+public sealed interface UiText {
+	static UiText empty() {
+		return literal("");
 	}
-	/** 由实现方调用，用它包装具体的文本对象。 */
-	public static UiText of(Object handle) {
-		return new UiText(handle);
+	static UiText literal(String text) {
+		return new Literal(text, UiStyle.EMPTY);
 	}
-	public static UiText empty() {
-		return UiTexts.engine().literal("");
+	static UiText translatable(@com.demonwav.mcdev.annotations.Translatable(foldMethod = true) String key, Object... args) {
+		return new Translatable(key, null, args, UiStyle.EMPTY);
 	}
-	public static UiText literal(String text) {
-		return UiTexts.engine().literal(text);
+	static UiText translatableWithFallback(
+		String fallback,
+		@com.demonwav.mcdev.annotations.Translatable(foldMethod = true) String key,
+		Object... args
+	) {
+		return new Translatable(key, fallback, args, UiStyle.EMPTY);
 	}
-	public static UiText translatable(@Translatable(foldMethod = true) String key, Object... args) {
-		return UiTexts.engine().translatable(key, args);
+	/** 包装实现提供的原生文本，具体类型只在实现中出现。 */
+	static UiText nativeText(Object value) {
+		return new Native(value, UiStyle.EMPTY);
 	}
-	public static UiText translatableWithFallback(String fallback, @Translatable(foldMethod = true) String key, Object... args) {
-		return UiTexts.engine().translatableWithFallback(fallback, key, args);
+	static @Nullable UiText from(@Nullable Object component) {
+		return component == null ? null : nativeText(component);
 	}
-	public static UiText from(Object component) {
-		return component == null ? null : UiTexts.engine().fromComponent(component);
+	UiStyle style();
+	default UiText copy() {
+		return this;
 	}
-	public Object handle() {
-		return handle;
+	default UiText append(UiText sibling) {
+		return new Composite(this, sibling, UiStyle.EMPTY);
 	}
-	public UiText copy() {
-		return UiTexts.engine().copy(this);
+	default UiText append(String text) {
+		return append(literal(text));
 	}
-	public UiText append(UiText sibling) {
-		return UiTexts.engine().append(this, sibling);
-	}
-	public UiText append(String literal) {
-		return UiTexts.engine().append(this, literal);
-	}
-	public UiText withStyle(UiStyle style) {
-		return UiTexts.engine().withStyle(this, style);
+	default UiText withStyle(UiStyle extra) {
+		var merged = style().merge(extra);
+		return switch (this) {
+			case Literal text -> new Literal(text.text(), merged);
+			case Translatable text -> new Translatable(text.key(), text.fallback(), text.args(), merged);
+			case Native text -> new Native(text.value(), merged);
+			case Composite text -> new Composite(text.left(), text.right(), merged);
+		};
 	}
 	/** 替换文本内容，保留原样式。 */
-	public UiText replaceText(String content) {
-		return UiTexts.engine().replaceText(this, content);
+	default UiText replaceText(String content) {
+		return new Literal(content, style());
 	}
-	public String getString() {
+	default String getString() {
 		return UiTexts.engine().getString(this);
 	}
-	public int width() {
+	default int width() {
 		return UiTexts.engine().width(this);
 	}
-	public boolean isEmpty() {
+	default boolean isEmpty() {
 		return getString().isEmpty();
+	}
+	/** 由实现解释文本描述；组合节点由实现递归解析。 */
+	<R> R visit(UiTextVisitor<R> visitor);
+	record Literal(String text, UiStyle style) implements UiText {
+		@Override
+		public <R> R visit(UiTextVisitor<R> visitor) {
+			return visitor.literal(text, style);
+		}
+	}
+	record Translatable(String key, @Nullable String fallback, Object[] args, UiStyle style) implements UiText {
+		@Override
+		public <R> R visit(UiTextVisitor<R> visitor) {
+			return visitor.translatable(key, fallback, args, style);
+		}
+	}
+	record Native(Object value, UiStyle style) implements UiText {
+		@Override
+		public <R> R visit(UiTextVisitor<R> visitor) {
+			return visitor.nativeText(value, style);
+		}
+	}
+	record Composite(UiText left, UiText right, UiStyle style) implements UiText {
+		@Override
+		public <R> R visit(UiTextVisitor<R> visitor) {
+			return visitor.composite(left.visit(visitor), right.visit(visitor), style);
+		}
 	}
 }

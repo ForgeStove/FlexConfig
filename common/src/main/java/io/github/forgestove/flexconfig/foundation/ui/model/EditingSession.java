@@ -1,12 +1,11 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
-import com.mojang.blaze3d.platform.InputConstants.Key;
 import io.github.forgestove.flexconfig.api.*;
 import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
 import io.github.forgestove.flexconfig.foundation.ConfigStore;
-import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.foundation.client.ClientLockManager;
 import io.github.forgestove.flexconfig.foundation.tree.*;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
-import net.minecraft.client.KeyMapping;
+import io.github.forgestove.flexconfig.foundation.ui.factory.Keybinds;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -14,7 +13,7 @@ import java.util.*;
  * 一次配置编辑的会话状态。持有活动配置、按键绑定分类和撤销快照，负责校验、保存和重置，
  * 界面只调用这些操作。
  */
-public final class EditingSession<C, V> {
+public class EditingSession<C, V> {
 	private final ConfigHandler<C, V> handler;
 	private final RootConfigNode root;
 	private final C config;
@@ -47,23 +46,11 @@ public final class EditingSession<C, V> {
 		root.resetToActive(config);
 	}
 	public void buildKeybindCategory() {
-		var modMappings = new ArrayList<KeyMapping>();
-		for (var mapping : ClientUtil.mc.options.keyMappings)
-			if (mapping.getCategory().equals("key.categories." + root.modId())) modMappings.add(mapping);
-		if (modMappings.isEmpty()) {
+		var built = Keybinds.support().buildCategory(root.modId());
+		if (built == null) {
 			keybindCategory = null;
 			return;
 		}
-		var builder = CategoryConfigNode.builder().title(Translation.toComponent(Translation.KEYBINDS_LABEL));
-		modMappings.forEach(mapping -> builder.value(value -> value.valueType(Key.class)
-			.name(mapping.getName())
-			.path("keybinds." + mapping.getName())
-			.title(Translation.toComponent(UiText.translatable(mapping.getName())))
-			.defaultValue(mapping.getDefaultKey())
-			.valueReader(config -> ClientUtil.boundKey(mapping))
-			.valueWriter((config, valueKey) -> mapping.setKey((Key) valueKey))
-			.restartType(null)));
-		var built = builder.build();
 		built.resetToActive(config);
 		keybindCategory = built;
 	}
@@ -73,15 +60,15 @@ public final class EditingSession<C, V> {
 		return list;
 	}
 	public boolean editable() {
-		return handler.getType() != ConfigType.SERVER || ClientUtil.mc.hasSingleplayerServer();
+		return handler.getType() != ConfigType.SERVER || Keybinds.support().singleplayerServer();
 	}
 	public boolean lockable() {
 		return ConfigStore.isLockable(new FileKey(root.modId(), root.fileName()));
 	}
 	public @Nullable UiText validate() {
 		var rootError = root.validate(config);
-		if (rootError != null) return Translation.from(rootError);
-		return keybindCategory == null ? null : Translation.from(keybindCategory.validate(config));
+		if (rootError != null) return rootError;
+		return keybindCategory == null ? null : keybindCategory.validate(config);
 	}
 	public void writeEditingToConfig() {
 		root.writeEditingToConfig(config);
@@ -93,7 +80,7 @@ public final class EditingSession<C, V> {
 	/** 保存前把编辑值写入配置与按键映射；写盘失败时返回 false，调用方不关闭界面。 */
 	public boolean save() {
 		writeEditingToConfig();
-		ClientUtil.mc.options.save();
+		Keybinds.support().saveOptions();
 		if (!handler.save(config)) return false;
 		ClientLockManager.flushPendingLocks();
 		captureTriggerKeybinds();

@@ -6,9 +6,8 @@ import io.github.forgestove.flexconfig.api.registration.ConfigCondition;
 import io.github.forgestove.flexconfig.foundation.*;
 import io.github.forgestove.flexconfig.foundation.client.Translation;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode.*;
+import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.platform.FlexConfigServices;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.*;
 
 import java.lang.invoke.VarHandle;
@@ -20,11 +19,11 @@ public record RootConfigNode(
 	public static @NotNull RootConfigNode create(Object defaultConfig, String modId, String fileName, ConfigType type) {
 		return new Builder(defaultConfig, modId, fileName, type).build();
 	}
-	public @NotNull Component getTitle() {
-		return Component.empty();
+	public @NotNull UiText getTitle() {
+		return UiText.empty();
 	}
 	@Override
-	public @Nullable Component getTooltip() {
+	public @Nullable UiText getTooltip() {
 		return null;
 	}
 	@Override
@@ -55,13 +54,13 @@ public record RootConfigNode(
 		return categories.stream().allMatch(node -> node.isActiveValue(config));
 	}
 	@Override
-	public @Nullable Component validate(Object config) {
-		Component error = null;
+	public @Nullable UiText validate(Object config) {
+		UiText error = null;
 		for (var node : categories) {
 			var result = node.validate(config);
 			if (result == null) continue;
 			if (error == null) error = result;
-			else return Translation.toComponent(Translation.MULTIPLE_ERRORS);
+			else return Translation.MULTIPLE_ERRORS;
 		}
 		return error;
 	}
@@ -150,7 +149,7 @@ public record RootConfigNode(
 			var categoryKey = ConfigTranslationKeys.category(modId, categoryField.getName());
 			translationKeys.add(categoryKey);
 			var categoryBuilder = CategoryConfigNode.builder()
-				.title(ConfigTranslation.translatable(categoryKey))
+				.title(UiText.translatable(categoryKey))
 				.icon(categoryField.getAnnotation(Category.class).icon());
 			for (var valueField : FieldAccess.collectOrderedFields(categoryField.getType()))
 				if (valueField.isAnnotationPresent(Category.class)) {
@@ -170,7 +169,7 @@ public record RootConfigNode(
 			var categoryKey = ConfigTranslationKeys.category(modId, pathKey);
 			translationKeys.add(categoryKey);
 			var builder = CategoryConfigNode.builder()
-				.title(ConfigTranslation.translatable(categoryKey))
+				.title(UiText.translatable(categoryKey))
 				.icon(subCategoryField.getAnnotation(Category.class).icon());
 			for (var valueField : FieldAccess.collectOrderedFields(subCategoryField.getType()))
 				if (valueField.isAnnotationPresent(Category.class)) {
@@ -211,16 +210,16 @@ public record RootConfigNode(
 				translationKeys.add(ConfigTranslationKeys.enumValue(modId, (Enum<?>) constant));
 			else if (elementType != null && !elementType.isSimple()) collectElementTranslationKeys(elementType, titleKey);
 			var fullPath = (pathKey.isEmpty() ? "" : pathKey + ".") + valueName;
-			var tooltip = ConfigTranslation.translatable(ConfigTranslationKeys.tooltip(titleKey));
+			var tooltip = UiText.translatable(ConfigTranslationKeys.tooltip(titleKey));
 			if (valueField.isAnnotationPresent(WarnCheat.class)) tooltip = tooltip.copy()
-				.append(Component.literal("\n"))
-				.append(Translation.toComponent(Translation.WARN_CHEAT_TOOLTIP).copy().withStyle(ChatFormatting.RED));
+				.append("\n")
+				.append(Translation.WARN_CHEAT_TOOLTIP.copy().withStyle(UiStyle.RED));
 			final var finalTooltip = tooltip;
 			categoryBuilder.value(valueBuilder -> valueBuilder.valueType(type)
 				.field(valueField)
 				.name(valueName)
 				.path(fullPath)
-				.title(ConfigTranslation.translatable(titleKey))
+				.title(UiText.translatable(titleKey))
 				.tooltip(finalTooltip)
 				.defaultValue(treeDefault)
 				.colorValue(valueField.getAnnotation(ColorValue.class))

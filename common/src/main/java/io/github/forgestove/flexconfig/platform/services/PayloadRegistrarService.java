@@ -3,7 +3,7 @@ import io.github.forgestove.flexconfig.platform.NetworkPayload;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.function.Function;
-public interface PayloadRegistrar {
+public interface PayloadRegistrarService {
 	<P extends NetworkPayload> void clientToServer(
 		String channel,
 		Class<P> type,

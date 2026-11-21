@@ -1,12 +1,13 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 /**
- * {@link UiText} 的静态入口，保存当前安装的实现。兼容层启动时安装 MinecraftTextEngine，
- * 界面层只调用这里的方法。
+ * {@link UiText} 的静态读取入口，保存当前安装的实现。实现只影响文本的翻译和度量，
+ * 文本对象本身在创建时不依赖它。
  */
 public final class UiTexts {
 	private static UiTextEngine engine = Fallback.INSTANCE;
-	private UiTexts() {}
 	public static void install(UiTextEngine engine) {
 		if (engine != null) UiTexts.engine = engine;
 	}
@@ -31,49 +32,27 @@ public final class UiTexts {
 	/** 实现安装前使用的兜底：只做字符串拼接和近似宽度，保证界面代码不会因为后端缺失而崩溃。 */
 	private enum Fallback implements UiTextEngine {
 		INSTANCE;
-		private record Plain(String text, UiStyle style) {}
-		private static String textOf(UiText text) {
-			return text.handle() instanceof Plain plain ? plain.text() : String.valueOf(text.handle());
-		}
-		@Override
-		public UiText literal(String text) {
-			return UiText.of(new Plain(text, UiStyle.EMPTY));
-		}
-		@Override
-		public UiText translatable(String key, Object... args) {
-			return UiText.of(new Plain(key, UiStyle.EMPTY));
-		}
-		@Override
-		public UiText translatableWithFallback(String fallback, String key, Object... args) {
-			return UiText.of(new Plain(fallback, UiStyle.EMPTY));
-		}
-		@Override
-		public UiText fromComponent(Object component) {
-			return UiText.of(new Plain(String.valueOf(component), UiStyle.EMPTY));
-		}
-		@Override
-		public UiText copy(UiText text) {
-			return text;
-		}
-		@Override
-		public UiText append(UiText text, UiText sibling) {
-			return UiText.of(new Plain(textOf(text) + textOf(sibling), UiStyle.EMPTY));
-		}
-		@Override
-		public UiText append(UiText text, String literal) {
-			return UiText.of(new Plain(textOf(text) + literal, UiStyle.EMPTY));
-		}
-		@Override
-		public UiText withStyle(UiText text, UiStyle style) {
-			return UiText.of(new Plain(textOf(text), style));
-		}
-		@Override
-		public UiText replaceText(UiText text, String content) {
-			return UiText.of(new Plain(content, UiStyle.EMPTY));
-		}
+		private static final UiTextVisitor<String> STRING = new UiTextVisitor<>() {
+			@Override
+			public String literal(String text, UiStyle style) {
+				return text;
+			}
+			@Override
+			public String translatable(String key, @Nullable String fallback, Object[] args, UiStyle style) {
+				return key;
+			}
+			@Override
+			public String nativeText(Object value, UiStyle style) {
+				return String.valueOf(value);
+			}
+			@Override
+			public String composite(String left, String right, UiStyle style) {
+				return left + right;
+			}
+		};
 		@Override
 		public String getString(UiText text) {
-			return textOf(text);
+			return text.visit(STRING);
 		}
 		@Override
 		public int width(UiText text) {
@@ -97,7 +76,7 @@ public final class UiTexts {
 			var value = getString(text);
 			if (value.isEmpty()) return List.of();
 			var lines = new ArrayList<UiText>();
-			for (var line : value.split("\n", -1)) lines.add(literal(line));
+			for (var line : value.split("\n", -1)) lines.add(UiText.literal(line));
 			return lines;
 		}
 	}
