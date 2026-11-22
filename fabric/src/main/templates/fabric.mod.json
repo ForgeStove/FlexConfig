@@ -4,9 +4,8 @@
 	"version": "${modVersion}",
 	"name": "${modDisplayName}",
 	"description": "${modDescription}",
-	"authors": [
-		"${modAuthors}"
-	],
+	"authors": ["${modAuthors}"],
+	"contributors": ["${modCredits}"],
 	"license": "${modLicense}",
 	"environment": "*",
 	"entrypoints": {
