@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import net.minecraft.util.Mth;
-/** 界面配色和尺寸常量。 */
 public class UiTheme {
 	public static int fadeToward(int argb, int surface, float amount) {
 		var t = Mth.clamp(amount, 0F, 1F);

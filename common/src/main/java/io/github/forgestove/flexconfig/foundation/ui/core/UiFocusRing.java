@@ -1,5 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
-/** 键盘焦点框。位置跟随当前焦点控件，焦点切换时平滑移动。 */
+
 public class UiFocusRing {
 	private final UiAnim x = new UiAnim(0, UiMotion.INDICATOR_LEAD);
 	private final UiAnim y = new UiAnim(0, UiMotion.INDICATOR_LEAD);

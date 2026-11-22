@@ -87,7 +87,7 @@ public class CategoryConfigNode implements ConfigNode {
 		try {
 			children.forEach(node -> node.applyRestart(saved, active, restartType));
 		} finally {
-			ConfigChangeDispatcher.end();   // finally：节点抛异常也不会让派发深度卡住
+			ConfigChangeDispatcher.end();
 		}
 	}
 	@Override
@@ -96,7 +96,7 @@ public class CategoryConfigNode implements ConfigNode {
 		try {
 			children.forEach(node -> node.writeEditingToConfig(config));
 		} finally {
-			ConfigChangeDispatcher.end();   // finally：节点抛异常也不会让派发深度卡住
+			ConfigChangeDispatcher.end();
 		}
 	}
 	@NotNull

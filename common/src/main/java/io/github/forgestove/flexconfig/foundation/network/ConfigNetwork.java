@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import java.util.*;
 public class ConfigNetwork {
 	private static final Logger LOGGER = LogUtils.getLogger();
-	/** 每个 (模组, 配置文件) 一份锁定存储。 */
 	private static final Map<FileKey, ServerConfigLockStore> lockStores = new HashMap<>();
 	public static void register(PayloadRegistrarService payloads) {
 		payloads.clientToServer(
@@ -41,7 +40,6 @@ public class ConfigNetwork {
 		receiver.serverToClient(ConfigSyncPayload.CHANNEL, ConfigSyncPayload.class, ConfigNetwork::handleConfigSyncClient);
 		receiver.serverToClient(ServerConfigPayload.CHANNEL, ServerConfigPayload.class, ConfigNetwork::handleServerConfigClient);
 	}
-	// -- 数据包处理器 --
 	private static void handleConfigLockServer(ConfigLockPayload payload, PayloadContext context) {
 		var player = context.player();
 		if (player == null) return;
@@ -51,7 +49,6 @@ public class ConfigNetwork {
 		if (lockStore == null) return;
 		if (payload.value().isEmpty()) lockStore.unlockEntry(payload.configId());
 		else {
-			// 字符串 → TOML 原生值：按路径查到节点，交给 LockValueCodec 按字段类型转（找不到节点或类型不支持就忽略这条）
 			var node = ConfigStore.getRootConfigNode(key).getValueNode(payload.configId());
 			var typed = node == null ? null : LockValueCodec.toToml(node, payload.value());
 			if (typed == null) return;
@@ -93,7 +90,6 @@ public class ConfigNetwork {
 			new ConfigSyncPayload(key.modId(), key.fileName(), value.toTomlString())
 		));
 	}
-	/** 下发的是文件值而非活动值，锁值由 {@link ConfigSyncPayload} 单独同步。 */
 	public static void sendServerConfigsToPlayer(ServerPlayer player) {
 		ConfigStore.getRegisteredFileKeys().forEach(key -> {
 			var handler = ConfigStore.getHandler(key);

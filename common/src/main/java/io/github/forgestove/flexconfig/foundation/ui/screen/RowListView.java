@@ -6,9 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
-/**
- * 行列表的绘制、点击命中和滚动定位。三者共用同一份行位置计算，避免绘制位置和点击位置不一致。
- */
 public class RowListView extends UiScrollPane {
 	private final Supplier<List<ConfigRow>> rows;
 	private UiBounds content;

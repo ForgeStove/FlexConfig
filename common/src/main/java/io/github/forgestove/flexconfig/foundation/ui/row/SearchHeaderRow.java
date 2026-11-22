@@ -3,7 +3,6 @@ import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
 
 import java.util.Locale;
-/** 搜索结果里的分类标题。 */
 public class SearchHeaderRow extends ConfigRow {
 	private final UiText title;
 	public SearchHeaderRow(RowContext ctx, UiText title, int depth) {

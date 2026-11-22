@@ -12,12 +12,10 @@ import java.awt.Color;
 import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.regex.Pattern;
-/** 颜色选择器：顶部预览，下方色相、饱和度、亮度、透明度通道滑条与十六进制输入。 */
 public class ColorPickerView extends UiScreenView {
 	private static final int PREVIEW_SIZE = 80, COLUMN_WIDTH = 148, PAD = 8;
 	private static final int ACTION_WIDTH = 64, ACTION_HEIGHT = 18, HEX_WIDTH = 70;
 	private static final Pattern HEX_PATTERN = Pattern.compile("[0-9A-Fa-f]*");
-	/** 色相六段，末段接回红。 */
 	private static final int[] HUE_STOPS = {0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000};
 	private final boolean hasAlpha;
 	private final List<UiColorSlider> sliders = new ArrayList<>();
@@ -66,7 +64,6 @@ public class ColorPickerView extends UiScreenView {
 		);
 		cancel = new UiButton(Translation.BACK_LABEL, Style.SECONDARY, host::close);
 	}
-	/** 仅一格宽时无从插值，取起点色。 */
 	private static void horizontal(UiPainter painter, UiBounds bounds, int from, int to) {
 		for (var i = 0; i < bounds.width(); i++) {
 			var t = bounds.width() == 1 ? 0F : (float) i / (bounds.width() - 1);
@@ -208,10 +205,9 @@ public class ColorPickerView extends UiScreenView {
 	}
 	private void renderPreview() {
 		var painter = painter();
-		painter.rect(preview, 0xFF000000 | colorFromHSB());   // 不看 alpha，避免和面板底色混合
+		painter.rect(preview, 0xFF000000 | colorFromHSB());
 		painter.border(preview, UiTheme.WINDOW_EDGE);
 	}
-	/** 色相轨道：{@link #HUE_STOPS} 的末段接回红，故只铺前六段。 */
 	private void hueTrack(UiPainter painter, UiBounds bounds) {
 		for (var i = 0; i < bounds.width(); i++) {
 			var t = bounds.width() == 1 ? 0F : (float) i / (bounds.width() - 1);

@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
@@ -7,21 +8,19 @@ import java.util.*;
 import java.util.function.*;
 public class UiDropdown extends UiControl implements UiPopup {
 	private static final int ROW_HEIGHT = 16, MAX_ROWS = 8, PAD = 4, FILTER_HEIGHT = 16;
-	public record Option(Object value, UiText label) {}
 	private final List<Option> options;
 	private final Supplier<Object> selected;
 	private final Consumer<Object> onSelect;
 	private final Consumer<UiDropdown> opener;
 	private final Runnable onClose;
 	private final UiTextField filter = new UiTextField();
-	private boolean open, closing, above;
 	private final UiTween openAnim = new UiTween(0);
 	private final UiAnim highlightAnim = new UiAnim(0, UiMotion.SELECT);
+	private boolean open, closing, above;
 	private int highlight;
 	private int pressedOption = -1;
 	private UiBounds popup = UiBounds.EMPTY;
 	private UiBounds viewport = UiBounds.EMPTY;
-	/** {@code onClose} 用于自身发起的关闭（选中、Esc），交给界面清掉弹层引用，否则下一次点击会被空弹层吞掉。 */
 	public UiDropdown(
 		List<Option> options,
 		Supplier<Object> selected,
@@ -51,20 +50,11 @@ public class UiDropdown extends UiControl implements UiPopup {
 			highlightAnim.snap(highlight * (double) ROW_HEIGHT);
 		} else openAnim.snap(0);
 	}
-	@Override
-	public void close() {
-		open = false;
-		closing = false;
-	}
 	public void beginClose() {
 		if (!open) return;
 		open = false;
 		closing = true;
 		openAnim.start(1, 0, UiMotion.POPUP_OUT);
-	}
-	@Override
-	public boolean closing() {
-		return closing;
 	}
 	private @Nullable Option currentOption() {
 		var value = selected.get();
@@ -211,11 +201,6 @@ public class UiDropdown extends UiControl implements UiPopup {
 		if (index < list.size() && isOverPopup(mouseX, mouseY)) select(list.get(index).value());
 		return true;
 	}
-	private void select(Object value) {
-		UiSound.click();
-		onSelect.accept(value);
-		onClose.run();
-	}
 	@Override
 	public boolean popupMouseScrolled(double amount) {
 		var list = filtered();
@@ -226,19 +211,19 @@ public class UiDropdown extends UiControl implements UiPopup {
 	public boolean popupKeyPressed(UiContext ctx, int keyCode, int scanCode, int modifiers) {
 		if (!open) return false;
 		var list = filtered();
-		if (keyCode == 256) {   // Esc
+		if (keyCode == InputConstants.KEY_ESCAPE) {
 			onClose.run();
 			return true;
 		}
-		if (keyCode == 265) {   // Up
+		if (keyCode == InputConstants.KEY_UP) {
 			highlight = Math.max(0, highlight - 1);
 			return true;
 		}
-		if (keyCode == 264) {   // Down
+		if (keyCode == InputConstants.KEY_DOWN) {
 			highlight = Mth.clamp(highlight + 1, 0, Math.max(0, list.size() - 1));
 			return true;
 		}
-		if (keyCode == 257 || keyCode == 335) {   // Enter
+		if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
 			if (!list.isEmpty() && highlight >= 0 && highlight < list.size()) select(list.get(highlight).value());
 			else onClose.run();
 			return true;
@@ -251,4 +236,19 @@ public class UiDropdown extends UiControl implements UiPopup {
 		highlight = 0;
 		return filter.charTyped(ctx, codePoint);
 	}
+	@Override
+	public void close() {
+		open = false;
+		closing = false;
+	}
+	@Override
+	public boolean closing() {
+		return closing;
+	}
+	private void select(Object value) {
+		UiSound.click();
+		onSelect.accept(value);
+		onClose.run();
+	}
+	public record Option(Object value, UiText label) {}
 }

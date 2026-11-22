@@ -80,7 +80,6 @@ public class UiColorSlider extends UiControl {
 		var ratio = Mth.clamp((float) ((mouseX - bounds().x() - KNOB_W / 2F) / Math.max(1, bounds().width() - KNOB_W)), 0F, 1F);
 		onChange.accept(ratio);
 	}
-	/** 轨道内容，调用方按通道绘制渐变；范围已去掉 1px 描边。 */
 	public interface Track {
 		void render(UiPainter painter, UiBounds bounds);
 	}

@@ -13,6 +13,7 @@ import io.github.forgestove.flexconfig.foundation.ui.screen.HeaderBar.Info;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiPopupMenu.Item;
+import net.minecraft.client.gui.GuiGraphics;
 import org.jetbrains.annotations.*;
 import org.lwjgl.glfw.GLFW;
 
@@ -36,7 +37,6 @@ public class ConfigShell implements UiView, RowContext {
 	private final UiPopupHost popups = new UiPopupHost();
 	private final SearchSession search;
 	private final RemovalQueue removals = new RemovalQueue();
-	/** 已被筛掉的旧结果行：先播完收起动画，再从列表里移除。 */
 	private final List<LeavingRow> leaving = new ArrayList<>();
 	private byte pageDirection = 1;
 	private ScreenLayout layout;
@@ -320,7 +320,7 @@ public class ConfigShell implements UiView, RowContext {
 		doneButton = new UiButton(Translation.DONE_LABEL.copy().withStyle(UiStyle.BOLD), Style.PRIMARY, this::done);
 		header = new HeaderBar(this::onClose, this::undoAll, this::openPageMenu, this::updateSearch, this::toggleChanged);
 		sidebar = new SidebarView(model, this::selectTab);
-		showcase = new ShowcaseView(Translation.texture(session.handler().getMenuOptions().icon()));
+		showcase = new ShowcaseView(session.handler().getMenuOptions().icon());
 		sidebar.setBounds(layout.tabs);
 		footer = new FooterView(doneButton);
 		footer.setBounds(layout.footer);
@@ -353,12 +353,12 @@ public class ConfigShell implements UiView, RowContext {
 		}
 	}
 	@Override
-	public void frame(@NotNull UiRenderTarget target, int mouseX, int mouseY, float seconds) {
+	public void frame(@NotNull GuiGraphics gui, int mouseX, int mouseY, float seconds) {
 		if (!ready) return;
 		ui.onRefresh(this::refresh);
 		var virtualX = mouseX / (double) zoom;
 		var virtualY = mouseY / (double) zoom;
-		ui.beginFrame(target, seconds, virtualX, virtualY);
+		ui.beginFrame(gui, seconds, virtualX, virtualY);
 		ui.viewport(logicalWidth, logicalHeight);
 		backdropAnim.update(seconds);
 		windowAnim.update(seconds);

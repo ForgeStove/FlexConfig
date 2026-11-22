@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Objects;
-/** 可捕获行（Boolean/Enum）的触发键位：注册、捕获、重置与撤销快照。 */
 public class TriggerKeybindSupport implements CaptureTarget {
 	private final ValueConfigNode node;
 	private final RowContext ctx;

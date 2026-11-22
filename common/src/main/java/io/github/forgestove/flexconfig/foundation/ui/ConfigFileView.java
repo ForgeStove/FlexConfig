@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
-/** 单份配置的模组不经过本界面，由 {@link FlexConfigScreenFactory} 直接打开配置界面。 */
 public class ConfigFileView extends UiScreenView {
 	private static final int BUTTON_HEIGHT = 20, SPACING = 6;
 	private final ConfigActions actions;

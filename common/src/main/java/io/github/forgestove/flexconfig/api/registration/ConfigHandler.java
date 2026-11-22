@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
-@SuppressWarnings("unused")
 public class ConfigHandler<C, V> {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Map<String, Runnable> triggerActions = new LinkedHashMap<>();
@@ -31,12 +30,10 @@ public class ConfigHandler<C, V> {
 	private final boolean lockable;
 	private final MenuOptions menuOptions;
 	private final Accent accent;
-	// ---- 全局快捷键系统 ----
 	private final Map<String, String> triggerKeybinds = new LinkedHashMap<>();
 	private final List<ConfigSaveListener<C>> saveListeners = new ArrayList<>();
 	private final List<ConfigLoadListener<C>> loadListeners = new ArrayList<>();
 	private final List<ConfigValidator<C>> validators = new ArrayList<>();
-	/** 已解析的磁盘路径；SERVER 型在进世界前为 {@code null}。 */
 	@Nullable private Path resolvedPath;
 	private ConfigHandler(Builder<C, V> builder) {
 		configClass = builder.configClass;
@@ -70,11 +67,10 @@ public class ConfigHandler<C, V> {
 		};
 	}
 	public void loadFromDisk(@Nullable MinecraftServer server) {
-		resolvedPath = ConfigNaming.resolve(modId, type, fileName, server);
+		resolvedPath = ConfigNaming.resolve(type, fileName, server);
 		serializer.setTargetPath(resolvedPath);
 		reloadAndCopy();
 	}
-	/** 重读磁盘并覆盖 saved 与 active，连同锁值与已下发的服务端值一并撤销。 */
 	public void reloadAndCopy() {
 		if (resolvedPath == null) return;
 		CommentedConfig toml;
@@ -86,11 +82,9 @@ public class ConfigHandler<C, V> {
 		}
 		var fresh = acceptLoaded(toml == null ? newInstance() : deserialize(toml));
 		configTree.copy(fresh, savedConfig);
-		// 重载时延迟生效的项保持旧值，避免它们提前生效
 		configTree.copyForRuntime(fresh, activeConfig);
 		triggerKeybinds.clear();
 		if (toml != null) triggerKeybinds.putAll(ConfigSerializer.readKeybinds(toml));
-		// 读取文件后记录修改时间，避免热重载把这次读取当成外部改动
 		ConfigWatchService.markCurrent(new FileKey(modId, fileName));
 	}
 	private C deserialize(CommentedConfig toml) {
@@ -101,13 +95,11 @@ public class ConfigHandler<C, V> {
 			return newInstance();
 		}
 	}
-	/** 用服务端下发的整份内容覆盖 saved 与 active；只修改内存，不写入文件，也不读取本地文件。 */
 	public void applySynced(CommentedConfig toml) {
 		var fresh = acceptLoaded(deserialize(toml));
 		configTree.copy(fresh, savedConfig);
 		configTree.copy(fresh, activeConfig);
 	}
-	/** SERVER 型在世界停止时调用：恢复默认值并丢弃已解析路径。 */
 	public void unload() {
 		resolvedPath = null;
 		var defaults = newInstance();
@@ -160,8 +152,6 @@ public class ConfigHandler<C, V> {
 	public ConfigHandler<Object, Object> cast() {
 		return (ConfigHandler<Object, Object>) this;
 	}
-	// ========== 全局快捷键系统 ==========
-	/** 值、本地化注释与快捷键段一次性写出，采用临时文件加原子替换，写入失败时原文件保持完整。 */
 	public boolean save(C config) {
 		var message = validateConfig(config);
 		if (message != null) {
@@ -173,17 +163,15 @@ public class ConfigHandler<C, V> {
 				LOGGER.warn("Configuration '{}' save canceled by listener", fileName);
 				return false;
 			}
-		// 全量写入文件模型 → 补上延迟生效项的新值（运行时仍守旧值）→ 运行时仅接收即时生效的改动
 		configTree.copy(config, savedConfig);
 		configTree.flushPending(savedConfig);
 		configTree.copyForRuntime(config, activeConfig);
-		if (resolvedPath == null) return true;   // 路径未解析（SERVER 未进世界）时没有落盘目标
+		if (resolvedPath == null) return true;
 		try {
 			serializer.serialize(savedConfig, triggerKeybinds);
 		} catch (SerializationException e) {
 			LOGGER.error("Failed to save configuration", e);
 		}
-		// 写入文件后记录修改时间，避免热重载把这次写入当成外部改动
 		ConfigWatchService.markCurrent(new FileKey(modId, fileName));
 		return true;
 	}
@@ -318,7 +306,6 @@ public class ConfigHandler<C, V> {
 			menuLogo = logo;
 			return this;
 		}
-		/** 构建并注册到 {@link ConfigStore}；同一 (模组, 类型) 只能注册一次。 */
 		public @NotNull ConfigHandler<C, V> build() {
 			if (fileName == null || fileName.isBlank()) fileName = ConfigNaming.fileName(ConfigStore.getModId(configClass), type, "");
 			var handler = new ConfigHandler<>(this);

@@ -1,16 +1,16 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
-import io.github.forgestove.flexconfig.foundation.client.FlexGuiTextures;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 public class UiIconButton extends UiControl {
 	private final UiAnim hover = new UiAnim(0);
-	private FlexGuiTextures icon;
+	private ResourceLocation icon;
 	private final Runnable action;
-	public UiIconButton(FlexGuiTextures icon, Runnable action) {
+	public UiIconButton(ResourceLocation icon, Runnable action) {
 		this.icon = icon;
 		this.action = action;
 	}
-	public void setIcon(FlexGuiTextures icon) {
+	public void setIcon(ResourceLocation icon) {
 		this.icon = icon;
 	}
 	public void setTooltip(@Nullable UiText tooltip) {

@@ -1,5 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
-/** 立方贝塞尔缓动。 */
+
 public class UiEasing {
 	public static final UiEasing ENTER = new UiEasing(0.2F, 0F, 0F, 1F);
 	public static final UiEasing EXIT = new UiEasing(0.3F, 0F, 1F, 1F);
@@ -17,7 +17,6 @@ public class UiEasing {
 		if (this == LINEAR) return t;
 		return (float) bezier(solveX(t), y1, y2);
 	}
-	@SuppressWarnings("ReturnSeparatedFromComputation")
 	private double solveX(double x) {
 		var s = x;
 		for (var i = 0; i < 8; i++) {

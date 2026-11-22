@@ -5,7 +5,6 @@ import io.github.forgestove.flexconfig.foundation.ui.widget.UiTextField;
 import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 
 import java.util.function.*;
-/** 数值文本行，按类型提供 parser/validator/formatter；拖动或重置后由 refresh 回填文本。 */
 public class NumberRow extends ValueRow {
 	private final UiTextField field;
 	private final Function<String, Object> parser;

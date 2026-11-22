@@ -27,7 +27,6 @@ public class UiButton extends UiControl {
 	public void setLabel(UiText label) {
 		this.label = label;
 	}
-	/** 仅按键绑定样式使用：捕获中时把凹槽描边换成主题色。 */
 	public void setActive(boolean active) {
 		this.active = active;
 	}
@@ -80,7 +79,6 @@ public class UiButton extends UiControl {
 		if (painter.textWidth(text) <= max) return text;
 		return text.replaceText(painter.trim(text.getString(), max));
 	}
-	/** 按键绑定：输入框式凹槽里居中显示键名，捕获中把描边换成主题色。 */
 	private void drawKeybind(UiContext ctx) {
 		var painter = ctx.painter;
 		var b = bounds();

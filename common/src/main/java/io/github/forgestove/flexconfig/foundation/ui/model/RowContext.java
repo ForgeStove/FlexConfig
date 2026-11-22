@@ -4,7 +4,6 @@ import io.github.forgestove.flexconfig.api.registration.ConfigHandler;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiDropdown;
 
 import java.util.function.IntConsumer;
-/** 行访问配置和界面动作的接口。行只依赖这里的方法，不直接依赖 ConfigShell。 */
 public interface RowContext {
 	ConfigHandler<?, ?> handler();
 	Object config();

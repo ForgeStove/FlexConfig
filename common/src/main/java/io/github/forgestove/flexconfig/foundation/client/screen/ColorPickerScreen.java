@@ -7,7 +7,6 @@ import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.IntConsumer;
-/** 颜色选择器的 Screen 适配器，视图逻辑在 {@link ColorPickerView}。 */
 public class ColorPickerScreen extends MinecraftScreen implements ConfigHost {
 	private final Screen parent;
 	public ColorPickerScreen(Screen parent, int initialColor, boolean hasAlpha, IntConsumer onColorSelected) {

@@ -1,10 +1,11 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import io.github.forgestove.flexconfig.api.menu.Accent;
 import net.minecraft.Util;
+import net.minecraft.client.gui.GuiGraphics;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
-/** 跨帧保留的界面状态：焦点、拖拽 owner、提示延迟和淡入，都由界面复用同一个实例。 */
+
 public class UiContext {
 	public UiPainter painter;
 	public float delta;
@@ -30,8 +31,8 @@ public class UiContext {
 	public void setAccent(Accent accent) {
 		this.accent = accent;
 	}
-	public void beginFrame(UiRenderTarget target, float delta, double mouseX, double mouseY) {
-		painter = new UiPainter(target);
+	public void beginFrame(GuiGraphics gui, float delta, double mouseX, double mouseY) {
+		painter = new UiPainter(gui);
 		this.delta = delta;
 		pointer(mouseX, mouseY);
 		hoveredOwner = null;
@@ -56,7 +57,7 @@ public class UiContext {
 		focusedContent = content;
 		focusedAnchor = anchor;
 	}
-	/** 鼠标移开或点击时调用，清掉候选提示，已显示的提示淡出。 */
+
 	public void clearTooltip() {
 		if (shownFor != null) lastClosedAt = Util.getMillis();
 		hoveredOwner = null;

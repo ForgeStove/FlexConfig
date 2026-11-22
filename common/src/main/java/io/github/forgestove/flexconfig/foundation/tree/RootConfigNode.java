@@ -120,7 +120,6 @@ public record RootConfigNode(
 		private final String modId;
 		private final String fileName;
 		private final ConfigType type;
-		/** 构建期收集的翻译键，供开发期检查缺失。 */
 		private final ImmutableList.Builder<String> translationKeys = ImmutableList.builder();
 		private Object defaultConfig;
 		private Builder(Object defaultConfig, String modId, String fileName, ConfigType type) {
@@ -231,7 +230,6 @@ public record RootConfigNode(
 				.sliderRange(FieldValidators.sliderRange(valueField))
 				.validator(FieldValidators.validatorFor(type, valueField)));
 		}
-		/** 检查当前配置类型是否支持声明的重启级别，不支持就在构建配置树时抛异常。 */
 		private @Nullable RestartType restartTypeOf(Field field) {
 			var annotation = field.getAnnotation(RequiresRestart.class);
 			if (annotation == null) return null;
@@ -277,7 +275,6 @@ public record RootConfigNode(
 				FieldAccess.writeField(valueHandle, current, target, valueField);
 			};
 		}
-		/** 集合元素对象的字段键：{@code <列表选项键>.<元素类名>.<字段名>}；嵌套集合取最内层元素类型。 */
 		private void collectElementTranslationKeys(ElementType shape, String listKey) {
 			if (shape.isCollection()) {
 				if (shape.element() != null) collectElementTranslationKeys(shape.element(), listKey);
@@ -286,7 +283,6 @@ public record RootConfigNode(
 			if (shape.isSimple()) return;
 			collectObjectTranslationKeys(shape.raw(), "%s.%s".formatted(listKey, shape.raw().getSimpleName()));
 		}
-		/** 对象元素及其 {@code @Category} 子对象的显示键。 */
 		private void collectObjectTranslationKeys(Class<?> type, String prefix) {
 			translationKeys.add(prefix);
 			for (var field : FieldAccess.collectOrderedFields(type)) {

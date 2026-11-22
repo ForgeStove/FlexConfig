@@ -29,9 +29,9 @@ public abstract class ValueRow extends ConfigRow {
 		this.node = node;
 		label = node.getTitle();
 		tooltip = node.getTooltip();
-		reset = new UiIconButton(FlexGuiTextures.ICON_RESET, this::resetToDefault);
+		reset = new UiIconButton(FlexGuiTextures.ICON_RESET.id, this::resetToDefault);
 		reset.tooltip(Translation.RESET_TOOLTIP);
-		lock = new UiIconButton(FlexGuiTextures.ICON_UNLOCK, this::toggleLock);
+		lock = new UiIconButton(FlexGuiTextures.ICON_UNLOCK.id, this::toggleLock);
 		buttons.add(lock, UiTheme.ACTION_SIZE).add(reset, UiTheme.ACTION_SIZE);
 	}
 	private static boolean hasCustomToString(Class<?> type) {
@@ -304,7 +304,7 @@ public abstract class ValueRow extends ConfigRow {
 		state.refresh(node, ctx);
 		reset.setEnabled(canReset());
 		lock.setEnabled(state.showLock && state.canLock);
-		lock.setIcon(state.locked ? FlexGuiTextures.ICON_LOCK : FlexGuiTextures.ICON_UNLOCK);
+		lock.setIcon((state.locked ? FlexGuiTextures.ICON_LOCK : FlexGuiTextures.ICON_UNLOCK).id);
 		lock.setTooltip(state.locked ? Translation.LOCKED_TOOLTIP : Translation.UNLOCK_TOOLTIP);
 	}
 	@Override

@@ -4,7 +4,6 @@ import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-/** 按键绑定的平台实现：原版按键映射、键盘状态和配置值类型都只在这里出现。 */
 public interface KeybindSupport {
 	UiText displayName(EntryKeybind keybind);
 	/** 配置值是指针类型（原版按键）时返回显示文本，否则返回 null。 */

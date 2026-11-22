@@ -2,9 +2,7 @@ package io.github.forgestove.flexconfig.foundation.client;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.*;
-/** 客户端文本常量与 UiText、Component 的转换入口。 */
 public class Translation {
 	public static final UiText ON_LABEL = UiText.literal("✔");
 	public static final UiText OFF_LABEL = UiText.literal("❌");
@@ -69,14 +67,9 @@ public class Translation {
 	public static @Nullable String getString(String key) {
 		return I18n.exists(key) ? I18n.get(key) : null;
 	}
-	/** 交给原版界面前转回 Component。 */
 	public static Component toComponent(UiText text) {
 		return MinecraftTextEngine.toComponent(text);
 	}
-	public static @Nullable UiTexture texture(@Nullable ResourceLocation id) {
-		return id == null ? null : new MinecraftTexture(id);
-	}
-	/** 多行 tooltip：加粗标题 + 灰色说明；{@code \n} 由字体换行处理。 */
 	public static @NotNull UiText tooltip(@NotNull UiText title, @NotNull UiText detail) {
 		return title.copy().withStyle(UiStyle.BOLD).append("\n").append(detail.copy().withStyle(UiStyle.GRAY));
 	}

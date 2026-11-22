@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiMotion.SpringSpec;
-/** 弹簧驱动的单值动画，供悬停、开关和滑条滑块使用。 */
 public class UiAnim {
 	private final UiSpring spring;
 	public UiAnim(double initial) {

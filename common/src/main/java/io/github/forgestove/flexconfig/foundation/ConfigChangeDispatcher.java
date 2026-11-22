@@ -5,11 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.*;
-/**
- * 批次窗口由 {@code RootConfigNode} 和 {@code CategoryConfigNode} 的写回遍历用 {@link #begin()}/{@link #end()} 划定，
- * 深度归零才派发，handler 执行时配置对象已经是完整的新值；不经过树遍历的单节点写入（快捷键路径）深度为 0，
- * 调用 {@link #record} 时立即派发。只在客户端保存时使用；单线程，没有做线程安全。
- */
+
 public class ConfigChangeDispatcher {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final Map<Class<? extends ConfigChangeHandler>, ConfigChangeHandler> INSTANCES = new HashMap<>();
@@ -45,7 +41,6 @@ public class ConfigChangeDispatcher {
 			}
 		}
 	}
-	/** 无参构造并缓存；构造失败也缓存 {@code null}，避免每次保存都重试。 */
 	@Nullable
 	private static ConfigChangeHandler instance(Class<? extends ConfigChangeHandler> type) {
 		if (INSTANCES.containsKey(type)) return INSTANCES.get(type);
@@ -58,7 +53,6 @@ public class ConfigChangeDispatcher {
 		INSTANCES.put(type, handler);
 		return handler;
 	}
-	/** 同一 handler 类仅保留首次记录，派发时按类执行一次。 */
 	public static void record(Class<? extends ConfigChangeHandler> type, String path, Object oldValue, Object newValue) {
 		PENDING.putIfAbsent(type, new Pending(path, oldValue, newValue));
 		if (depth == 0) flush();

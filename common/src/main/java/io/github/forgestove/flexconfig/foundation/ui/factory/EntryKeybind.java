@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.factory;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiText;
-/** 平台无关的按键绑定：类型、编码和修饰键，解释与显示交给 {@link Keybinds} 当前的实现。 */
 public record EntryKeybind(Type type, int code, int modifierFlags) {
 	public enum Type {
 		KEYSYM,

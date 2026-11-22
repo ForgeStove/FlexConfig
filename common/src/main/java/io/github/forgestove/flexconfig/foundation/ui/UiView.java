@@ -1,5 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui;
-import io.github.forgestove.flexconfig.foundation.ui.core.UiRenderTarget;
+import net.minecraft.client.gui.GuiGraphics;
 import org.jetbrains.annotations.NotNull;
 /**
  * 界面对屏幕层暴露的生命周期和输入方法。客户端的 Screen 适配器把原版回调转发到这里，
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public interface UiView {
 	void init();
 	void resize();
-	void frame(@NotNull UiRenderTarget target, int mouseX, int mouseY, float seconds);
+	void frame(@NotNull GuiGraphics gui, int mouseX, int mouseY, float seconds);
 	boolean input(ConfigInput event);
 	void onClose();
 	void onRemoved();

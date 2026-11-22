@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
-/** 滚动值的平滑来源：滚动容器只读写它，换实现即可替换平滑曲线。 */
 public interface ScrollMotion {
 	/** 当前应绘制的滚动位置。 */
 	double value();

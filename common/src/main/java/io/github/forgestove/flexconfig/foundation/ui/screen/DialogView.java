@@ -5,7 +5,6 @@ import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
-/** 确认对话框。保存标题、正文和确认后的动作，打开期间由 ConfigShell 拦截其余输入。 */
 public class DialogView {
 	private static final int MAX_WIDTH = 300, PAD = 8, BUTTON_WIDTH = 70, BUTTON_HEIGHT = 18;
 	private final UiButton confirm, cancel;

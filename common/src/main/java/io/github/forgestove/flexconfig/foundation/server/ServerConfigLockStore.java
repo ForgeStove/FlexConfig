@@ -10,11 +10,9 @@ import org.slf4j.Logger;
 
 import java.nio.file.*;
 import java.util.*;
-/** 按世界存档保存锁定的配置条目，文件是存档下的 {@code serverconfig/flexconfig/<modId>_locks.toml}；{@code flexconfig} 子目录用来和官方的「server 配置覆盖文件」分开。 */
 public class ServerConfigLockStore {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private final Path lockFilePath;
-	/** 锁定项结构同配置文件；键由客户端传来的路径按点号分层。 */
 	private CommentedConfig locks = ConfigSerializer.inMemory();
 	public ServerConfigLockStore(MinecraftServer server, String modId) {
 		lockFilePath = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/flexconfig/" + modId + "_locks.toml");
@@ -45,7 +43,6 @@ public class ServerConfigLockStore {
 			locks = ConfigSerializer.inMemory();
 		}
 	}
-	/** {@code value} 已由 {@link io.github.forgestove.flexconfig.foundation.LockValueCodec} 转为 TOML 原生类型。 */
 	public void lockEntry(String configId, Object value) {
 		locks.set(splitPath(configId), value);
 		save();
@@ -67,11 +64,9 @@ public class ServerConfigLockStore {
 		collectPaths(locks, "", result);
 		return Collections.unmodifiableSet(result);
 	}
-	/** 直接返回底层配置对象，服务端应用时不再经过文本转换。 */
 	public CommentedConfig toConfig() {
 		return locks;
 	}
-	/** 锁定项的 TOML 文本，供下发给客户端。 */
 	public String toTomlString() {
 		return new TomlWriter().writeToString(locks);
 	}

@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.List;
-/** 对象元素分组。 */
 public class GroupRows {
 	public static void appendGroup(
 		RowContext ctx,

@@ -8,7 +8,6 @@ import net.minecraft.client.gui.screens.Screen;
 
 import java.util.List;
 import java.util.function.IntConsumer;
-/** 配置文件列表的 Screen 适配器，视图逻辑在 {@link ConfigFileView}。 */
 public class ConfigFileScreen extends MinecraftScreen implements ConfigActions {
 	private final Screen parent;
 	private final List<ConfigHandler<?, ?>> handlers;

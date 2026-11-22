@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.platform;
+import io.github.forgestove.flexconfig.foundation.common.CommonUtil;
 import io.github.forgestove.flexconfig.platform.services.NetworkService;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -21,6 +22,6 @@ public class FabricNetworkService implements NetworkService {
 	}
 	@Override
 	public boolean canSendToPlayer(ServerPlayer player, String channel) {
-		return ServerPlayNetworking.canSend(player, new Type<>(FlexResources.getFlexRes(channel)));
+		return ServerPlayNetworking.canSend(player, new Type<>(CommonUtil.getFlexRes(channel)));
 	}
 }

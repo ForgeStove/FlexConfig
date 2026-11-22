@@ -1,5 +1,6 @@
 package io.github.forgestove.flexconfig.platform;
 import io.github.forgestove.flexconfig.FlexConfig;
+import io.github.forgestove.flexconfig.foundation.common.CommonUtil;
 import io.github.forgestove.flexconfig.platform.services.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -25,7 +26,7 @@ public record NeoForgePayloads(PayloadRegistrar registrar) implements PayloadReg
 		Function<FriendlyByteBuf, P> decoder,
 		PayloadHandler<P> handler
 	) {
-		var registered = new Type<P>(FlexResources.getFlexRes(channel));
+		var registered = new Type<P>(CommonUtil.getFlexRes(channel));
 		registrar.playToServer(registered, codec(decoder), (payload, context) -> handler.handle(payload, new NeoForgeContext(context)));
 	}
 	@Override
@@ -35,7 +36,7 @@ public record NeoForgePayloads(PayloadRegistrar registrar) implements PayloadReg
 		Function<FriendlyByteBuf, P> decoder,
 		PayloadHandler<P> handler
 	) {
-		var registered = new Type<P>(FlexResources.getFlexRes(channel));
+		var registered = new Type<P>(CommonUtil.getFlexRes(channel));
 		registrar.playToClient(registered, codec(decoder), (payload, context) -> handler.handle(payload, new NeoForgeContext(context)));
 	}
 	private record NeoForgeContext(IPayloadContext context) implements PayloadContext {

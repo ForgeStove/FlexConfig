@@ -3,8 +3,8 @@ import io.github.forgestove.flexconfig.api.RestartType;
 
 import java.lang.annotation.*;
 /**
- * 保存时新值写入文件、运行时值保持不变，重启后运行时值才切换过去。
- * 与 {@link OnChange} 互斥。
+ * 保存时触发。
+ * <p>与 {@link OnChange} 互斥。</p>
  */
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

@@ -1,4 +1,5 @@
 package io.github.forgestove.flexconfig.platform;
+import io.github.forgestove.flexconfig.foundation.common.CommonUtil;
 import io.github.forgestove.flexconfig.platform.services.*;
 import net.fabricmc.fabric.api.networking.v1.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context;
@@ -24,7 +25,7 @@ public class FabricPayloads implements PayloadRegistrarService {
 		Function<FriendlyByteBuf, P> decoder,
 		PayloadHandler<P> handler
 	) {
-		var registered = new Type<P>(FlexResources.getFlexRes(channel));
+		var registered = new Type<P>(CommonUtil.getFlexRes(channel));
 		PayloadTypeRegistry.playC2S().register(registered, codec(decoder));
 		ServerPlayNetworking.registerGlobalReceiver(
 			registered,
@@ -38,7 +39,7 @@ public class FabricPayloads implements PayloadRegistrarService {
 		Function<FriendlyByteBuf, P> decoder,
 		PayloadHandler<P> handler
 	) {
-		var registered = new Type<P>(FlexResources.getFlexRes(channel));
+		var registered = new Type<P>(CommonUtil.getFlexRes(channel));
 		PayloadTypeRegistry.playS2C().register(registered, codec(decoder));
 	}
 	/** 服务端侧实现；接收器回调在网络线程，用 {@code server().execute} 切回主线程。 */

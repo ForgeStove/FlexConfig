@@ -9,7 +9,6 @@ import net.minecraft.client.gui.screens.Screen;
 
 import java.util.Set;
 import java.util.function.IntConsumer;
-/** 屏幕适配层：只处理 Screen 的打开、关闭和坐标转发，界面编排在 {@link ConfigShell}。 */
 public class ConfigScreen<C, V> extends MinecraftScreen implements ConfigActions {
 	public final RootConfigNode root;
 	private final Screen parent;

@@ -5,7 +5,6 @@ import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 
 import java.util.List;
-/** 搜索无结果时的提示行：左侧说明，右侧清除按钮。 */
 public class SearchEmptyRow extends ConfigRow {
 	private static final int CLEAR_WIDTH = 48;
 	private final UiText message;

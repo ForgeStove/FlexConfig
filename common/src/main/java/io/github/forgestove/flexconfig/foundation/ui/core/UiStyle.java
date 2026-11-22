@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import org.jetbrains.annotations.Nullable;
-/** 文本样式。字段为 null 表示沿用上层样式，只设置需要改的部分。 */
 public record UiStyle(
 	@Nullable Integer color,
 	@Nullable Boolean bold,
@@ -18,7 +17,6 @@ public record UiStyle(
 	public static final UiStyle RED = EMPTY.withColor(0xFF5555);
 	public static final UiStyle GREEN = EMPTY.withColor(0x55FF55);
 	public static final UiStyle YELLOW = EMPTY.withColor(0xFFFF55);
-	/** 后设置的样式覆盖已有值，null 保持原值。 */
 	public UiStyle merge(UiStyle other) {
 		return new UiStyle(
 			other.color != null ? other.color : color,

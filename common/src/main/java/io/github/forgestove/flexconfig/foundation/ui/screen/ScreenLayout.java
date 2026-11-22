@@ -1,7 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.screen;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.util.Mth;
-/** 窗口布局：标题栏、左侧栏（操作按钮在上、分类在下）和右侧内容。 */
 public class ScreenLayout {
 	public final UiBounds panel, header, sidebar, showcase, tabs, footer, pageHeader, content, scrollbar;
 	public ScreenLayout(int screenWidth, int screenHeight, boolean showShowcase) {

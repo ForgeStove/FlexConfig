@@ -2,8 +2,7 @@ package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.Util;
 import net.minecraft.util.Mth;
-
-import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 public class UiScrollView extends UiControl {
 	protected static final double[] WHEEL_ACCEL = {1, 1.2, 1.6, 2.2, 3};
 	private ScrollMotion motion = new SpringScrollMotion(UiMotion.SCROLL);
@@ -13,8 +12,8 @@ public class UiScrollView extends UiControl {
 	public ScrollMotion motion() {
 		return motion;
 	}
-	public void setMotion(ScrollMotion motion) {
-		this.motion = Objects.requireNonNull(motion);
+	public void setMotion(@NotNull ScrollMotion motion) {
+		this.motion = motion;
 	}
 	public void setPitch(int pitch) {
 		this.pitch = Math.max(1, pitch);
@@ -56,9 +55,7 @@ public class UiScrollView extends UiControl {
 	protected double clamp(double value) {
 		return Mth.clamp(value, 0, maxScroll());
 	}
-	/** 绘制滚动内容；调用时裁剪已按 {@link #bounds()} 开启。 */
 	protected void renderContent(UiContext ui) {}
-	/** 内容之上、不受裁剪影响的装饰层（滚动条、边缘阴影等），默认不画。 */
 	protected void paintOverlay(UiContext ui) {}
 	@Override
 	public boolean focusable() {

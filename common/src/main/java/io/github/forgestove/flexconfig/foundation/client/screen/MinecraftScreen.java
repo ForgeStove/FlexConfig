@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.*;
-/** Screen 适配器：把原版生命周期、绘制和输入原样转发给平台无关的 {@link UiView}。 */
 public class MinecraftScreen extends Screen {
 	private @Nullable UiView view;
 	private final UiText uiTitle;
@@ -15,7 +14,6 @@ public class MinecraftScreen extends Screen {
 		super(Translation.toComponent(title));
 		uiTitle = title;
 	}
-	/** 子类构造视图后再接入，视图需要适配器实例作为宿主。 */
 	protected final void setView(@Nullable UiView view) {
 		this.view = view;
 	}
@@ -30,7 +28,7 @@ public class MinecraftScreen extends Screen {
 	public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
 		if (view == null) return;
 		renderBackground(graphics, mouseX, mouseY, delta);
-		view.frame(new MinecraftRenderTarget(graphics), mouseX, mouseY, seconds());
+		view.frame(graphics, mouseX, mouseY, seconds());
 	}
 	private static float seconds() {
 		return ClientUtil.mc.getTimer().getRealtimeDeltaTicks() / 20F;

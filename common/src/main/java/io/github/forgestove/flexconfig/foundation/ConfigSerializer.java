@@ -330,7 +330,9 @@ public class ConfigSerializer<C> {
 		try {
 			var toml = toConfig(config);
 			writeKeybinds(toml, keybinds);
-			new TomlWriter().write(toml, targetPath(), WritingMode.REPLACE_ATOMIC);
+			var target = targetPath();
+			Files.createDirectories(target.getParent());
+			new TomlWriter().write(toml, target, WritingMode.REPLACE_ATOMIC);
 		} catch (Exception e) {
 			throw new SerializationException(e);
 		}

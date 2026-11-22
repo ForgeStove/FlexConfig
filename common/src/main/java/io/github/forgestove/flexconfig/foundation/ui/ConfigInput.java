@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.foundation.ui;
-/** 适配层到界面编排层的输入事件，坐标保持 Screen 原始值。 */
 public sealed interface ConfigInput {
 	record MouseDown(double x, double y, int button) implements ConfigInput {}
 	record MouseUp(double x, double y, int button) implements ConfigInput {}

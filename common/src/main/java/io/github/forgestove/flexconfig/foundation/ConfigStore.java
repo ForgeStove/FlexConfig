@@ -10,13 +10,10 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
-/** 一个模组可按 {@link ConfigType} 注册多份配置，各自对应一个文件。 */
 public class ConfigStore {
 	private static final Object LOCK = new Object();
 	private static final List<ConfigType> PRIMARY_ORDER = List.of(ConfigType.CLIENT, ConfigType.COMMON, ConfigType.SERVER);
-	/** 注册成功后整体替换，读路径永远看到一致的一组索引。 */
 	private static volatile Snapshot SNAPSHOT = Snapshot.EMPTY;
-	/** 由 {@code ConfigHandler.Builder#build()} 调用；同一 (模组 ID, 类型)、同一 Class、同一文件均只能注册一次。 */
 	public static <C, V> void register(ConfigHandler<C, V> handler) {
 		var modId = handler.getModId();
 		var type = handler.getType();
@@ -67,8 +64,6 @@ public class ConfigStore {
 	public static String getModId(@NotNull Class<?> configClass) {
 		return requireAnnotation(configClass).value();
 	}
-	// ========== 按 modId（主配置）访问 ==========
-	/** 按 {@link #PRIMARY_ORDER} 顺序返回该 mod 已注册的主配置 handler；未注册返回空列表。 */
 	public static List<ConfigHandler<?, ?>> getHandlers(String modId) {
 		var modMap = SNAPSHOT.byMod().get(modId);
 		if (modMap == null) return List.of();
@@ -83,7 +78,6 @@ public class ConfigStore {
 		var handler = findByFile(key);
 		return handler == null ? null : handler.getConfig();
 	}
-	// ========== 按 Class / 文件精确定位 ==========
 	@SuppressWarnings("unused")
 	public static <C> @NotNull ConfigHandler<C, ?> getHandler(Class<C> configClass) {
 		var handler = getByClass(SNAPSHOT.byClass(), configClass);
@@ -104,25 +98,19 @@ public class ConfigStore {
 	public static void resetToSaved(FileKey key) {
 		getHandler(key).cast().reloadAndCopy();
 	}
-	/** 只改活动配置，不修改 savedConfig，所以不会改动 TOML 文件。 */
 	@Internal
 	public static void applyLockedValue(FileKey key, ValueConfigNode node, Object parsed) {
 		node.setActiveValue(getHandler(key).cast().getConfig(), parsed);
 	}
-	/** 退出世界或服务端停止时调用，让各份配置的 WORLD 型延迟改动写入活动配置。 */
 	public static void applyWorldRestart() {
 		for (var handler : allHandlers()) handler.applyWorldRestart();
 	}
-	// ========== 加载与卸载 ==========
-	/** 世界即将开始：解析并加载 SERVER 型配置（存档优先，回退全局 config）。 */
 	public static void loadServerConfigs(MinecraftServer server) {
 		for (var handler : allHandlers()) if (handler.getType() == ConfigType.SERVER) handler.loadFromDisk(server);
 	}
 	public static void unloadServerConfigs() {
 		for (var handler : allHandlers()) if (handler.getType() == ConfigType.SERVER) handler.unload();
 	}
-	// ========== 查询 ==========
-	/** 锁的语义是服务端强制客户端的本地配置；只有 CLIENT 型且注册时显式开启 {@code lockable} 才生效。 */
 	@Internal
 	public static boolean isLockable(FileKey key) {
 		var handler = findByFile(key);
@@ -138,7 +126,6 @@ public class ConfigStore {
 	private static Collection<ConfigHandler<?, ?>> allHandlers() {
 		return SNAPSHOT.byFile().values();
 	}
-	/** 把 key 的配置类与 value 的类型参数绑在一起，避免向通配符表写错类型。 */
 	private static <C, V> void putByClass(Map<Class<?>, ConfigHandler<?, ?>> target, Class<C> configClass, ConfigHandler<C, V> handler) {
 		target.put(configClass, handler);
 	}
@@ -146,7 +133,6 @@ public class ConfigStore {
 	private static <C> @Nullable ConfigHandler<C, ?> getByClass(Map<Class<?>, ConfigHandler<?, ?>> source, Class<C> configClass) {
 		return (ConfigHandler<C, ?>) source.get(configClass);
 	}
-	/** 按文件、Class、modId 建立索引；{@code byMod} 的内层 map 保留枚举声明顺序。 */
 	private record Snapshot(
 		Map<FileKey, ConfigHandler<?, ?>> byFile,
 		Map<Class<?>, ConfigHandler<?, ?>> byClass,

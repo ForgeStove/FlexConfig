@@ -1,7 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.screen;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import org.jetbrains.annotations.Nullable;
-/** 底部居中的提示条：左侧色条、可选的次级按钮动作，以及倒计时进度。 */
 public class ToastLayer {
 	private static final int HEIGHT = 20, PAD = 6, MAX_WIDTH = 315;
 	private record Message(UiText text, @Nullable UiText actionLabel, @Nullable Runnable action, boolean undo) {}

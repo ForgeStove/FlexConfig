@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
-/** 按键绑定的 Minecraft 实现：原版 KeyMapping、键盘状态和配置值类型都收在这里。 */
 public final class MinecraftKeybinds implements KeybindSupport {
 	public static final MinecraftKeybinds INSTANCE = new MinecraftKeybinds();
 	static {

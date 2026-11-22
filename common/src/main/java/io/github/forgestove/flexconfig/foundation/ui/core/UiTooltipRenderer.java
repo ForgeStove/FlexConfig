@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
-/** 自绘文本提示：标题白色、正文灰色，优先贴在控件下方，空间不足时翻到上方。 */
 public class UiTooltipRenderer {
 	private static final int MAX_WIDTH = 192, PADDING = 4, GAP = 6;
 	public static void render(

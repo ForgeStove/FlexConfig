@@ -11,7 +11,6 @@ import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-/** 集合标题行与元素行的生成。 */
 public class CollectionRows {
 	public static void append(RowContext ctx, ValueConfigNode node, int depth, List<ConfigRow> out) {
 		var header = new CollectionHeaderRow(ctx, node);

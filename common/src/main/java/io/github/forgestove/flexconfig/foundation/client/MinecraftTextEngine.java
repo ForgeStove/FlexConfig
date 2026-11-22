@@ -1,49 +1,42 @@
 package io.github.forgestove.flexconfig.foundation.client;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText.Composite;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText.Literal;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText.Native;
+import io.github.forgestove.flexconfig.foundation.ui.core.UiText.Translatable;
 import net.minecraft.network.chat.*;
 import net.minecraft.util.FormattedCharSequence;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-/**
- * UiText 的 Minecraft 实现。把平台无关的文本描述转成 Component；翻译、度量、换行和样式都交给
- * Component 和 Font 处理。
- */
 public final class MinecraftTextEngine implements UiTextEngine {
 	public static final MinecraftTextEngine INSTANCE = new MinecraftTextEngine();
 	static {
 		UiTexts.install(INSTANCE);
 	}
-	private static final UiTextVisitor<Component> COMPONENT = new UiTextVisitor<>() {
-		@Override
-		public Component literal(String text, UiStyle style) {
-			return Component.literal(text).withStyle(style(style));
-		}
-		@Override
-		public Component translatable(String key, @Nullable String fallback, Object[] args, UiStyle style) {
-			var converted = args(args);
-			var result = fallback == null
-				? Component.translatable(key, converted)
-				: Component.translatableWithFallback(key, fallback, converted);
-			return result.withStyle(style(style));
-		}
-		@Override
-		public Component nativeText(Object value, UiStyle style) {
-			var result = value instanceof Component component ? component : Component.literal(String.valueOf(value));
-			return style == UiStyle.EMPTY ? result : result.copy().withStyle(style(style));
-		}
-		@Override
-		public Component composite(Component left, Component right, UiStyle style) {
-			return Component.empty().withStyle(style(style)).append(left).append(right);
-		}
-	};
 	private static Component component(UiText text) {
-		return text.visit(COMPONENT);
+		return switch (text) {
+			case Literal literal -> Component.literal(literal.text()).withStyle(style(literal.style()));
+			case Translatable translatable -> {
+				var converted = args(translatable.args());
+				var result = translatable.fallback() == null
+					? Component.translatable(translatable.key(), converted)
+					: Component.translatableWithFallback(translatable.key(), translatable.fallback(), converted);
+				yield result.withStyle(style(translatable.style()));
+			}
+			case Native nativeText -> {
+				var value = nativeText.value();
+				var result = value instanceof Component component ? component : Component.literal(String.valueOf(value));
+				yield nativeText.style() == UiStyle.EMPTY ? result : result.copy().withStyle(style(nativeText.style()));
+			}
+			case Composite composite -> Component.empty()
+				.withStyle(style(composite.style()))
+				.append(component(composite.left()))
+				.append(component(composite.right()));
+		};
 	}
 	public static Component toComponent(UiText text) {
 		return component(text);
 	}
-	/** 绘制统一走 {@code FormattedCharSequence}，样式由它逐字符携带。 */
 	public static FormattedCharSequence toRenderable(UiText text) {
 		return component(text).getVisualOrderText();
 	}
@@ -62,7 +55,6 @@ public final class MinecraftTextEngine implements UiTextEngine {
 		for (var i = 0; i < args.length; i++) converted[i] = args[i] instanceof UiText text ? component(text) : args[i];
 		return converted;
 	}
-	/** 按字符样式分段还原，断行结果转回 Component 后仍能继续复制、追加和改样式。 */
 	private static Component fromSequence(FormattedCharSequence sequence) {
 		var result = Component.empty();
 		var run = new StringBuilder();

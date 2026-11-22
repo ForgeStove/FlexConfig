@@ -7,7 +7,6 @@ import io.github.forgestove.flexconfig.foundation.ui.widget.UiGlyphButton.Glyph;
 
 import java.util.*;
 import java.util.function.Consumer;
-/** 标题栏和页面头，包含标题、文件名、撤销、搜索、筛选开关和页面菜单。 */
 public class HeaderBar {
 	public record Info(
 		String modId, String fileName, boolean restartRequired, boolean filtering, int searchCount, boolean pageMenuVisible

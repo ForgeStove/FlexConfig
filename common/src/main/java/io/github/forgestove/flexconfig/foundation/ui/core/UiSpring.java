@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiMotion.SpringSpec;
-/** 固定步长弹簧。 */
 public class UiSpring {
 	private static final float STEP = 0.004166667F, EPSILON = 0.01F;
 	private float stiffness, friction, target, value, previous, velocity, accumulator;

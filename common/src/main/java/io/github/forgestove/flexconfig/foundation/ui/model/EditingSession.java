@@ -9,17 +9,12 @@ import io.github.forgestove.flexconfig.foundation.ui.factory.Keybinds;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-/**
- * 一次配置编辑的会话状态。持有活动配置、按键绑定分类和撤销快照，负责校验、保存和重置，
- * 界面只调用这些操作。
- */
 public class EditingSession<C, V> {
 	private final ConfigHandler<C, V> handler;
 	private final RootConfigNode root;
 	private final C config;
 	private @Nullable CategoryConfigNode keybindCategory;
 	private Map<String, String> savedTriggerKeybinds = Map.of();
-	/** 首次打开才重置编辑值；从子界面返回时保留未保存的修改。 */
 	private boolean initialized;
 	public EditingSession(ConfigHandler<C, V> handler) {
 		this.handler = handler;

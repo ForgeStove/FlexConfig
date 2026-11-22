@@ -7,7 +7,6 @@ import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.DoubleFunction;
-/** 滑条行：轨道横跨整行，数值显示在右端。 */
 public class SliderRow extends ValueRow {
 	private final UiSlider slider;
 	private final DoubleFunction<Object> converter;

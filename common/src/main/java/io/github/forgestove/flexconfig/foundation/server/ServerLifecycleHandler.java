@@ -37,7 +37,6 @@ public class ServerLifecycleHandler {
 		ConfigStore.unloadServerConfigs();
 	}
 	public static void onPlayerLogin(ServerPlayer player) {
-		// 仅向安装了此模组的客户端发送
 		if (!FlexConfigServices.NETWORK.canSendToPlayer(player, ConfigSyncPayload.CHANNEL)) return;
 		ConfigNetwork.sendLocksToPlayer(player);
 		ConfigNetwork.sendServerConfigsToPlayer(player);

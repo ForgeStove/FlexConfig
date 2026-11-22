@@ -7,7 +7,6 @@ import io.github.forgestove.flexconfig.api.annotation.*;
 
 import java.awt.Point;
 import java.util.*;
-/** 演示配置：每种字段类型和注解各用一次。 */
 @Config(FlexConfig.ID)
 @SuppressWarnings("unused")
 public class DemoConfig {

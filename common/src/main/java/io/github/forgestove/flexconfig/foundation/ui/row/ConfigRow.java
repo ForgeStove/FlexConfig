@@ -1,12 +1,11 @@
 package io.github.forgestove.flexconfig.foundation.ui.row;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
-import io.github.forgestove.flexconfig.foundation.ui.model.ConfigStatus;
-import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
+import io.github.forgestove.flexconfig.foundation.ui.model.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiControl;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-public abstract class ConfigRow implements RowTransition, UiPointerTarget, ConfigStatus {
+public abstract class ConfigRow implements UiPointerTarget, ConfigStatus {
 	protected final RowContext ctx;
 	private final UiTween reveal = new UiTween(1);
 	private final UiTween heightAnim = new UiTween(1);
@@ -32,11 +31,8 @@ public abstract class ConfigRow implements RowTransition, UiPointerTarget, Confi
 	public float revealValue() {
 		return reveal.value();
 	}
-	@Override
 	public void onEnter() {}
-	@Override
 	public void onExit() {}
-	@Override
 	public boolean exited() {
 		return true;
 	}

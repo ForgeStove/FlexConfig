@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import io.github.forgestove.flexconfig.foundation.ui.core.UiMotion.TweenSpec;
-/** 带延迟和缓动的补间。 */
 public class UiTween {
 	private float from, to, durationMs, delayMs, elapsedMs;
 	private UiEasing easing = UiEasing.LINEAR;

@@ -11,10 +11,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FieldAccess {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final Set<Field> WARNED_FIELDS = ConcurrentHashMap.newKeySet();
-	/**
-	 * 按 {@link Order @Order} 值排序，同值者保持声明顺序，无注解者视为 0。
-	 * 配置树和序列化器都使用这个方法，否则界面能看到的值可能永远不会写入文件。
-	 */
+	private static @Nullable Object unsafe;
+	private static @Nullable Method allocateInstance;
+	static {
+		try {
+			var unsafeClass = Class.forName("sun.misc.Unsafe");
+			var theUnsafe = unsafeClass.getDeclaredField("theUnsafe");
+			theUnsafe.setAccessible(true);
+			unsafe = theUnsafe.get(null);
+			allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+		} catch (ReflectiveOperationException | InaccessibleObjectException | SecurityException e) {
+			unsafe = null;
+			allocateInstance = null;
+		}
+	}
 	public static Field[] collectOrderedFields(Class<?> clazz) {
 		var fields = Arrays.stream(clazz.getDeclaredFields())
 			.filter(field -> !Modifier.isStatic(field.getModifiers()))
@@ -31,7 +41,6 @@ public class FieldAccess {
 		);
 		return fields;
 	}
-	/** 数组按组件类型、{@code List<T>} 按实参递归解析；裸 {@code List} 或无法解析时返回 {@code null}。 */
 	public static @Nullable ElementType elementShape(Field field) {
 		if (field.getType().isArray()) return shape(field.getType().getComponentType());
 		if (field.getGenericType() instanceof ParameterizedType parameterized && parameterized.getActualTypeArguments().length == 1)
@@ -50,7 +59,6 @@ public class FieldAccess {
 		if (type instanceof WildcardType wildcard && wildcard.getUpperBounds().length == 1) return shape(wildcard.getUpperBounds()[0]);
 		return null;
 	}
-	/** 原始类型映射到包装类型，因为值类型注册表按包装类型索引。 */
 	public static Class<?> boxed(Class<?> type) {
 		if (type == int.class) return Integer.class;
 		if (type == boolean.class) return Boolean.class;
@@ -62,7 +70,6 @@ public class FieldAccess {
 		if (type == char.class) return Character.class;
 		return type;
 	}
-	/** 能直接映射成单个 TOML 值或单个编辑框的类型。 */
 	public static boolean isSimpleType(Class<?> type) {
 		type = boxed(type);
 		return type.isEnum() || type == String.class || isImmutable(type);
@@ -79,21 +86,6 @@ public class FieldAccess {
 		for (var i = 0; i < list.size(); i++) Array.set(array, i, list.get(i));
 		return array;
 	}
-	private static @Nullable Object unsafe;
-	private static @Nullable Method allocateInstance;
-	static {
-		try {
-			var unsafeClass = Class.forName("sun.misc.Unsafe");
-			var theUnsafe = unsafeClass.getDeclaredField("theUnsafe");
-			theUnsafe.setAccessible(true);
-			unsafe = theUnsafe.get(null);
-			allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
-		} catch (ReflectiveOperationException | InaccessibleObjectException | SecurityException e) {
-			unsafe = null;
-			allocateInstance = null;
-		}
-	}
-	/** 优先无参构造；没有时退回 {@code Unsafe.allocateInstance}，与 Cloth Config 的构造方式一致。 */
 	public static @Nullable Object newInstance(Class<?> type) {
 		try {
 			var constructor = type.getDeclaredConstructor();
@@ -145,7 +137,6 @@ public class FieldAccess {
 			throw new IllegalArgumentException("Failed to write " + field.getName(), e);
 		}
 	}
-	/** 深拷贝集合与普通对象；无法实例化的类型保持原引用。 */
 	@SuppressWarnings("unchecked")
 	public static <T> @Nullable T deepCopy(@Nullable T value) {
 		return (T) deepCopy(value, new IdentityHashMap<>());
@@ -196,7 +187,6 @@ public class FieldAccess {
 			}
 		return copy;
 	}
-	/** 结构相等：集合逐元素、对象逐字段比较，避免深拷贝后 identity 比较误判为「已修改」。 */
 	public static boolean deepEquals(@Nullable Object first, @Nullable Object second) {
 		if (first == second) return true;
 		if (first == null || second == null || !first.getClass().equals(second.getClass())) return false;
@@ -261,10 +251,6 @@ public class FieldAccess {
 			|| type == Float.class
 			|| type == Double.class;
 	}
-	/**
-	 * final 类且所有实例字段都是 final：以构造器创建的值不可变，直接复用引用。
-	 * 反射无法安全改写 final 字段，深拷贝会造出字段为 null 的残次对象（如 {@code InputConstants.Key}）。
-	 */
 	private static boolean isDeeplyImmutable(Class<?> type) {
 		if (!Modifier.isFinal(type.getModifiers())) return false;
 		var hasInstanceField = false;

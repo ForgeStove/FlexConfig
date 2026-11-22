@@ -1,7 +1,6 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.Util;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,7 +212,7 @@ public class UiSlider extends UiControl {
 	public boolean mouseDragged(UiContext ctx, double mouseX, double mouseY, int button, double dragX, double dragY) {
 		if (!dragging || button != 0) return false;
 		var delta = mouseX - lastPointerX;
-		virtualX += Screen.hasShiftDown() ? delta / 10D : delta;
+		virtualX += UiInputs.shiftDown() ? delta / 10D : delta;
 		lastPointerX = mouseX;
 		applyDrag();
 		return true;

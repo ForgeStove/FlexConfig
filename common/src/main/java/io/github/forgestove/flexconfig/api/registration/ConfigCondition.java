@@ -4,10 +4,8 @@ import io.github.forgestove.flexconfig.platform.FlexConfigServices;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-/** 实现类要有无参构造，框架通过它创建实例。 */
 @FunctionalInterface
 public interface ConfigCondition {
-	/** 无 {@link Condition} 注解的字段视为通过。 */
 	static boolean evaluate(Field field) {
 		var condition = field.getAnnotation(Condition.class);
 		return condition == null || evaluate(condition);

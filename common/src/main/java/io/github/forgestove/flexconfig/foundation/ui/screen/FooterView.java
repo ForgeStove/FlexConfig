@@ -3,7 +3,6 @@ import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.widget.*;
 
 import java.util.List;
-/** 左侧栏顶部的操作区：完成按钮。 */
 public class FooterView {
 	private static final int BUTTON_HEIGHT = 18;
 	private final UiButton done;

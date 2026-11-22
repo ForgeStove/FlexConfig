@@ -1,9 +1,9 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import java.util.*;
-/** 焦点顺序：每帧由界面重建，结构变化后当前焦点若已不存在会自动清除。 */
+
 public class UiFocus {
 	public interface Target {
-		@SuppressWarnings("unused")
+
 		UiBounds focusBounds();
 	}
 	private List<Target> order = new ArrayList<>();
@@ -28,7 +28,6 @@ public class UiFocus {
 		for (var candidate : order) if (candidate == target) return true;
 		return false;
 	}
-	/** 在焦点顺序里移动一格并回绕；没有可聚焦项时返回 false。 */
 	public void move(int direction) {
 		if (order.isEmpty()) return;
 		var size = order.size();

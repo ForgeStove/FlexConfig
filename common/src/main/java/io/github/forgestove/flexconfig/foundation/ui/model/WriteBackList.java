@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.model;
 import java.util.*;
-/** 数组字段/数组元素的 List 视图：任何增删改都立刻写回目标数组。 */
 public class WriteBackList extends ArrayList<Object> {
 	private final Runnable onChange;
 	private boolean updating;

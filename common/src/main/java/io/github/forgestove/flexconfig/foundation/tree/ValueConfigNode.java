@@ -24,14 +24,11 @@ public class ValueConfigNode implements ConfigNode {
 	private ValueValidator validator;
 	private ConfigChangeCallback changeCallback;
 	private Object defaultValue;
-	/** 默认列表里没有这个索引时，元素本身没有默认值，只有用于重置的兜底值。 */
 	private boolean hasDefault = true;
 	private Object editingValue;
 	private boolean editingInitialized;
 	private Object baselineValue;
-	/** 绑定在集合元素上：值直接读写目标对象，不保存独立编辑副本。 */
 	private boolean writeThrough;
-	/** 集合元素或元素字段：不参与锁定与快捷键绑定。 */
 	private boolean element;
 	private String lockPath;
 	public static Builder builder() {
@@ -51,7 +48,6 @@ public class ValueConfigNode implements ConfigNode {
 	public boolean isElement() {
 		return element;
 	}
-	/** 锁定状态挂在所属集合的路径上，元素自身没有独立锁。 */
 	public String getLockPath() {
 		return lockPath != null ? lockPath : path;
 	}
@@ -98,7 +94,7 @@ public class ValueConfigNode implements ConfigNode {
 	}
 	@Override
 	public void copyForRuntime(Object from, Object to) {
-		if (pendingValue != null) return;   // 待生效：运行时先保持旧值
+		if (pendingValue != null) return;
 		setActiveValue(to, getActiveValue(from));
 	}
 	@Override

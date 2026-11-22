@@ -1,6 +1,5 @@
 package io.github.forgestove.flexconfig.foundation.ui.core;
 import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
-import net.minecraft.util.Mth;
 public class UiPrefs {
 	public static int highContrastColor(int argb) {
 		if (!ClientUtil.mc.options.highContrast().get()) return argb;
@@ -18,6 +17,6 @@ public class UiPrefs {
 	}
 	public static int zoom(int guiWidth, int guiHeight) {
 		var value = (int) Math.floor(Math.min(guiWidth / 480D, guiHeight / 270D));
-		return Mth.clamp(value, 1, 3);
+		return Math.clamp(value, 1, 3);
 	}
 }

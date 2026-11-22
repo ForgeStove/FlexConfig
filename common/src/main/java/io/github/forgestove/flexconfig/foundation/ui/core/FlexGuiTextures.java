@@ -1,12 +1,9 @@
-package io.github.forgestove.flexconfig.foundation.client;
+package io.github.forgestove.flexconfig.foundation.ui.core;
 import io.github.forgestove.flexconfig.api.CategoryIcon;
-import io.github.forgestove.flexconfig.foundation.ui.core.UiTexture;
-import io.github.forgestove.flexconfig.platform.FlexResources;
-import net.minecraft.client.renderer.texture.SpriteContents;
+import io.github.forgestove.flexconfig.foundation.common.CommonUtil;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.*;
-/** 界面图标注册表；界面层只通过 {@link UiTexture} 使用，资源路径和精灵读取留在这里。 */
-public enum FlexGuiTextures implements UiTexture {
+import org.jetbrains.annotations.Nullable;
+public enum FlexGuiTextures {
 	ICON_ON("icon/on"),
 	ICON_OFF("icon/off"),
 	ICON_RESET("icon/reset"),
@@ -48,25 +45,9 @@ public enum FlexGuiTextures implements UiTexture {
 	ICON_CATEGORY_UI_MENU_WORLDS_TAB_ALT01("icon/category/ui-menu-worldstab-alt01"),
 	ICON_CATEGORY_UI_MENU_WORLDS_TAB_ALT02("icon/category/ui-menu-worldstab-alt02"),
 	ICON_CATEGORY_WORK_BENCH("icon/category/work-bench");
-	public final ResourceLocation id, texture;
+	public final ResourceLocation id;
 	FlexGuiTextures(String path) {
-		id = FlexResources.getFlexRes(path);
-		texture = FlexResources.getFlexRes("textures/gui/sprites/" + path + ".png");
-	}
-	private @NotNull SpriteContents getContents() {
-		return ClientUtil.mc.getGuiSprites().getSprite(id).contents();
-	}
-	@Override
-	public int width() {
-		return getContents().width();
-	}
-	@Override
-	public int height() {
-		return getContents().height();
-	}
-	@Override
-	public Object handle() {
-		return texture;
+		id = CommonUtil.getFlexRes(path);
 	}
 	@Nullable
 	public static FlexGuiTextures of(CategoryIcon icon) {

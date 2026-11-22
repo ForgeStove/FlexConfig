@@ -1,9 +1,8 @@
 package io.github.forgestove.flexconfig.foundation.ui.widget;
 import com.mojang.blaze3d.platform.InputConstants;
-import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.foundation.client.ClientUtil;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import net.minecraft.Util;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -84,7 +83,7 @@ public class UiTextField extends UiControl {
 		painter.well(bounds(), error ? UiTheme.DANGER : focused ? ctx.accent().base() : UiTheme.WINDOW_EDGE, hovered(ctx) ? 0.3F : 0F);
 		var inner = bounds().inset(1, 1);
 		if (leadingSearch) painter.icon(
-			FlexGuiTextures.ICON_SEARCH,
+			FlexGuiTextures.ICON_SEARCH.id,
 			new UiBounds(inner.x() + 1, inner.y(), 12, inner.height()),
 			isFocused(ctx) ? UiTheme.TEXT : UiTheme.TEXT_3
 		);
@@ -122,7 +121,7 @@ public class UiTextField extends UiControl {
 			cursor = value.length();
 		} else {
 			cursor = indexAt(mouseX);
-			anchor = Screen.hasShiftDown() ? previous : cursor;
+			anchor = UiInputs.shiftDown() ? previous : cursor;
 		}
 		lastClickMs = now;
 		caretShownAt = now;
@@ -148,7 +147,7 @@ public class UiTextField extends UiControl {
 	@Override
 	public boolean keyPressed(UiContext ctx, int keyCode, int scanCode, int modifiers) {
 		if (!isFocused(ctx)) return false;
-		var control = Screen.hasControlDown();
+		var control = UiInputs.controlDown();
 		switch (keyCode) {
 			case InputConstants.KEY_LEFT -> moveCaret(-1, control);
 			case InputConstants.KEY_RIGHT -> moveCaret(1, control);
@@ -235,7 +234,7 @@ public class UiTextField extends UiControl {
 		changed();
 	}
 	private void moveTo(int target) {
-		var extend = Screen.hasShiftDown();
+		var extend = UiInputs.shiftDown();
 		var previous = cursor;
 		cursor = target;
 		if (extend) {
@@ -243,7 +242,7 @@ public class UiTextField extends UiControl {
 		} else anchor = -1;
 	}
 	private void moveCaret(int direction, boolean word) {
-		var extend = Screen.hasShiftDown();
+		var extend = UiInputs.shiftDown();
 		if (!extend && anchor >= 0 && anchor != cursor) {   // 有选区时先收起到对应一端
 			cursor = direction < 0 ? selectionStart() : selectionEnd();
 			anchor = -1;

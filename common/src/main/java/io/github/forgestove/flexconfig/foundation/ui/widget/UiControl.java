@@ -40,7 +40,6 @@ public abstract class UiControl implements Target, UiPointerTarget {
 	public void markPressed() {
 		pressBounds = bounds;
 	}
-	/** 释放时同时检查当前 bounds 和按下时的 bounds，列表在按压期间重排也不会丢动作。 */
 	public boolean releasedWithin(double mouseX, double mouseY) {
 		return bounds.contains(mouseX, mouseY) || pressBounds.contains(mouseX, mouseY);
 	}
@@ -67,7 +66,6 @@ public abstract class UiControl implements Target, UiPointerTarget {
 	public boolean charTyped(UiContext ctx, char codePoint) {
 		return false;
 	}
-	/** 悬停时把提示交给界面统一绘制。 */
 	protected void showTooltip(UiContext ctx) {
 		if (tooltip == null) return;
 		if (hovered(ctx)) ctx.hover(this, this::tooltip, focusBounds());

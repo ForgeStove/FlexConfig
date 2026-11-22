@@ -1,5 +1,4 @@
 package io.github.forgestove.flexconfig.foundation.ui.screen;
-import io.github.forgestove.flexconfig.foundation.client.FlexGuiTextures;
 import io.github.forgestove.flexconfig.foundation.ui.core.*;
 import io.github.forgestove.flexconfig.foundation.ui.model.ConfigUiModel;
 import io.github.forgestove.flexconfig.foundation.ui.widget.UiScrollPane;
@@ -51,7 +50,7 @@ public class SidebarView extends UiScrollPane {
 			var nudge = active ? 0F : (float) hover.get();
 			if (nudge != 0F) ui.painter.pushTranslate(nudge, 0F);
 			var icon = FlexGuiTextures.of(tab.node.getIcon());
-			if (icon != null) ui.painter.texture(icon, new UiBounds(item.x() + 6, item.y() + (item.height() - 16) / 2, 16, 16));
+			if (icon != null) ui.painter.sprite(icon.id, new UiBounds(item.x() + 6, item.y() + (item.height() - 16) / 2, 16, 16));
 			var textInset = icon == null ? 10 : 26;
 			var label = ui.painter.trim(tab.title.getString(), item.width() - textInset - 16);
 			ui.painter.text(
