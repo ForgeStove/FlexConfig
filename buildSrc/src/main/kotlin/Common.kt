@@ -13,7 +13,7 @@ import org.gradle.kotlin.dsl.register
 fun Project.configure(loader: String) {
 	extensions.getByType(BasePluginExtension::class.java).archivesName.set(p("modId"))
 	group = p("modGroupId")
-	version = "${p("mcVersion")}-${p("modVersion")}-$loader"
+	version = "$loader-${p("mcVersion")}-${p("modVersion")}"
 	val generateMetadata = tasks.register<Copy>("generateMetadata") {
 		description = "Expand mod metadata templates from gradle.properties."
 		val values = project.extra.properties.mapValues { it.value.toString() }

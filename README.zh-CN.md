@@ -17,7 +17,7 @@ repositories {
 	}
 }
 dependencies {
-	implementation("io.github.forgestove:flexconfig:$mcVersion-$flexConfigVersion-$loader")?.let { jarJar(it) }
+	implementation("io.github.forgestove:flexconfig:$loader-$mcVersion-$flexConfigVersion")?.let { jarJar(it) }
 }
 ```
 
@@ -30,7 +30,7 @@ repositories {
     }
 }
 dependencies {
-    jarJar(implementation("io.github.forgestove:flexconfig:$mcVersion-$flexConfigVersion-$loader"))
+    jarJar(implementation("io.github.forgestove:flexconfig:$loader-$mcVersion-$flexConfigVersion"))
 }
 ```
 
