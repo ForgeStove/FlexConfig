@@ -1,0 +1,48 @@
+package io.github.forgestove.flexconfig.foundation.ui.core;
+import org.jetbrains.annotations.Nullable;
+public record UiStyle(
+	@Nullable Integer color,
+	@Nullable Boolean bold,
+	@Nullable Boolean italic,
+	@Nullable Boolean underlined,
+	@Nullable Boolean strikethrough,
+	@Nullable Boolean obfuscated
+) {
+	public static final UiStyle EMPTY = new UiStyle(null, null, null, null, null, null);
+	public static final UiStyle BOLD = EMPTY.withBold(true);
+	public static final UiStyle UNDERLINE = EMPTY.withUnderlined(true);
+	public static final UiStyle WHITE = EMPTY.withColor(0xFFFFFF);
+	public static final UiStyle GRAY = EMPTY.withColor(0xAAAAAA);
+	public static final UiStyle DARK_GRAY = EMPTY.withColor(0x555555);
+	public static final UiStyle RED = EMPTY.withColor(0xFF5555);
+	public static final UiStyle GREEN = EMPTY.withColor(0x55FF55);
+	public static final UiStyle YELLOW = EMPTY.withColor(0xFFFF55);
+	public UiStyle merge(UiStyle other) {
+		return new UiStyle(
+			other.color != null ? other.color : color,
+			other.bold != null ? other.bold : bold,
+			other.italic != null ? other.italic : italic,
+			other.underlined != null ? other.underlined : underlined,
+			other.strikethrough != null ? other.strikethrough : strikethrough,
+			other.obfuscated != null ? other.obfuscated : obfuscated
+		);
+	}
+	public UiStyle withColor(int rgb) {
+		return new UiStyle(rgb & 0xFFFFFF, bold, italic, underlined, strikethrough, obfuscated);
+	}
+	public UiStyle withBold(boolean bold) {
+		return new UiStyle(color, bold, italic, underlined, strikethrough, obfuscated);
+	}
+	public UiStyle withItalic(boolean italic) {
+		return new UiStyle(color, bold, italic, underlined, strikethrough, obfuscated);
+	}
+	public UiStyle withUnderlined(boolean underlined) {
+		return new UiStyle(color, bold, italic, underlined, strikethrough, obfuscated);
+	}
+	public UiStyle withStrikethrough(boolean strikethrough) {
+		return new UiStyle(color, bold, italic, underlined, strikethrough, obfuscated);
+	}
+	public UiStyle withObfuscated(boolean obfuscated) {
+		return new UiStyle(color, bold, italic, underlined, strikethrough, obfuscated);
+	}
+}

@@ -1,0 +1,111 @@
+package io.github.forgestove.flexconfig.foundation.ui.row;
+import io.github.forgestove.flexconfig.api.ConfigTranslationKeys;
+import io.github.forgestove.flexconfig.foundation.client.*;
+import io.github.forgestove.flexconfig.foundation.tree.ValueConfigNode;
+import io.github.forgestove.flexconfig.foundation.ui.core.*;
+import io.github.forgestove.flexconfig.foundation.ui.factory.*;
+import io.github.forgestove.flexconfig.foundation.ui.model.*;
+import io.github.forgestove.flexconfig.foundation.ui.widget.*;
+import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
+import io.github.forgestove.flexconfig.foundation.ui.widget.UiDropdown.Option;
+import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+public class EnumRow extends ValueRow implements KeybindConflictAware, TriggerKeybindAware {
+	private static final int TRIGGER_WIDTH = 96;
+	private final TriggerKeybindSupport keybind;
+	private final UiButton trigger;
+	private final @Nullable UiSegmented segmented;
+	private final Object[] constants;
+	private KeybindState keyState = KeybindState.BOUND;
+	private List<UiText> conflictUsages = List.of();
+	public EnumRow(RowContext ctx, ValueConfigNode node) {
+		super(ctx, node);
+		constants = node.getValueType().getEnumConstants();
+		keybind = new TriggerKeybindSupport(node, ctx);
+		var options = new ArrayList<Option>();
+		var labels = new ArrayList<UiText>();
+		for (var constant : constants) {
+			var component = label((Enum<?>) constant);
+			options.add(new Option(constant, component));
+			labels.add(component);
+		}
+		trigger = new UiButton(UiText.empty(), Style.KEYBIND, keybind::beginCapture);
+		if (constants.length <= 4) {
+			segmented = new UiSegmented(labels, () -> ((Enum<?>) value()).ordinal(), index -> setValue(constants[index]));
+			actionBar.add(segmented, Mth.clamp(constants.length * 50, 64, 150)).add(trigger, TRIGGER_WIDTH);
+		} else {
+			segmented = null;
+			var dropdown = new UiDropdown(options, this::value, this::setValue, ctx::openDropdown, ctx::closeDropdown);
+			actionBar.add(dropdown, dropdownWidth(options)).add(trigger, TRIGGER_WIDTH);
+		}
+		keybind.register(() -> {
+			var next = nextValue();
+			writeValue(next);
+			if (ClientUtil.mc.player == null) return;
+			var title = node.getTitle().withStyle(UiStyle.WHITE);
+			var valueText = label(next).copy().withStyle(UiStyle.UNDERLINE).withStyle(UiStyle.BOLD);
+			ClientUtil.mc.player.displayClientMessage(Translation.toComponent(title.append(": ").append(valueText)), true);
+		});
+	}
+	/** 默认与按键按钮同宽，选项文字更长时按最长项加左右留白放宽。 */
+	private static int dropdownWidth(List<Option> options) {
+		var widest = 0;
+		for (var option : options) widest = Math.max(widest, option.label().width());
+		return Math.max(TRIGGER_WIDTH, widest + 20);
+	}
+	private UiText label(Enum<?> value) {
+		return UiText.translatable(ConfigTranslationKeys.enumValue(ctx.modId(), value));
+	}
+	private Enum<?> nextValue() {
+		var current = (Enum<?>) value();
+		return (Enum<?>) constants[(current.ordinal() + 1) % constants.length];
+	}
+	@Override
+	public void refresh() {
+		super.refresh();
+		if (segmented != null) segmented.show(((Enum<?>) value()).ordinal(), true);
+		trigger.setEnabled(!state.readOnly);
+		trigger.setLabel(keybind.current().getDisplayName());
+		trigger.setActive(keybind.capturing());
+		if (keyState == KeybindState.CONFLICT && !conflictUsages.isEmpty()) trigger.tooltip(conflictTooltip(conflictUsages));
+		else trigger.tooltip(null);
+		if (keybind.changed() && !state.readOnly) state.changed = true;
+	}
+	@Override
+	public boolean hasTriggerKeybind() {
+		return keybind.serialized() != null;
+	}
+	private static UiText conflictTooltip(List<UiText> usages) {
+		var used = UiText.empty();
+		for (var i = 0; i < usages.size(); i++) {
+			if (i > 0) used = used.append(", ");
+			used = used.append(usages.get(i));
+		}
+		return UiText.translatable("controls.keybinds.duplicateKeybinds", used);
+	}
+	@Override
+	public EntryKeybind keybind() {
+		return keybind.current();
+	}
+	@Override
+	public UiText displayTitle() {
+		return node.getTitle();
+	}
+	@Override
+	public void applyConflict(KeybindState state, List<UiText> usages) {
+		keyState = state;
+		conflictUsages = usages;
+	}
+	@Override
+	public void resetToDefault() {
+		keybind.resetToDefault();
+		super.resetToDefault();
+	}
+	@Override
+	public void resetToActive() {
+		keybind.resetToActive();
+		super.resetToActive();
+	}
+}

@@ -1,0 +1,70 @@
+package io.github.forgestove.flexconfig.foundation.ui.row;
+import io.github.forgestove.flexconfig.foundation.ui.core.*;
+import io.github.forgestove.flexconfig.foundation.ui.model.RowContext;
+import io.github.forgestove.flexconfig.foundation.ui.widget.*;
+import io.github.forgestove.flexconfig.foundation.ui.widget.UiButton.Style;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+public class GroupHeaderRow extends ConfigRow {
+	private final UiText label;
+	private final String path;
+	private final @Nullable UiButton delete;
+	public GroupHeaderRow(RowContext ctx, String path, UiText label, int depth, boolean canDelete, @Nullable Runnable onDelete) {
+		super(ctx);
+		this.path = path;
+		this.label = label;
+		this.depth = depth;
+		delete = onDelete == null ? null : new UiButton(UiText.literal("-"), Style.DANGER, onDelete);
+		if (delete != null) {
+			delete.setEnabled(canDelete);
+			delete.setVisible(true);
+		}
+	}
+	@Override
+	public void layout() {
+		if (delete != null) {
+			var height = Math.min(bounds().height(), UiTheme.CONTROL_HEIGHT);
+			delete.setBounds(new UiBounds(
+				bounds().right() - UiTheme.PADDING - UiTheme.ACTION_SIZE,
+				bounds().y() + (bounds().height() - height) / 2,
+				UiTheme.ACTION_SIZE,
+				height
+			));
+		}
+	}
+	@Override
+	public int height() {
+		return UiTheme.GROUP_HEIGHT;
+	}
+	@Override
+	public void render(UiContext ui) {
+		var painter = ui.painter;
+		var text = painter.trim(label.getString().toUpperCase(), bounds().width() - UiTheme.PADDING * 2 - 18);
+		var ty = bounds().bottom() - 13;
+		painter.text(text, bounds().x() + UiTheme.INDENT + depth * UiTheme.INDENT, ty, UiTheme.TEXT_2);
+		var ruleX = bounds().x() + UiTheme.INDENT + depth * UiTheme.INDENT + painter.textWidth(text) + 4;
+		if (ruleX < bounds().right() - UiTheme.PADDING - 18) painter.groove(ruleX, bounds().right() - UiTheme.PADDING - 18, ty + 4);
+		if (delete != null) delete.render(ui);
+	}
+	@Override
+	public void onEnter() {
+		expand();
+	}
+	@Override
+	public void onExit() {
+		collapse();
+	}
+	@Override
+	public boolean exited() {
+		return exiting() && heightSettled();
+	}
+	@Override
+	public String configPath() {
+		return path;
+	}
+	@Override
+	public List<UiControl> controls() {
+		return delete == null ? List.of() : List.of(delete);
+	}
+}

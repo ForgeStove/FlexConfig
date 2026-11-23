@@ -4,7 +4,7 @@ plugins {
 }
 configure("forge")
 legacyForge {
-	version = p("forgeVersion")
+	version = p("mcVersion") + "-" + p("forgeVersion")
 	parchment {
 		mappingsVersion.set(p("parchmentVersion"))
 		minecraftVersion.set(p("mcVersion"))
