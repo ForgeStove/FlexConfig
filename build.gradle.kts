@@ -8,6 +8,8 @@ subprojects {
 		options.encoding = "UTF-8"
 	}
 	repositories {
+		maven("https://maven.minecraftforge.net")
+		maven("https://repo.spongepowered.org/repository/maven-public")
 		mavenLocal()
 		mavenCentral()
 	}
