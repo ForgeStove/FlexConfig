@@ -46,7 +46,7 @@ fun Project.configure(loader: String) {
 		changelog.set(rootProject.file("CHANGELOG.md").readText())
 		type.set(ReleaseType.BETA)
 		version.set(project.version.toString())
-		displayName.set("[$loader] ${p("modVersion")}")
+		displayName.set(version)
 		modLoaders.add(loader)
 		github {
 			repository.set("ForgeStove/FlexConfig")
